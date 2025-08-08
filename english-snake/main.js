@@ -99,6 +99,7 @@ const speedSelect = document.getElementById("speedSelect");
 const importBtn = document.getElementById("importBtn");
 const importInput = document.getElementById("importInput");
 const helpBtn = document.getElementById("helpBtn");
+const settingsBtn = document.getElementById("settingsBtn");
 const scoreEl = document.getElementById("score");
 const bestScoreEl = document.getElementById("bestScore");
 const learnedCountEl = document.getElementById("learnedCount");
@@ -122,6 +123,18 @@ const dirRightBtn = document.getElementById("dirRight");
 const helpModal = document.getElementById("helpModal");
 const closeHelpBtn = document.getElementById("closeHelpBtn");
 const closeHelpFooterBtn = document.getElementById("closeHelpFooterBtn");
+// settings modal
+const settingsModal = document.getElementById("settingsModal");
+const closeSettingsBtn = document.getElementById("closeSettingsBtn");
+const saveSettingsBtn = document.getElementById("saveSettingsBtn");
+const themeSelect = document.getElementById("themeSelect");
+const contrastToggle = document.getElementById("contrastToggle");
+const reducedMotionToggle = document.getElementById("reducedMotionToggle");
+const voiceAccent = document.getElementById("voiceAccent");
+const voiceRate = document.getElementById("voiceRate");
+const voicePitch = document.getElementById("voicePitch");
+const sfxToggle = document.getElementById("sfxToggle");
+const bgmToggle = document.getElementById("bgmToggle");
 
 // ---- 游戏参数 ----
 const CELL_SIZE = 20; // 网格大小
@@ -141,6 +154,8 @@ let timer = null;
 let tickMs = Number(speedSelect.value);
 let isPaused = true;
 let lastTime = performance.now();
+let settings = loadSettings();
+applyTheme(settings.theme, settings.highContrast);
 
 bestScoreEl.textContent = String(bestScore);
 learnedCountEl.textContent = String(learnedCount);
@@ -491,6 +506,26 @@ const closeHelp = () => { if (helpModal) helpModal.hidden = true; };
 closeHelpBtn && closeHelpBtn.addEventListener("click", closeHelp);
 closeHelpFooterBtn && closeHelpFooterBtn.addEventListener("click", closeHelp);
 
+// 设置面板弹窗
+settingsBtn && settingsBtn.addEventListener("click", () => openModal(settingsModal));
+closeSettingsBtn && closeSettingsBtn.addEventListener("click", () => closeModal(settingsModal));
+saveSettingsBtn && saveSettingsBtn.addEventListener("click", () => {
+  settings = {
+    theme: themeSelect.value,
+    highContrast: Boolean(contrastToggle.checked),
+    reducedMotion: Boolean(reducedMotionToggle.checked),
+    accent: voiceAccent.value,
+    rate: Number(voiceRate.value),
+    pitch: Number(voicePitch.value),
+    sfx: Boolean(sfxToggle.checked),
+    bgm: Boolean(bgmToggle.checked),
+  };
+  saveSettings(settings);
+  applyTheme(settings.theme, settings.highContrast);
+  closeModal(settingsModal);
+  toast("设置已保存");
+});
+
 // ---- 词卡弹窗 ----
 let vocabIndex = 0;
 function showNextWord() {
@@ -521,6 +556,20 @@ nextBtn.addEventListener("click", () => {
   isPaused = false;
 });
 
+// 再练一下（提升该词再次出现权重）
+const againBtn = document.getElementById("againBtn");
+againBtn && againBtn.addEventListener("click", () => {
+  closeModal(modal);
+  // 将当前词放入队列后面两次，简单提高再现概率
+  const ref = activeVocab.length ? activeVocab : VOCAB;
+  const lastIndex = (vocabIndex - 1 + ref.length) % ref.length;
+  const item = ref[lastIndex];
+  if (activeVocab === ref) {
+    activeVocab.splice(vocabIndex, 0, item, item);
+  }
+  isPaused = false;
+});
+
 speakWordBtn.addEventListener("click", () => {
   const text = wordTitle.textContent || "";
   speak(text);
@@ -538,9 +587,9 @@ function speak(text) {
   if (!synth) return;
   const utter = new SpeechSynthesisUtterance(text);
   // 优先英语
-  utter.lang = "en-US";
-  utter.rate = 0.95;
-  utter.pitch = 1.0;
+  utter.lang = settings.accent || "en-US";
+  utter.rate = Number(settings.rate || 0.95);
+  utter.pitch = Number(settings.pitch || 1.0);
   synth.cancel();
   synth.speak(utter);
 }
@@ -596,6 +645,33 @@ function hashHue(str){
   let h = 0;
   for(let i=0;i<str.length;i++){ h = (h*31 + str.charCodeAt(i)) >>> 0; }
   return 180 + (h % 120); // 蓝绿到粉紫区间
+}
+
+// ---- 设置存取与主题应用 ----
+function loadSettings(){
+  try{
+    const raw = localStorage.getItem("snake_settings");
+    return raw ? JSON.parse(raw) : {theme:"dark", highContrast:false, reducedMotion:false, accent:"en-US", rate:0.95, pitch:1.0, sfx:true, bgm:false};
+  }catch{ return {theme:"dark", highContrast:false, reducedMotion:false, accent:"en-US", rate:0.95, pitch:1.0, sfx:true, bgm:false}; }
+}
+function saveSettings(s){ localStorage.setItem("snake_settings", JSON.stringify(s)); }
+function applyTheme(theme, highContrast){
+  const body = document.body;
+  const useLight = theme === "light" || (theme === "auto" && matchMedia('(prefers-color-scheme: light)').matches);
+  body.classList.toggle("light", useLight);
+  // 高对比下仅增强对比度，不直接覆盖文字颜色，避免暗色主题被误改
+  if (highContrast) {
+    body.style.setProperty('--panel', useLight ? '#ffffff' : '#0b1220');
+    body.style.setProperty('--panel-2', useLight ? '#f3f4f6' : '#0e1426');
+  } else {
+    body.style.removeProperty('--panel');
+    body.style.removeProperty('--panel-2');
+  }
+}
+
+// PWA 注册
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
 }
 
 

@@ -1,0 +1,11 @@
+{
+  "name": "Snake English 英语贪吃蛇",
+  "short_name": "SnakeEnglish",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0f1f",
+  "theme_color": "#0a0f1f",
+  "icons": []
+}
+
+
