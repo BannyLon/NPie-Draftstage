@@ -7,19 +7,27 @@ body{margin:0;background:
   radial-gradient(1200px 600px at 70% -10%,#19233b 0%,#0c1226 45%,#050816 100%),
   linear-gradient(180deg,rgba(167,139,250,.05),transparent 40%,rgba(34,211,238,.05));
 color:var(--text);font:14px/1.5 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+/* 浅色主题整体背景 */
+body.light{background:
+  radial-gradient(1200px 600px at 70% -10%,#f2f6ff 0%,#eef3ff 45%,#f7f9ff 100%),
+  linear-gradient(180deg,rgba(34,211,238,.06),transparent 40%,rgba(167,139,250,.06))}
 .topbar{position:sticky;top:0;z-index:20;background:rgba(10,15,31,.72);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid #151c30;color:var(--text)}
 .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.3px;color:var(--text)}
 .brand-text{color:var(--text);opacity:.98}
 .brand .logo{filter:drop-shadow(0 2px 6px var(--glow));font-size:20px}
 .toolbar{display:flex;gap:12px;align-items:center}
 .tool-group{display:flex;gap:8px;align-items:center;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));border:1px solid #18213a;padding:6px 8px;border-radius:10px}
+.light .tool-group{background:linear-gradient(180deg,rgba(0,0,0,.02),rgba(0,0,0,.01));border-color:#e5e7eb}
 .main{display:grid;place-items:center;padding:24px}
 .app-shell{display:grid;grid-template-columns:1fr min(320px,30vw);gap:18px;align-items:start;padding:24px;max-width:1080px;margin:0 auto}
 .game-area{display:grid;gap:12px}
 .board-card{background:linear-gradient(180deg,#0b1220,#0c1222);border:1px solid #141c34;border-radius:16px;box-shadow:0 20px 80px rgba(0,0,0,.55),inset 0 0 0 1px rgba(255,255,255,.03);padding:14px}
+body.light .board-card{background:linear-gradient(180deg,#ffffff,#f7f9ff);border-color:#e5e7eb;box-shadow:0 16px 48px rgba(0,0,0,.08),inset 0 0 0 1px rgba(0,0,0,.02)}
 canvas{background:radial-gradient(120% 70% at 50% 0%,#0a0f1f,#090e1e 50%,#070b17);border:1px solid #11182c;border-radius:14px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03),0 30px 80px rgba(0,0,0,.45)}
+body.light canvas{background:radial-gradient(120% 70% at 50% 0%,#eef4ff,#eaf1ff 55%,#e9f0ff);border-color:#e5e7eb;box-shadow:inset 0 0 0 1px rgba(0,0,0,.03),0 24px 60px rgba(0,0,0,.08)}
 .sidebar{display:grid;gap:14px}
 .card{background:linear-gradient(180deg,#0b1220,#0c1222);border:1px solid #141c34;border-radius:14px;box-shadow:0 18px 70px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.03);padding:14px}
+body.light .card{background:linear-gradient(180deg,#ffffff,#f7f9ff);border-color:#e5e7eb;box-shadow:0 14px 40px rgba(0,0,0,.08),inset 0 0 0 1px rgba(0,0,0,.02)}
 .card-title{margin:0 0 8px;font-size:16px;color:#e6e9f2}
 .sidebar, .stats, .hint-list, .stat-list, .tool-group, .topbar, .card, .board-card, label, p, li, h1, h2, h3, h4, h5 { color: var(--text); }
 .stat-list,.hint-list{list-style:none;padding:0;margin:0;display:grid;gap:8px}
@@ -37,6 +45,8 @@ body.light select{background:#fff;color:#0b1020;border-color:#d1d5db}
 .modal{position:fixed;inset:0;display:grid;place-items:center;background:rgba(2,6,23,.6)}
 .modal[hidden]{display:none}
 .modal-content{width:min(760px,92vw);background:linear-gradient(180deg,#0b1220,#0d1424);border:1px solid #1b2744;border-radius:16px;box-shadow:0 24px 80px rgba(0,0,0,.65),0 0 0 1px rgba(255,255,255,.04) inset;padding:16px 18px}
+.light .modal{background:rgba(0,0,0,.35)}
+body.light .modal-content{background:linear-gradient(180deg,#ffffff,#f7f9ff);border-color:#e5e7eb;box-shadow:0 24px 80px rgba(0,0,0,.12),0 0 0 1px rgba(0,0,0,.02) inset}
 .modal.open{animation:overlayIn .26s ease forwards}
 .modal.closing{animation:overlayOut .18s ease forwards}
 .modal.open .modal-content{animation:cardIn .26s cubic-bezier(.2,.8,.2,1)}
