@@ -1,0 +1,56 @@
+:root{--bg:#050816;--panel:#0a0f1f;--panel-2:#0e1426;--text:#e6e9f2;--muted:#9aa3b2;--primary:#22d3ee;--accent:#a78bfa;--danger:#f43f5e;--green:#10b981;--glow:rgba(34,211,238,.15)}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:
+  radial-gradient(1200px 600px at 70% -10%,#19233b 0%,#0c1226 45%,#050816 100%),
+  linear-gradient(180deg,rgba(167,139,250,.05),transparent 40%,rgba(34,211,238,.05));
+color:var(--text);font:14px/1.5 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+.topbar{position:sticky;top:0;z-index:20;background:rgba(10,15,31,.72);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid #151c30}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.3px}
+.brand .logo{filter:drop-shadow(0 2px 6px var(--glow));font-size:20px}
+.toolbar{display:flex;gap:12px;align-items:center}
+.tool-group{display:flex;gap:8px;align-items:center;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));border:1px solid #18213a;padding:6px 8px;border-radius:10px}
+.main{display:grid;place-items:center;padding:24px}
+.app-shell{display:grid;grid-template-columns:1fr min(320px,30vw);gap:18px;align-items:start;padding:24px;max-width:1080px;margin:0 auto}
+.game-area{display:grid;gap:12px}
+.board-card{background:linear-gradient(180deg,#0b1220,#0c1222);border:1px solid #141c34;border-radius:16px;box-shadow:0 20px 80px rgba(0,0,0,.55),inset 0 0 0 1px rgba(255,255,255,.03);padding:14px}
+canvas{background:radial-gradient(120% 70% at 50% 0%,#0a0f1f,#090e1e 50%,#070b17);border:1px solid #11182c;border-radius:14px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03),0 30px 80px rgba(0,0,0,.45)}
+.sidebar{display:grid;gap:14px}
+.card{background:linear-gradient(180deg,#0b1220,#0c1222);border:1px solid #141c34;border-radius:14px;box-shadow:0 18px 70px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.03);padding:14px}
+.card-title{margin:0 0 8px;font-size:16px;color:#cbd5e1}
+.stat-list,.hint-list{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.stat-list .label{color:var(--muted)}
+.stat-list .value{font-weight:700}
+.btn{appearance:none;border:1px solid #24304e;background:linear-gradient(180deg,#0f172a,#0c1426);color:var(--text);padding:8px 12px;border-radius:10px;cursor:pointer;transition:.15s ease;box-shadow:inset 0 0 0 1px rgba(255,255,255,.02)}
+.btn:hover{border-color:#475569;transform:translateY(-1px)}
+.btn.primary{background:linear-gradient(135deg,var(--primary),var(--accent));border-color:transparent;color:#0b1020;font-weight:700}
+.btn.disabled{opacity:.5;cursor:not-allowed;filter:grayscale(40%)}
+.btn.icon{width:32px;height:32px;display:inline-grid;place-items:center;padding:0}
+.speed-label{display:inline-flex;gap:6px;align-items:center;color:var(--muted)}
+select{background:#0f172a;color:var(--text);border:1px solid #334155;border-radius:6px;padding:4px 8px}
+
+.modal{position:fixed;inset:0;display:grid;place-items:center;background:rgba(2,6,23,.6)}
+.modal[hidden]{display:none}
+.modal-content{width:min(760px,92vw);background:linear-gradient(180deg,#0b1220,#0d1424);border:1px solid #18213a;border-radius:16px;box-shadow:0 24px 80px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.03) inset;padding:16px 18px}
+.modal-header{display:flex;align-items:center;justify-content:space-between}
+.word-title{font-size:28px;margin:6px 0}
+.word-meta{display:flex;align-items:center;gap:12px;color:var(--muted)}
+.ipa{font-family:Menlo,Consolas,Monaco,monospace;color:var(--primary)}
+.definition,.examples{margin-top:12px}
+.examples ul{margin:8px 0 0 18px}
+.tts-row{margin-top:8px}
+.footer{padding:10px 14px;color:var(--muted);text-align:center}
+.code{display:block;background:#0b1220;border:1px solid #1f2937;border-radius:10px;padding:10px 12px;color:var(--text);overflow:auto}
+
+.toast{position:fixed;right:16px;bottom:16px;background:#0b1220;border:1px solid #1f2937;border-radius:10px;padding:10px 12px;color:var(--text);box-shadow:0 12px 40px rgba(0,0,0,.5)}
+
+/* 移动端触控方向键 */
+.touchpad{position:fixed;left:14px;bottom:14px}
+.dpad{display:grid;grid-template-columns:48px 48px 48px;grid-template-rows:48px 48px 48px;gap:6px;align-items:center;justify-items:center}
+.dpad .spacer{width:48px;height:48px}
+.dpad .spacer.center{opacity:.4;border:1px dashed #334155;border-radius:8px}
+.btn.dir{width:48px;height:48px;padding:0;font-size:18px;background:#0f172a88}
+@media (min-width: 900px){
+  .touchpad{display:none}
+}
+

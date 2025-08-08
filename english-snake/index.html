@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>英语贪吃蛇 | Snake English</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">🧠🐍</span>
+        <span class="brand-text">Snake English · 英语贪吃蛇</span>
+      </div>
+      <div class="toolbar">
+        <div class="tool-group">
+          <button id="startBtn" class="btn primary">▶ 开始</button>
+          <button id="pauseBtn" class="btn">⏸ 暂停</button>
+          <button id="resetBtn" class="btn">⟲ 重开</button>
+        </div>
+        <div class="tool-group">
+          <label class="speed-label">
+            速度
+            <select id="speedSelect">
+              <option value="140">慢</option>
+              <option value="110" selected>中</option>
+              <option value="80">快</option>
+              <option value="60">超快</option>
+            </select>
+          </label>
+          <button id="importBtn" class="btn">📥 导入词库</button>
+          <input id="importInput" type="file" accept="application/json,.json" hidden />
+          <button id="helpBtn" class="btn">❓ 词库说明</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="app-shell">
+      <section class="game-area">
+        <div class="board-card">
+          <canvas id="gameCanvas" width="640" height="520" aria-label="贪吃蛇游戏画布"></canvas>
+        </div>
+        <div id="touchPad" class="touchpad" aria-hidden="true">
+          <div class="dpad">
+            <button id="dirUp" class="btn dir up" aria-label="向上">▲</button>
+            <div class="spacer"></div>
+            <button id="dirLeft" class="btn dir left" aria-label="向左">◀</button>
+            <div class="spacer center"></div>
+            <button id="dirRight" class="btn dir right" aria-label="向右">▶</button>
+            <div class="spacer"></div>
+            <button id="dirDown" class="btn dir down" aria-label="向下">▼</button>
+          </div>
+        </div>
+      </section>
+      <aside class="sidebar">
+        <div class="card stats-card">
+          <h3 class="card-title">学习进度</h3>
+          <ul class="stat-list">
+            <li><span class="label">分数</span><span class="value" id="score">0</span></li>
+            <li><span class="label">最佳</span><span class="value" id="bestScore">0</span></li>
+            <li><span class="label">已学</span><span class="value" id="learnedCount">0</span></li>
+          </ul>
+        </div>
+        <div class="card help-card">
+          <h3 class="card-title">操作提示</h3>
+          <ul class="hint-list">
+            <li>方向键 / WASD 控制蛇移动</li>
+            <li>吃到食物会弹出单词卡，点“发音/朗读例句”学习</li>
+            <li>空格键可以快速暂停/继续</li>
+          </ul>
+        </div>
+      </aside>
+    </main>
+
+    <div id="wordModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="wordTitle" hidden>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="wordTitle" class="word-title">word</h2>
+          <button id="closeModalBtn" class="btn icon" aria-label="关闭">✕</button>
+        </div>
+        <div class="word-meta">
+          <span id="wordIpa" class="ipa">/ˈwɜːd/</span>
+          <button id="speakWordBtn" class="btn">发音</button>
+        </div>
+        <div class="definition">
+          <h3>释义</h3>
+          <p id="wordDef">Definition</p>
+        </div>
+        <div class="examples">
+          <h3>例句</h3>
+          <ul id="examplesList"></ul>
+          <div class="tts-row">
+            <button id="speakExampleBtn" class="btn">朗读例句</button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="nextBtn" class="btn primary">继续游戏</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="helpModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle" hidden>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="helpTitle">词库导入说明</h2>
+          <button id="closeHelpBtn" class="btn icon" aria-label="关闭">✕</button>
+        </div>
+        <div class="definition">
+          <p>当前支持 <strong>JSON</strong> 文件导入，数组每一项为一个单词对象，字段如下：</p>
+          <ul>
+            <li><code>word</code>：必填，英文单词</li>
+            <li><code>definition</code>/<code>def</code>：必填，英文释义</li>
+            <li><code>ipa</code>：可选，音标</li>
+            <li><code>examples</code>：可选，例句数组（字符串数组）</li>
+          </ul>
+          <p>示例：</p>
+          <pre class="code" aria-label="JSON 示例">[
+  {
+    "word": "resilient",
+    "ipa": "/rɪˈzɪliənt/",
+    "definition": "able to quickly return to a previous good condition",
+    "examples": ["Children are often very resilient."]
+  },
+  {
+    "word": "concise",
+    "def": "giving a lot of information clearly and in a few words",
+    "examples": ["Please be concise in your answer."]
+  }
+]</pre>
+          <p>
+            你可以下载模板：
+            <a id="downloadTemplateLink" href="./vocab-template.json" download>vocab-template.json</a>
+          </p>
+          <p>制作好 JSON 后，点击顶部“导入词库”按钮选择文件即可。</p>
+        </div>
+        <div class="modal-footer">
+          <button id="closeHelpFooterBtn" class="btn primary">知道了</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <small>小技巧：方向键控制；吃到食物会弹出单词卡，点击“发音/朗读例句”学习后继续游戏。</small>
+    </footer>
+
+    <script src="./main.js"></script>
+  </body>
+  </html>
+
+
