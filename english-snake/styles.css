@@ -7,8 +7,9 @@ body{margin:0;background:
   radial-gradient(1200px 600px at 70% -10%,#19233b 0%,#0c1226 45%,#050816 100%),
   linear-gradient(180deg,rgba(167,139,250,.05),transparent 40%,rgba(34,211,238,.05));
 color:var(--text);font:14px/1.5 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
-.topbar{position:sticky;top:0;z-index:20;background:rgba(10,15,31,.72);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid #151c30}
-.brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.3px}
+.topbar{position:sticky;top:0;z-index:20;background:rgba(10,15,31,.72);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid #151c30;color:var(--text)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.3px;color:var(--text)}
+.brand-text{color:var(--text);opacity:.98}
 .brand .logo{filter:drop-shadow(0 2px 6px var(--glow));font-size:20px}
 .toolbar{display:flex;gap:12px;align-items:center}
 .tool-group{display:flex;gap:8px;align-items:center;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));border:1px solid #18213a;padding:6px 8px;border-radius:10px}
