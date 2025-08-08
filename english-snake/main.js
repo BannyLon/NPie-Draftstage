@@ -156,6 +156,7 @@ let isPaused = true;
 let lastTime = performance.now();
 let settings = loadSettings();
 applyTheme(settings.theme, settings.highContrast);
+syncSettingsUI();
 
 bestScoreEl.textContent = String(bestScore);
 learnedCountEl.textContent = String(learnedCount);
@@ -526,6 +527,19 @@ saveSettingsBtn && saveSettingsBtn.addEventListener("click", () => {
   toast("设置已保存");
 });
 
+// 即时预览并持久化
+function bindLiveSettings() {
+  if (themeSelect) themeSelect.addEventListener("change", () => { settings.theme = themeSelect.value; saveSettings(settings); applyTheme(settings.theme, settings.highContrast); });
+  if (contrastToggle) contrastToggle.addEventListener("change", () => { settings.highContrast = contrastToggle.checked; saveSettings(settings); applyTheme(settings.theme, settings.highContrast); document.body.classList.toggle('contrast', settings.highContrast); });
+  if (reducedMotionToggle) reducedMotionToggle.addEventListener("change", () => { settings.reducedMotion = reducedMotionToggle.checked; saveSettings(settings); document.body.style.setProperty('animation-duration', settings.reducedMotion ? '0s' : ''); });
+  if (voiceAccent) voiceAccent.addEventListener("change", () => { settings.accent = voiceAccent.value; saveSettings(settings); });
+  if (voiceRate) voiceRate.addEventListener("input", () => { settings.rate = Number(voiceRate.value); saveSettings(settings); });
+  if (voicePitch) voicePitch.addEventListener("input", () => { settings.pitch = Number(voicePitch.value); saveSettings(settings); });
+  if (sfxToggle) sfxToggle.addEventListener("change", () => { settings.sfx = sfxToggle.checked; saveSettings(settings); });
+  if (bgmToggle) bgmToggle.addEventListener("change", () => { settings.bgm = bgmToggle.checked; saveSettings(settings); });
+}
+bindLiveSettings();
+
 // ---- 词卡弹窗 ----
 let vocabIndex = 0;
 function showNextWord() {
@@ -667,11 +681,29 @@ function applyTheme(theme, highContrast){
     body.style.removeProperty('--panel');
     body.style.removeProperty('--panel-2');
   }
+  body.classList.toggle('contrast', !!highContrast);
 }
 
 // PWA 注册
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+
+function syncSettingsUI(){
+  if (themeSelect) themeSelect.value = settings.theme || 'dark';
+  if (contrastToggle) contrastToggle.checked = !!settings.highContrast;
+  if (reducedMotionToggle) reducedMotionToggle.checked = !!settings.reducedMotion;
+  if (voiceAccent) voiceAccent.value = settings.accent || 'en-US';
+  if (voiceRate) voiceRate.value = String(settings.rate || 0.95);
+  if (voicePitch) voicePitch.value = String(settings.pitch || 1.0);
+  if (sfxToggle) sfxToggle.checked = !!settings.sfx;
+  if (bgmToggle) bgmToggle.checked = !!settings.bgm;
+}
+
+// 自动主题监听（当选择“自动”时）
+const media = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)');
+if (media && typeof media.addEventListener === 'function') {
+  media.addEventListener('change', () => { if ((settings.theme||'dark') === 'auto') applyTheme('auto', settings.highContrast); });
 }
 
 
