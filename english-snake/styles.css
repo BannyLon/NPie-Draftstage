@@ -1,4 +1,4 @@
-:root{--bg:#050816;--panel:#0a0f1f;--panel-2:#0e1426;--text:#e6e9f2;--muted:#9aa3b2;--primary:#22d3ee;--accent:#a78bfa;--danger:#f43f5e;--green:#10b981;--glow:rgba(34,211,238,.15)}
+:root{--bg:#050816;--panel:#0a0f1f;--panel-2:#0e1426;--text:#f3f6ff;--muted:#b2bccb;--primary:#22d3ee;--accent:#a78bfa;--danger:#f43f5e;--green:#10b981;--glow:rgba(34,211,238,.2)}
 /* 明确：只在 body.light 下切换到浅色主题，避免系统偏好覆盖手动选择 */
 body.light{--bg:#f6f7fb;--panel:#ffffff;--panel-2:#f4f6fb;--text:#0b1020;--muted:#4b5563;--glow:rgba(34,211,238,.18)}
 *{box-sizing:border-box}
@@ -19,11 +19,12 @@ color:var(--text);font:14px/1.5 ui-sans-serif,system-ui,-apple-system,Segoe UI,R
 canvas{background:radial-gradient(120% 70% at 50% 0%,#0a0f1f,#090e1e 50%,#070b17);border:1px solid #11182c;border-radius:14px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03),0 30px 80px rgba(0,0,0,.45)}
 .sidebar{display:grid;gap:14px}
 .card{background:linear-gradient(180deg,#0b1220,#0c1222);border:1px solid #141c34;border-radius:14px;box-shadow:0 18px 70px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.03);padding:14px}
-.card-title{margin:0 0 8px;font-size:16px;color:#cbd5e1}
+.card-title{margin:0 0 8px;font-size:16px;color:#e6e9f2}
+.sidebar, .stats, .hint-list, .stat-list, .tool-group, .topbar, .card, .board-card, label, p, li, h1, h2, h3, h4, h5 { color: var(--text); }
 .stat-list,.hint-list{list-style:none;padding:0;margin:0;display:grid;gap:8px}
 .stat-list .label{color:var(--muted)}
 .stat-list .value{font-weight:700}
-.btn{appearance:none;border:1px solid #24304e;background:linear-gradient(180deg,#0f172a,#0c1426);color:var(--text);padding:8px 12px;border-radius:10px;cursor:pointer;transition:.15s ease;box-shadow:inset 0 0 0 1px rgba(255,255,255,.02)}
+.btn{appearance:none;border:1px solid #2b3758;background:linear-gradient(180deg,#0f172a,#0c1426);color:var(--text);padding:8px 12px;border-radius:10px;cursor:pointer;transition:.15s ease;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04)}
 .btn:hover{border-color:#475569;transform:translateY(-1px)}
 .btn.primary{background:linear-gradient(135deg,var(--primary),var(--accent));border-color:transparent;color:#0b1020;font-weight:700}
 .btn.disabled{opacity:.5;cursor:not-allowed;filter:grayscale(40%)}
@@ -34,7 +35,7 @@ body.light select{background:#fff;color:#0b1020;border-color:#d1d5db}
 
 .modal{position:fixed;inset:0;display:grid;place-items:center;background:rgba(2,6,23,.6)}
 .modal[hidden]{display:none}
-.modal-content{width:min(760px,92vw);background:linear-gradient(180deg,#0b1220,#0d1424);border:1px solid #18213a;border-radius:16px;box-shadow:0 24px 80px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.03) inset;padding:16px 18px}
+.modal-content{width:min(760px,92vw);background:linear-gradient(180deg,#0b1220,#0d1424);border:1px solid #1b2744;border-radius:16px;box-shadow:0 24px 80px rgba(0,0,0,.65),0 0 0 1px rgba(255,255,255,.04) inset;padding:16px 18px}
 .modal.open{animation:overlayIn .26s ease forwards}
 .modal.closing{animation:overlayOut .18s ease forwards}
 .modal.open .modal-content{animation:cardIn .26s cubic-bezier(.2,.8,.2,1)}
