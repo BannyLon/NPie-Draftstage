@@ -140,6 +140,7 @@ let learnedCount = Number(localStorage.getItem("snake_learned") || 0);
 let timer = null;
 let tickMs = Number(speedSelect.value);
 let isPaused = true;
+let lastTime = performance.now();
 
 bestScoreEl.textContent = String(bestScore);
 learnedCountEl.textContent = String(learnedCount);
@@ -171,6 +172,7 @@ function placeFood() {
     const y = Math.floor(Math.random() * GRID_ROWS);
     if (!snake.some((s) => s.x === x && s.y === y)) {
       food = { x, y };
+      foodHue = hashHue((activeVocab[vocabIndex % Math.max(1, activeVocab.length)]?.word) || "food");
       return;
     }
   }
@@ -180,6 +182,106 @@ function placeFood() {
 function drawCell(x, y, color) {
   ctx.fillStyle = color;
   ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE - 1, CELL_SIZE - 1);
+}
+
+// 渲染参数与元素
+let particles = [];
+let foodHue = 45;
+
+/** 生成吃到食物时的光点粒子 */
+function spawnParticles(cx, cy) {
+  const centerX = cx * CELL_SIZE + CELL_SIZE / 2;
+  const centerY = cy * CELL_SIZE + CELL_SIZE / 2;
+  for (let i = 0; i < 24; i++) {
+    const angle = (Math.PI * 2 * i) / 24 + Math.random() * 0.3;
+    const speed = 1.2 + Math.random() * 1.4;
+    particles.push({
+      x: centerX,
+      y: centerY,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      life: 1.0,
+      hue: foodHue,
+    });
+  }
+}
+
+function updateParticles(dt) {
+  for (const p of particles) {
+    p.x += p.vx * dt * 60 * 0.016;
+    p.y += p.vy * dt * 60 * 0.016;
+    p.vx *= 0.98;
+    p.vy *= 0.98;
+    p.life -= dt * 1.6;
+  }
+  particles = particles.filter((p) => p.life > 0);
+}
+
+function drawFoodOrb(x, y, t) {
+  const cx = x * CELL_SIZE + CELL_SIZE / 2;
+  const cy = y * CELL_SIZE + CELL_SIZE / 2;
+  const r = CELL_SIZE * (0.42 + Math.sin(t * 2) * 0.03);
+  const g = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.4, r * 0.2, cx, cy, r);
+  g.addColorStop(0, `hsla(${foodHue}, 85%, 65%, .95)`);
+  g.addColorStop(0.6, `hsla(${foodHue}, 85%, 55%, .85)`);
+  g.addColorStop(1, `hsla(${foodHue}, 85%, 40%, .65)`);
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fill();
+  // 高光
+  ctx.fillStyle = "rgba(255,255,255,.35)";
+  ctx.beginPath();
+  ctx.ellipse(cx - r * 0.25, cy - r * 0.35, r * 0.18, r * 0.12, -0.6, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawSnake(t) {
+  // 尾部到头部绘制，使用渐变与轻微光晕
+  for (let i = snake.length - 1; i >= 0; i--) {
+    const seg = snake[i];
+    const cx = seg.x * CELL_SIZE + CELL_SIZE / 2;
+    const cy = seg.y * CELL_SIZE + CELL_SIZE / 2;
+    const r = CELL_SIZE * (i === 0 ? 0.48 : 0.44);
+    const hue = 190 + (i / snake.length) * 40;
+    const grad = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.35, r * 0.15, cx, cy, r);
+    grad.addColorStop(0, `hsla(${hue}, 90%, 70%, .95)`);
+    grad.addColorStop(0.7, `hsla(${hue}, 90%, 55%, .9)`);
+    grad.addColorStop(1, `hsla(${hue}, 90%, 40%, .85)`);
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 微光晕
+    ctx.strokeStyle = `hsla(${hue}, 95%, 70%, .18)`;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r + 2, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // 眼睛（头部）
+  const head = snake[0];
+  if (head) {
+    const hx = head.x * CELL_SIZE + CELL_SIZE / 2;
+    const hy = head.y * CELL_SIZE + CELL_SIZE / 2;
+    const eyeOffset = CELL_SIZE * 0.18;
+    ctx.fillStyle = "#0b1020";
+    ctx.beginPath();
+    ctx.arc(hx - eyeOffset, hy - 2, 3, 0, Math.PI * 2);
+    ctx.arc(hx + eyeOffset, hy - 2, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawParticles() {
+  for (const p of particles) {
+    ctx.fillStyle = `hsla(${p.hue}, 90%, 70%, ${Math.max(0, p.life)})`;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
 }
 
 function draw() {
@@ -199,14 +301,14 @@ function draw() {
     ctx.stroke();
   }
 
-  // 食物
-  drawCell(food.x, food.y, "#f59e0b");
+  // 食物（发光球）
+  drawFoodOrb(food.x, food.y, performance.now() / 1000);
 
-  // 蛇
-  snake.forEach((seg, idx) => {
-    const color = idx === 0 ? "#22d3ee" : "#38bdf8";
-    drawCell(seg.x, seg.y, color);
-  });
+  // 蛇（渐变圆段）
+  drawSnake(performance.now() / 1000);
+
+  // 粒子
+  drawParticles();
 }
 
 // ---- 更新 ----
@@ -237,6 +339,8 @@ function tick() {
       localStorage.setItem("snake_best", String(bestScore));
       bestScoreEl.textContent = String(bestScore);
     }
+    // 粒子特效
+    spawnParticles(food.x, food.y);
     placeFood();
     // 弹出学习卡片，暂停
     isPaused = true;
@@ -404,15 +508,13 @@ function showNextWord() {
     examplesList.appendChild(li);
   }
 
-  modal.hidden = false;
+  openModal(modal);
   speak(item.word);
 }
 
-closeModalBtn.addEventListener("click", () => {
-  modal.hidden = true;
-});
+closeModalBtn.addEventListener("click", () => closeModal(modal));
 nextBtn.addEventListener("click", () => {
-  modal.hidden = true;
+  closeModal(modal);
   learnedCount += 1;
   localStorage.setItem("snake_learned", String(learnedCount));
   learnedCountEl.textContent = String(learnedCount);
@@ -461,8 +563,39 @@ function toast(message) {
   }, 1800);
 }
 
+// ---- Modal 开关 ----
+function openModal(el){
+  if(!el) return;
+  el.hidden = false;
+  el.classList.remove("closing");
+  el.classList.add("open");
+}
+function closeModal(el){
+  if(!el) return;
+  el.classList.remove("open");
+  el.classList.add("closing");
+  setTimeout(()=>{ el.hidden = true; el.classList.remove("closing"); }, 180);
+}
+
+// ---- 渲染循环（用于粒子与食物呼吸动效） ----
+function renderLoop(now){
+  const dt = Math.min(0.05, (now - lastTime) / 1000);
+  lastTime = now;
+  updateParticles(dt);
+  draw();
+  requestAnimationFrame(renderLoop);
+}
+
 // 启动
 initGame();
 startLoop();
+requestAnimationFrame(renderLoop);
+
+// ---- 辅助：根据单词生成稳定色相 ----
+function hashHue(str){
+  let h = 0;
+  for(let i=0;i<str.length;i++){ h = (h*31 + str.charCodeAt(i)) >>> 0; }
+  return 180 + (h % 120); // 蓝绿到粉紫区间
+}
 
 

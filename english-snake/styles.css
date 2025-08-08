@@ -32,6 +32,10 @@ select{background:#0f172a;color:var(--text);border:1px solid #334155;border-radi
 .modal{position:fixed;inset:0;display:grid;place-items:center;background:rgba(2,6,23,.6)}
 .modal[hidden]{display:none}
 .modal-content{width:min(760px,92vw);background:linear-gradient(180deg,#0b1220,#0d1424);border:1px solid #18213a;border-radius:16px;box-shadow:0 24px 80px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.03) inset;padding:16px 18px}
+.modal.open{animation:overlayIn .26s ease forwards}
+.modal.closing{animation:overlayOut .18s ease forwards}
+.modal.open .modal-content{animation:cardIn .26s cubic-bezier(.2,.8,.2,1)}
+.modal.closing .modal-content{animation:cardOut .18s ease}
 .modal-header{display:flex;align-items:center;justify-content:space-between}
 .word-title{font-size:28px;margin:6px 0}
 .word-meta{display:flex;align-items:center;gap:12px;color:var(--muted)}
@@ -53,4 +57,10 @@ select{background:#0f172a;color:var(--text);border:1px solid #334155;border-radi
 @media (min-width: 900px){
   .touchpad{display:none}
 }
+
+/* 动效 */
+@keyframes overlayIn{from{opacity:0}to{opacity:1}}
+@keyframes overlayOut{from{opacity:1}to{opacity:0}}
+@keyframes cardIn{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes cardOut{from{opacity:1;transform:translateY(0) scale(1)}to{opacity:0;transform:translateY(6px) scale(.98)}}
 
