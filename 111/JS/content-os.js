@@ -382,11 +382,13 @@
             ? `<div style="padding:12px 14px;color:var(--text-muted);font-size:0.76rem;">${isArchivedView ? '暂无已存档选题' : '暂无选题'}</div>`
             : topics.map((topic, index) => {
             const sel = state.selectedTopicId === topic.id;
+            const urgent = isTopicUrgent(topic);
             const colorObj = getTopicColor(index);
             return `
-              <div class="topic-item ${sel ? 'selected' : ''}" data-sidebar-topic="${topic.id}"
+              <div class="topic-item ${sel ? 'selected' : ''} ${urgent ? 'topic-urgent' : ''}" data-sidebar-topic="${topic.id}"
                    style="border-left-color: ${colorObj.main}; background-color: ${colorObj.bg};">
-                ${esc(topic.title)}
+                <span class="topic-item-badge badge-${topic.type}">${topic.type === 'self' ? '自' : '商'}</span>
+                <span class="topic-item-title">${esc(topic.title)}</span>
               </div>
             `;
           }).join('')}
@@ -547,11 +549,13 @@
       let rowsHtml = '';
       visibleTopics().forEach((topic, index) => {
         const sel = state.selectedTopicId === topic.id;
+        const urgent = isTopicUrgent(topic);
         const colorObj = getTopicColor(index);
         const progress = calcProgress(topic);
         rowsHtml += `<div class="timeline-row" data-row-id="${topic.id}">`;
-        rowsHtml += `<div class="topic-label ${sel ? 'selected' : ''}" draggable="true" data-label-id="${topic.id}">
-          <div class="topic-label-card" style="border-left-color: ${colorObj.main}; background-color: ${colorObj.bg};">
+        rowsHtml += `<div class="topic-label ${sel ? 'selected' : ''} ${urgent ? 'tl-urgent' : ''}" draggable="true" data-label-id="${topic.id}">
+          <div class="topic-label-card" style="border-left-color: ${urgent ? '#E08840' : colorObj.main}; background-color: ${colorObj.bg};">
+            <span class="tl-type-dot dot-${topic.type}">${topic.type === 'self' ? '自' : '商'}</span>
             <div class="topic-label-name" data-rename-label="${topic.id}" title="${esc(topic.title)}">${esc(topic.title)}</div>
             <div class="topic-label-meta">
               <span class="topic-label-date">${fmtShortDate(topic.publishDate)}</span>
