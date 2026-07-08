@@ -165,18 +165,17 @@
     .tool-btn:hover { background: rgba(216,203,180,0.22); }
     .sidebar.collapsed .tool-btn { padding: 10px 6px; justify-content: center; }
     .sidebar.collapsed .tool-btn-text { display: none; }
-    .sidebar.collapsed .tool-btn-icon { width: 22px; height: 22px; }
     .sidebar.collapsed .tool-btn-icon { width: 20px; height: 20px; }
     /* ── Main header / logo bar ── */
     .main-header {
-      display: flex; align-items: center; justify-content: flex-end;
+      display: flex; align-items: center; justify-content: space-between;
       padding: 10px 24px;
       border-bottom: 1px solid var(--border);
       background: var(--surface);
-      flex-shrink: 0;
+      flex-shrink: 0; gap: 16px;
     }
     .main-header-brand {
-      display: flex; align-items: center; gap: 10px;
+      display: flex; align-items: center; gap: 10px; flex-shrink: 0;
     }
     .main-header-logo {
       height: 36px; width: auto; border-radius: 6px;
@@ -188,6 +187,35 @@
     .main-header-title small {
       display: block; font-size: 0.62rem; font-weight: 500;
       color: var(--text-muted); letter-spacing: 0.08em;
+    }
+    /* ── Notification ticker ── */
+    .header-ticker {
+      flex: 1; min-width: 0; max-width: 520px;
+      height: 32px; overflow: hidden; position: relative;
+      border-radius: 6px;
+      background: var(--surface-muted);
+      border: 1px solid var(--border);
+    }
+    .header-ticker-track {
+      display: flex; gap: 48px;
+      position: absolute; white-space: nowrap;
+      will-change: transform;
+      animation: ticker-scroll 28s linear infinite;
+    }
+    .header-ticker:hover .header-ticker-track { animation-play-state: paused; }
+    @keyframes ticker-scroll {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .header-ticker-item {
+      font-size: 0.72rem; font-weight: 600; color: var(--text);
+      line-height: 32px; flex-shrink: 0;
+    }
+    .header-ticker-item.urgent { color: var(--red); }
+    .header-ticker-item.done { color: var(--green); }
+    .header-ticker-empty {
+      font-size: 0.72rem; color: var(--text-muted);
+      line-height: 32px; padding: 0 12px;
     }
     .main-panel {
       flex: 1; display: flex; flex-direction: column;
@@ -596,6 +624,7 @@
     <aside class="sidebar" id="sidebar"></aside>
     <main class="main-panel">
       <div class="main-header">
+        <div class="header-ticker" id="header-ticker"></div>
         <div class="main-header-brand">
           <img class="main-header-logo" src="IMG/NPIEAI_logo.jpg" alt="NPIE" />
           <span class="main-header-title">CONTENT OS<br><small>内容项目看板</small></span>
@@ -2249,6 +2278,36 @@
       toast(`已添加「${title}」`);
     }
 
+    /** 更新顶部通知跑马灯 */
+    function updateTicker() {
+      const el = document.getElementById('header-ticker');
+      if (!el) return;
+      const active = state.topics.filter(t => !t.archived);
+      if (!active.length) {
+        el.innerHTML = '<span class="header-ticker-empty">暂无进行中的选题</span>';
+        return;
+      }
+      const today = new Date(); today.setHours(0,0,0,0);
+      const items = active.map(t => {
+        const pct = calcProgress(t);
+        const days = Math.round((parse(t.publishDate) - today) / MS_DAY);
+        if (pct >= 100) {
+          return { text: `✓ ${t.title} 已完成`, cls: 'done' };
+        } else if (days <= 3) {
+          return { text: `⚠ ${t.title} — 距发布仅 ${days} 天`, cls: 'urgent' };
+        } else if (days <= 7) {
+          return { text: `⚡ ${t.title} — 距发布还有 ${days} 天`, cls: '' };
+        } else {
+          return { text: `📌 ${t.title} — ${pct}% · ${days} 天后发布`, cls: '' };
+        }
+      });
+      // 复制一份实现无缝循环
+      const doubled = [...items, ...items];
+      el.innerHTML = `<div class="header-ticker-track">${doubled.map(i =>
+        `<span class="header-ticker-item ${i.cls}">${esc(i.text)}</span>`
+      ).join(' · ')}</div>`;
+    }
+
     /** 全局渲染 */
     function render() {
       // 视图相关 UI 控制
@@ -2262,6 +2321,7 @@
       const topicsSubtitle = document.querySelector('.topics-title-small');
       if (topicsSubtitle) topicsSubtitle.textContent = isArchived ? '已完成归档的选题，可在此恢复或彻底删除' : '前置准备可以自由增加、勾选和删除。正式流程保持统一，避免每条内容出现一套不同的复杂清单。';
 
+      updateTicker();
       renderSidebar();
       renderTimeline();
       renderCards();
