@@ -66,54 +66,53 @@
       --blue: #6B8898;
       --yellow: #A09050;
     }
-    /* ── 主题：暗金（高级时尚杂志风） ── */
-    [data-theme="gold"] {
-      --bg: #1A1816;
-      --surface: #24211E;
-      --surface-muted: #1E1C1A;
-      --border: #3D3530;
-      --text: #E8E0D4;
-      --text-muted: #A09888;
-      --muted-2: #706860;
-      --accent: #C8A050;
-      --accent-soft: #3D3028;
-      --green: #9AAA80;
-      --red: #C88878;
-      --blue: #8898A8;
-      --yellow: #D0B868;
-      --shadow: 0 12px 32px rgba(0,0,0,0.35);
+    /* ── 主题：高级时尚杂志风 ── */
+    [data-theme="magazine"] {
+      --bg: #F5F0EB;
+      --surface: #FFFFFF;
+      --surface-muted: #FAF6F2;
+      --border: #D8D0C8;
+      --text: #1A1A1A;
+      --text-muted: #6B6058;
+      --muted-2: #A09890;
+      --accent: #B88040;
+      --accent-soft: #E8D8C4;
+      --green: #889880;
+      --red: #B87060;
+      --blue: #7890A0;
+      --yellow: #C0A050;
     }
-    /* ── 主题：青翠（草绿小清新） ── */
+    /* ── 主题：草绿小清新风 ── */
     [data-theme="fresh"] {
-      --bg: #F0F5EE;
-      --surface: #FAFDF8;
-      --surface-muted: #F4F8F0;
-      --border: #C8D8C0;
-      --text: #304028;
-      --text-muted: #688058;
-      --muted-2: #90A880;
-      --accent: #58A040;
-      --accent-soft: #C8E4C0;
-      --green: #58A040;
-      --red: #B86050;
-      --blue: #5898A8;
-      --yellow: #A89838;
+      --bg: #F2F7EC;
+      --surface: #FDFEFB;
+      --surface-muted: #F6FAF2;
+      --border: #D0DCC4;
+      --text: #384830;
+      --text-muted: #789060;
+      --muted-2: #A0B890;
+      --accent: #78A848;
+      --accent-soft: #D8E8CC;
+      --green: #78A848;
+      --red: #C07058;
+      --blue: #6898A8;
+      --yellow: #B8A040;
     }
-    /* ── 主题：深海（沉静蓝） ── */
-    [data-theme="ocean"] {
-      --bg: #E8EEF4;
-      --surface: #F5F8FC;
-      --surface-muted: #EEF2F8;
-      --border: #C0CCD8;
-      --text: #203040;
-      --text-muted: #607080;
-      --muted-2: #8898A8;
-      --accent: #4078B0;
-      --accent-soft: #C8D8E8;
-      --green: #60A088;
-      --red: #A86860;
-      --blue: #4078B0;
-      --yellow: #B09848;
+    /* ── 主题：暖金 ── */
+    [data-theme="warmgold"] {
+      --bg: #F8F2E8;
+      --surface: #FFFCF6;
+      --surface-muted: #FCF5E8;
+      --border: #E0D4BC;
+      --text: #383020;
+      --text-muted: #887050;
+      --muted-2: #B09870;
+      --accent: #C89038;
+      --accent-soft: #F0E0C0;
+      --green: #98A870;
+      --red: #B87858;
+      --blue: #7898A8;
+      --yellow: #C89830;
     }
     /* ── 暗色模式全局修正：按钮/标签文字可读性 ── */
     [data-theme="dark"] .add-topic-btn { background: var(--accent); color: #1C1B1A; }
@@ -127,6 +126,22 @@
     [data-theme="dark"] .prep-add-btn { background: var(--accent); color: #1C1B1A; }
     [data-theme="dark"] .header-ticker { background: var(--surface); border-color: var(--border); }
     [data-theme="dark"] .header-ticker-item { color: var(--text); }
+    /* 暗色模式：任务块背景加深 + 文字强制白色 */
+    [data-theme="dark"] .task-block.stage-prep,
+    [data-theme="dark"] .task-block.stage-research { background: #4A4038; border-color: rgba(176,138,83,0.3); color: #E8E0D4; }
+    [data-theme="dark"] .task-block.stage-script { background: #4A3030; border-color: rgba(180,100,80,0.3); color: #E8D8D4; }
+    [data-theme="dark"] .task-block.stage-a_roll { background: #3A4038; border-color: rgba(139,155,122,0.3); color: #E0E4D8; }
+    [data-theme="dark"] .task-block.stage-b_roll { background: #303840; border-color: rgba(124,142,153,0.3); color: #D8E0E4; }
+    [data-theme="dark"] .task-block.stage-edit { background: #403830; border-color: rgba(198,162,92,0.3); color: #E8E0D0; }
+    [data-theme="dark"] .task-block.stage-package { background: #3D3834; border-color: rgba(176,138,83,0.25); color: #E0DCD4; }
+    [data-theme="dark"] .task-block.stage-cover { background: #3D3834; border-color: rgba(176,138,83,0.25); color: #E0DCD4; }
+    [data-theme="dark"] .task-block.stage-copy { background: #403838; border-color: rgba(180,100,80,0.25); color: #E4D8D8; }
+    [data-theme="dark"] .task-block.stage-publish { background: #503840; border-color: rgba(180,100,80,0.35); color: #F0E0E0; }
+    [data-theme="dark"] .task-block.stage-brief { background: #403830; border-color: rgba(200,160,128,0.3); color: #E8E0D4; }
+    [data-theme="dark"] .task-block.stage-outline { background: #3D3830; border-color: rgba(184,152,112,0.3); color: #E0DCD0; }
+    [data-theme="dark"] .task-block.stage-review { background: #383040; border-color: rgba(155,138,165,0.35); color: #E0D8E8; }
+    [data-theme="dark"] .task-block.stage-custom { background: #383040; border-color: rgba(155,138,165,0.3); color: #E0D8E8; }
+    [data-theme="dark"] .task-block.completed { opacity: 0.5; }
     * { box-sizing: border-box; }
     html, body { min-height: 100%; background: var(--bg); color: var(--text); }
     body { margin: 0; -webkit-font-smoothing: antialiased; }
@@ -249,6 +264,7 @@
       flex-shrink: 0;
       padding: 24px 14px 14px;
       border-top: 1px solid var(--border);
+      margin-top: auto;
     }
     .sidebar-bottom-btns {
       display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
