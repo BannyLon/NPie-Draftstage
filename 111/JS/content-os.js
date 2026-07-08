@@ -564,7 +564,7 @@
               <span class="topic-label-progress">${progress}%</span>
             </div>
           </div>
-          <img class="topic-label-arrow" src="IMG/Obsidian.webp" alt="" />
+          <img class="topic-label-arrow ${topic.obsidianUrl ? 'has-url' : ''}" src="IMG/Obsidian.webp" alt="" title="${topic.obsidianUrl ? '打开 Obsidian 笔记' : '设置 Obsidian 链接'}" data-obsidian-label="${topic.id}" />
         </div>`;
         rowsHtml += `<div class="track-area" data-track-id="${topic.id}">`;
         dates.forEach(d => {
@@ -765,6 +765,20 @@
           e.preventDefault();
           e.stopPropagation();
           showTaskContextMenu(e.currentTarget, topicId, taskId);
+        });
+      });
+
+      /** 日历选题标签 Obsidian 图标点击 */
+      inner.querySelectorAll('[data-obsidian-label]').forEach(icon => {
+        icon.addEventListener('click', e => {
+          e.stopPropagation();
+          const topic = state.topics.find(t => t.id === icon.dataset.obsidianLabel);
+          if (!topic) return;
+          if (topic.obsidianUrl) {
+            window.open(topic.obsidianUrl, '_blank');
+          } else {
+            openObsidianModal(topic.id);
+          }
         });
       });
 

@@ -365,10 +365,13 @@
       box-shadow: 0 1px 4px rgba(44,42,41,0.05);
     }
     .topic-label-arrow {
-      flex-shrink: 0; opacity: 0.55;
-      height: 24px; width: auto;
-      margin-right: 2px;
+      flex-shrink: 0; opacity: 0.3; filter: grayscale(1);
+      height: 22px; width: auto;
+      margin-right: 2px; cursor: pointer;
+      transition: opacity 0.15s, filter 0.15s;
     }
+    .topic-label-arrow.has-url { opacity: 0.8; filter: none; }
+    .topic-label-arrow:hover { opacity: 1; }
     .topic-label:hover .topic-label-card { box-shadow: 0 3px 10px rgba(44,42,41,0.08); }
     .topic-label.selected .topic-label-card { outline: 2px solid rgba(176,138,83,0.4); }
     .topic-label-name {
@@ -396,11 +399,12 @@
     .tl-type-dot.dot-self { background: #C5554A; }
     .tl-type-dot.dot-commercial { background: #C89B3C; }
     .tl-urgent-dot {
-      position: absolute; top: 3px; left: 3px;
+      position: absolute; top: -5px; left: -9px;
       display: flex; align-items: center; justify-content: center;
-      width: 15px; height: 15px; border-radius: 50%;
-      font-size: 0.48rem; font-weight: 800; color: #fff;
-      background: #D4653E; z-index: 2;
+      width: 17px; height: 17px; border-radius: 50%;
+      font-size: 0.5rem; font-weight: 800; color: #fff;
+      background: #E04030; z-index: 3;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
     }
     .topic-label.tl-urgent .topic-label-card { border-left-color: #E08840 !important; }
     .track-area {
