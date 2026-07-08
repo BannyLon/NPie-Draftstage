@@ -1637,7 +1637,7 @@
       document.getElementById('modal-title').value = '';
       document.getElementById('modal-type').value = 'self';
       document.getElementById('modal-date').value = defaultDate || fmt(addDays(TODAY, 14));
-      document.getElementById('modal-status').value = 'normal';
+      document.querySelector('input[name="modal-status"][value="normal"]').checked = true;
       document.getElementById('modal-priority-val').value = '0';
       document.getElementById('modal-budget').value = '';
       document.getElementById('modal-budget-field').style.display = 'none';
@@ -1655,7 +1655,7 @@
       const type = document.getElementById('modal-type').value;
       const publishDate = document.getElementById('modal-date').value;
       if (!title || !publishDate) { toast('请填写名称与发布日期'); return; }
-      const status = document.getElementById('modal-status').value;
+      const status = document.querySelector('input[name="modal-status"]:checked')?.value || 'normal';
       const priority = parseInt(document.getElementById('modal-priority-val').value) || 0;
       const budget = document.getElementById('modal-budget').value.trim();
       const topic = { id: uid(), title, type, publishDate, prep: [], tasks: [], archived: false, obsidianUrl: '', status, priority, budget };
