@@ -68,7 +68,7 @@
         <label>发布日期</label>
         <input type="date" id="modal-date" />
       </div>
-      <div class="modal-field">
+      <div class="modal-field modal-field-row">
         <label>状态</label>
         <div class="radio-row">
           <label class="radio-label"><input type="radio" name="modal-status" value="normal" checked /> 普通</label>
@@ -76,14 +76,12 @@
           <label class="radio-label"><input type="radio" name="modal-status" value="urgent" /> 紧急</label>
         </div>
       </div>
-      <div class="modal-field">
+      <div class="modal-field modal-field-row">
         <label>影响力</label>
-        <div class="priority-row">
-          <div class="star-rating" id="modal-priority">
-            <span data-star="1">☆</span><span data-star="2">☆</span><span data-star="3">☆</span><span data-star="4">☆</span><span data-star="5">☆</span>
-          </div>
-          <input type="hidden" id="modal-priority-val" value="0" />
+        <div class="star-rating" id="modal-priority">
+          <span data-star="1">☆</span><span data-star="2">☆</span><span data-star="3">☆</span><span data-star="4">☆</span><span data-star="5">☆</span>
         </div>
+        <input type="hidden" id="modal-priority-val" value="0" />
       </div>
       <div class="modal-field" id="modal-budget-field" style="display:none;">
         <label>金额</label>

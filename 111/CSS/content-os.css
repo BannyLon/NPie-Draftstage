@@ -623,6 +623,8 @@
     .modal-title { font-size: 0.95rem; font-weight: 800; margin-bottom: 12px; }
     .modal-field { margin-bottom: 10px; }
     .modal-field label { display: block; font-size: 0.72rem; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; }
+    .modal-field-row { display: flex; align-items: center; gap: 10px; }
+    .modal-field-row label { margin-bottom: 0; white-space: nowrap; flex-shrink: 0; }
     .modal-field input, .modal-field select {
       width: 100%; padding: 8px 10px; border-radius: 6px;
       border: 1px solid var(--border); font-size: 0.82rem;
@@ -630,14 +632,14 @@
     .radio-row { display: flex; gap: 16px; padding: 4px 0; }
     .radio-label { font-size: 0.82rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 4px; color: var(--text); }
     .radio-label input[type="radio"] { width: auto; accent-color: var(--accent); }
-    .priority-row { display: flex; align-items: center; gap: 0; }
-    .star-rating { display: flex; gap: 2px; cursor: pointer; user-select: none; }
+    .star-rating { display: flex; gap: 4px; cursor: pointer; user-select: none; }
     .star-rating span {
-      font-size: 1.8rem; color: #D5D0C8; transition: color 0.1s, transform 0.1s;
-      display: inline-block; line-height: 1;
+      display: inline-block; width: 22px; height: 22px;
+      clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+      background: #D8D3CB; transition: background 0.15s, transform 0.15s;
     }
-    .star-rating span:hover { transform: scale(1.15); }
-    .star-rating span.active { color: #E2B020; }
+    .star-rating span:hover { transform: scale(1.2); }
+    .star-rating span.active { background: #E8B820; }
     .modal-actions { display: flex; gap: 8px; margin-top: 14px; }
     .modal-btn {
       flex: 1; padding: 8px; border-radius: 6px; border: none;

@@ -183,31 +183,50 @@
       return Math.round((done / total) * 100);
     }
 
-    /** 判断选题是否紧急（综合日期、状态、影响力、商单金额） */
+    /**
+     * 跑马灯筛选规则（多维度）：
+     *   状态=紧急          → 始终显示
+     *   状态=重要 + ≤7天   → 显示
+     *   影响力4-5星 + ≤7天 → 显示
+     *   商单有金额 + ≤7天  → 显示
+     *   自制≤3天 / 商单≤5天 → 显示（基础规则）
+     */
     function isTopicUrgent(topic) {
       if (topic.archived || calcProgress(topic) >= 100) return false;
-      // 标记为紧急 → 始终紧急
-      if (topic.status === 'urgent') return true;
-      // 高影响力（4-5星）或重要 → 放宽天数
       const today = new Date(); today.setHours(0,0,0,0);
       const days = Math.round((parse(topic.publishDate) - today) / MS_DAY);
-      const highPriority = (topic.priority >= 4) || (topic.status === 'important');
-      const limit = topic.type === 'commercial'
-        ? (highPriority ? 7 : 5)
-        : (highPriority ? 5 : 3);
+      // 紧急标记：无视天数
+      if (topic.status === 'urgent') return true;
+      // 重要 / 高影响力 / 商单有金额：宽限至 7 天
+      const highPriority = (topic.status === 'important') || (topic.priority >= 4) || (!!topic.budget && topic.type === 'commercial');
+      if (highPriority && days <= 7) return true;
+      // 基础规则
+      const limit = topic.type === 'commercial' ? 5 : 3;
       return days <= limit;
     }
 
-    /** 跑马灯排序权重 */
+    /** 跑马灯排序权重（越大越靠前） */
     function tickerWeight(topic) {
       let w = 0;
-      if (topic.status === 'urgent') w += 100;
-      if (topic.status === 'important') w += 50;
-      w += (topic.priority || 0) * 10;
-      if (topic.budget && topic.type === 'commercial') w += 30;
       const today = new Date(); today.setHours(0,0,0,0);
       const days = Math.round((parse(topic.publishDate) - today) / MS_DAY);
-      w += Math.max(0, 30 - days * 2);
+      // 状态
+      if (topic.status === 'urgent') w += 200;
+      else if (topic.status === 'important') w += 80;
+      // 影响力
+      w += (topic.priority || 0) * 15;
+      // 商单金额（有金额+40，金额含数字可以按量级加）
+      if (topic.budget && topic.type === 'commercial') {
+        w += 40;
+        const nums = topic.budget.match(/[\d.]+/g);
+        if (nums) {
+          const val = parseFloat(nums.join(''));
+          if (val >= 100000) w += 30;
+          else if (val >= 10000) w += 15;
+        }
+      }
+      // 临近度（越近权重越高）
+      w += Math.max(0, 50 - days * 5);
       return w;
     }
 
@@ -1750,7 +1769,6 @@
           document.getElementById('modal-priority-val').value = val;
           document.querySelectorAll('#modal-priority span').forEach((s, i) => {
             s.classList.toggle('active', i < val);
-            s.textContent = i < val ? '★' : '☆';
           });
         });
       });
