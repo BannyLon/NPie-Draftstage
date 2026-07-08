@@ -725,8 +725,12 @@
     /** @param {Date} d @param {number} n @returns {Date} */
     function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
 
-    /** @param {Date} d @returns {string} */
-    function fmt(d) { return d.toISOString().slice(0, 10); }
+    /** @param {Date} d @returns {string} 本地日期 YYYY-MM-DD，不用 UTC */
+    function fmt(d) {
+      return d.getFullYear() + '-' +
+        String(d.getMonth() + 1).padStart(2, '0') + '-' +
+        String(d.getDate()).padStart(2, '0');
+    }
 
     /** @param {string} s @returns {Date} */
     function parse(s) { return new Date(s + 'T00:00:00'); }
