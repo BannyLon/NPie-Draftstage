@@ -1,5 +1,5 @@
     /**
-     * @file ContentOS · 创作流水线
+     * @file 哌稿场 · 档期 (NPie Draftstage)
      * @description 单文件原生 JS 实现，含倒排日历与选题卡联动
      */
 
@@ -352,8 +352,8 @@
           <div class="brand-row">
             <img class="brand-logo" src="IMG/NPIEAI_logo.jpg" alt="" />
             <div class="brand-text">
-              <div class="brand-title">CONTENT OS</div>
-              <div class="brand-subtitle">创作流水线</div>
+              <div class="brand-title">哌稿场</div>
+              <div class="brand-subtitle">档期</div>
             </div>
           </div>
         </div>
