@@ -66,6 +66,67 @@
       --blue: #6B8898;
       --yellow: #A09050;
     }
+    /* ── 主题：暗金（高级时尚杂志风） ── */
+    [data-theme="gold"] {
+      --bg: #1A1816;
+      --surface: #24211E;
+      --surface-muted: #1E1C1A;
+      --border: #3D3530;
+      --text: #E8E0D4;
+      --text-muted: #A09888;
+      --muted-2: #706860;
+      --accent: #C8A050;
+      --accent-soft: #3D3028;
+      --green: #9AAA80;
+      --red: #C88878;
+      --blue: #8898A8;
+      --yellow: #D0B868;
+      --shadow: 0 12px 32px rgba(0,0,0,0.35);
+    }
+    /* ── 主题：青翠（草绿小清新） ── */
+    [data-theme="fresh"] {
+      --bg: #F0F5EE;
+      --surface: #FAFDF8;
+      --surface-muted: #F4F8F0;
+      --border: #C8D8C0;
+      --text: #304028;
+      --text-muted: #688058;
+      --muted-2: #90A880;
+      --accent: #58A040;
+      --accent-soft: #C8E4C0;
+      --green: #58A040;
+      --red: #B86050;
+      --blue: #5898A8;
+      --yellow: #A89838;
+    }
+    /* ── 主题：深海（沉静蓝） ── */
+    [data-theme="ocean"] {
+      --bg: #E8EEF4;
+      --surface: #F5F8FC;
+      --surface-muted: #EEF2F8;
+      --border: #C0CCD8;
+      --text: #203040;
+      --text-muted: #607080;
+      --muted-2: #8898A8;
+      --accent: #4078B0;
+      --accent-soft: #C8D8E8;
+      --green: #60A088;
+      --red: #A86860;
+      --blue: #4078B0;
+      --yellow: #B09848;
+    }
+    /* ── 暗色模式全局修正：按钮/标签文字可读性 ── */
+    [data-theme="dark"] .add-topic-btn { background: var(--accent); color: #1C1B1A; }
+    [data-theme="dark"] .add-topic-btn:hover { background: #D4A86A; }
+    [data-theme="dark"] .modal-btn-primary { background: var(--accent); color: #1C1B1A; }
+    [data-theme="dark"] #toast { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+    [data-theme="dark"] .task-block { color: var(--text); }
+    [data-theme="dark"] .task-block.stage-script { color: var(--text); }
+    [data-theme="dark"] .task-block.stage-publish { color: var(--text); }
+    [data-theme="dark"] .task-block-name { color: inherit; }
+    [data-theme="dark"] .prep-add-btn { background: var(--accent); color: #1C1B1A; }
+    [data-theme="dark"] .header-ticker { background: var(--surface); border-color: var(--border); }
+    [data-theme="dark"] .header-ticker-item { color: var(--text); }
     * { box-sizing: border-box; }
     html, body { min-height: 100%; background: var(--bg); color: var(--text); }
     body { margin: 0; -webkit-font-smoothing: antialiased; }
@@ -755,16 +816,21 @@
     .wf-stage-row input.wf-days { width: 50px; flex: 0 0 50px; text-align: center; }
     .wf-stage-row input[type="color"] { width: 30px; flex: 0 0 30px; padding: 2px; height: 28px; }
     /* ── 侧栏底部链接 ── */
-    .sidebar-links { display: flex; flex-direction: column; gap: 2px; padding: 0 0 2px; }
+    .sidebar-links {
+      display: flex; flex-direction: row; gap: 6px;
+      padding: 8px 0 2px; margin-top: 6px;
+      border-top: 1px solid var(--border);
+    }
     .sidebar-link {
-      display: flex; align-items: center; gap: 8px; padding: 7px 14px;
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px;
+      padding: 6px 8px; border-radius: 6px;
       border: none; background: transparent; color: var(--text-muted);
-      font-size: 0.72rem; cursor: pointer; border-radius: 6px;
-      transition: background 0.12s; width: 100%; text-align: left;
+      font-size: 0.7rem; cursor: pointer; transition: background 0.12s;
     }
     .sidebar-link:hover { background: rgba(176,138,83,0.08); color: var(--text); }
-    .sidebar-link-icon { width: 16px; height: 16px; opacity: 0.5; flex-shrink: 0; }
-    .sidebar.collapsed .sidebar-link { justify-content: center; padding: 8px; }
+    .sidebar-link-icon { width: 15px; height: 15px; opacity: 0.5; flex-shrink: 0; }
+    .sidebar.collapsed .sidebar-links { flex-direction: column; border-top: none; padding: 8px 4px; margin-top: 12px; gap: 8px; }
+    .sidebar.collapsed .sidebar-link { padding: 6px; flex: 0; }
     .sidebar.collapsed .sidebar-link span { display: none; }
     .sidebar.collapsed .sidebar-link-icon { width: 20px; height: 20px; opacity: 0.7; }
     #toast.show { opacity: 1; }
