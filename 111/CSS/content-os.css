@@ -167,7 +167,8 @@
     .sidebar.collapsed .sidebar-divider,
     .sidebar.collapsed .sidebar-bottom-text { display: none; }
     .sidebar.collapsed .sidebar-top { padding: 14px 10px; }
-    .sidebar.collapsed .sidebar-bottom { border-top: none; padding: 12px 6px 8px; margin-top: 24px; }
+    .sidebar.collapsed .sidebar-bottom { border-top: none; padding: 8px 6px; }
+    .sidebar.collapsed .sidebar-bottom .sidebar-bottom-text { display: none; }
     .sidebar.collapsed .sidebar-bottom-btns { grid-template-columns: 1fr; gap: 12px; }
     .sidebar-top { padding: 20px 16px 12px; position: relative; }
     .sidebar-toggle {
@@ -219,10 +220,10 @@
       color: var(--text-muted); letter-spacing: 0.06em;
     }
     .topic-list {
-      flex: 0 0 auto;
+      flex: 1 1 0;
       overflow-y: auto;
       overflow-x: hidden;
-      max-height: 318px; /* 恰好显示 8 个选题 */
+      min-height: 0;
       padding: 0 12px 8px;
       display: flex;
       flex-direction: column;
@@ -262,18 +263,30 @@
     .topic-item.topic-urgent { border-left-width: 4px; border-left-color: #E08840 !important; }
     .sidebar-bottom {
       flex-shrink: 0;
-      padding: 24px 14px 14px;
+      padding: 16px 14px 10px;
+      border-top: 1px solid var(--border);
+    }
+    .sidebar-bottom-text { font-size: 0.68rem; color: var(--text-muted); line-height: 1.5; }
+    /* ── 第二部分：关于/设置 + slogan，始终吸底 ── */
+    .sidebar-footer {
+      flex-shrink: 0;
+      padding: 6px 14px 10px;
       border-top: 1px solid var(--border);
       margin-top: auto;
     }
+    .sidebar-slogan {
+      margin: 0; padding: 10px 0 0; margin-top: 6px;
+      border-top: 1px solid var(--border);
+      text-align: center; line-height: 1.5;
+    }
+    .sidebar-slogan span { display: block; }
+    .sidebar-slogan span:first-child { font-size: 0.5rem; }
+    .sidebar-slogan span:last-child { font-size: 0.6rem; letter-spacing: 0.02em; }
+    .sidebar.collapsed .sidebar-footer { border-top: none; padding: 8px 4px; }
+    .sidebar.collapsed .sidebar-slogan { display: none; }
     .sidebar-bottom-btns {
       display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
       margin-bottom: 10px;
-    }
-    .sidebar-bottom-text {
-      font-size: 0.68rem;
-      color: var(--text-muted);
-      line-height: 1.5;
     }
     .tool-btn {
       display: inline-flex; align-items: center; justify-content: center; gap: 6px;

@@ -439,18 +439,18 @@
           }).join('')}
         </div>
 
+        <!-- 第一部分：导出/导入 + 说明 -->
         <div class="sidebar-bottom">
           <div class="sidebar-bottom-btns">
             <button class="tool-btn" id="btn-export" title="导出备份"><img src="IMG/Export.svg" alt="" class="tool-btn-icon" /><span class="tool-btn-text">导出备份</span></button>
             <button class="tool-btn" id="btn-import" title="导入恢复"><img src="IMG/Import.svg" alt="" class="tool-btn-icon" /><span class="tool-btn-text">导入恢复</span></button>
           </div>
           <div class="sidebar-bottom-text">
-            <p style="margin:0 0 6px 0;font-size:0.56rem;line-height:1.5;">导出 — 将全部选题数据保存为 JSON 文件；导入 — 从备份文件恢复选题数据。</p>
-            <p style="margin:0; padding:14px 0 0; margin-top:10px; border-top:1px solid var(--border); text-align:justify; text-align-last:justify;">
-              <span style="display:block; font-size:0.5rem; line-height:1.5;">NPie Draftstage – Creator Content Schedule</span>
-              <span style="display:block; font-size:0.65rem; line-height:1.5; letter-spacing:0.02em;">哌稿场——创作者内容排期看板</span>
-            </p>
+            <p style="margin:0;font-size:0.56rem;line-height:1.5;">导出 — 将全部选题数据保存为 JSON 文件；导入 — 从备份文件恢复选题数据。</p>
           </div>
+        </div>
+        <!-- 第二部分：关于/设置 + slogan -->
+        <div class="sidebar-footer">
           <div class="sidebar-links">
             <button class="sidebar-link" id="btn-about" title="关于嗯哌">
               <img src="IMG/About.svg" alt="" class="sidebar-link-icon" /><span>关于嗯哌</span>
@@ -459,6 +459,10 @@
               <img src="IMG/Settings.svg" alt="" class="sidebar-link-icon" /><span>设置</span>
             </button>
           </div>
+          <p class="sidebar-slogan">
+            <span>NPie Draftstage – Creator Content Schedule</span>
+            <span>哌稿场——创作者内容排期看板</span>
+          </p>
         </div>
       `;
 
