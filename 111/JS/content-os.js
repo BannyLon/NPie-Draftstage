@@ -143,7 +143,7 @@
      * @returns {Task[]}
      */
     function buildWorkflow(topic) {
-      const wf = topic.type === 'commercial' ? WORKFLOWS.commercial : WORKFLOWS.self;
+      const wf = getWorkflowById(topic.type) || WORKFLOWS.self;
       const publishDate = topic.publishDate;
       // 先统一算所有非堆叠阶段的日期
       const nonStack = wf.filter(s => !['cover', 'copy', 'publish'].includes(s.id));
@@ -444,10 +444,20 @@
             <button class="tool-btn" id="btn-export" title="导出备份"><img src="IMG/Export.svg" alt="" class="tool-btn-icon" /><span class="tool-btn-text">导出备份</span></button>
             <button class="tool-btn" id="btn-import" title="导入恢复"><img src="IMG/Import.svg" alt="" class="tool-btn-icon" /><span class="tool-btn-text">导入恢复</span></button>
           </div>
+          <div class="sidebar-links">
+            <button class="sidebar-link" id="btn-about" title="关于嗯哌">
+              <img src="IMG/About.svg" alt="" class="sidebar-link-icon" /><span>关于嗯哌</span>
+            </button>
+            <button class="sidebar-link" id="btn-settings" title="设置">
+              <img src="IMG/Settings.svg" alt="" class="sidebar-link-icon" /><span>设置</span>
+            </button>
+          </div>
           <div class="sidebar-bottom-text">
-            <p style="margin:0 0 6px 0;font-size:0.66rem;">📤 导出备份 — 将全部选题数据保存为 JSON 文件</p>
-            <p style="margin:0 0 6px 0;font-size:0.66rem;">📥 导入恢复 — 从备份文件恢复选题数据</p>
-            <p style="margin:0; padding:14px 0 0; margin-top:10px; border-top:1px solid var(--border); font-size:0.7rem; line-height:1.7;">NPie Draftstage<br>Content Schedule Board for Creators<br>哌稿场——创作者内容排期看板</p>
+            <p style="margin:0 0 6px 0;font-size:0.56rem;line-height:1.5;">导出 — 将全部选题数据保存为 JSON 文件；导入 — 从备份文件恢复选题数据。</p>
+            <p style="margin:0; padding:14px 0 0; margin-top:10px; border-top:1px solid var(--border); text-align:justify; text-align-last:justify;">
+              <span style="display:block; font-size:0.5rem; line-height:1.5;">NPie Draftstage – Creator Content Schedule</span>
+              <span style="display:block; font-size:0.65rem; line-height:1.5; letter-spacing:0.02em;">哌稿场——创作者内容排期看板</span>
+            </p>
           </div>
         </div>
       `;
@@ -515,6 +525,8 @@
         toast('已导出备份');
       };
       document.getElementById('btn-import').onclick = () => document.getElementById('import-file').click();
+      document.getElementById('btn-about').onclick = () => {}; // 预留
+      document.getElementById('btn-settings').onclick = () => openSettingsModal();
     }
 
     /**
@@ -1653,6 +1665,7 @@
     /** 新增选题弹窗 */
     function openAddModal(defaultDate) {
       const overlay = document.getElementById('modal-overlay');
+      updateTypeSelect(); // 确保工作流类型下拉最新
       document.getElementById('modal-title').value = '';
       document.getElementById('modal-type').value = 'self';
       document.getElementById('modal-date').value = defaultDate || fmt(addDays(TODAY, 14));
@@ -1751,6 +1764,222 @@
       }, 0);
     }
 
+    /** ── 设置弹窗 ─────────────────────────────────────── */
+
+    let _editingWfId = null; // 正在编辑的工作流 id
+
+    function openSettingsModal() {
+      document.getElementById('settings-modal-overlay').classList.add('open');
+      switchSettingsTab('appearance');
+      updateModeUI();
+      updateThemeUI();
+      renderWorkflowList();
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settings-modal-overlay').classList.remove('open');
+      _editingWfId = null;
+      document.getElementById('wf-editor').style.display = 'none';
+    }
+
+    // ── 面板切换 ──
+    function switchSettingsTab(tab) {
+      document.querySelectorAll('.settings-tab').forEach(t => t.classList.toggle('active', t.dataset.stab === tab));
+      document.querySelectorAll('.settings-panel').forEach(p => p.classList.toggle('active', p.id === 'spanel-' + tab));
+    }
+
+    // ── 主题 / 模式 ──
+    function applyTheme() {
+      const mode = localStorage.getItem('npiedraft-mode') || 'light';
+      const theme = localStorage.getItem('npiedraft-theme') || 'warm';
+      document.documentElement.setAttribute('data-theme', mode === 'dark' ? 'dark' : theme);
+      if (mode === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+      else document.documentElement.setAttribute('data-theme', theme);
+    }
+
+    function updateModeUI() {
+      const mode = localStorage.getItem('npiedraft-mode') || 'light';
+      document.getElementById('mode-light').classList.toggle('active', mode === 'light');
+      document.getElementById('mode-dark').classList.toggle('active', mode === 'dark');
+    }
+
+    function updateThemeUI() {
+      const theme = localStorage.getItem('npiedraft-theme') || 'warm';
+      document.querySelectorAll('[data-theme-opt]').forEach(b => b.classList.remove('active'));
+      const active = document.querySelector(`.theme-btn[data-theme="${theme}"]`);
+      if (active) active.classList.add('active');
+    }
+
+    // ── 工作流管理 ──
+    function getCustomWorkflows() {
+      try { return JSON.parse(localStorage.getItem('npiedraft-custom-wf') || '[]'); } catch(_) { return []; }
+    }
+    function saveCustomWorkflows(wfs) { localStorage.setItem('npiedraft-custom-wf', JSON.stringify(wfs)); }
+
+    /** 获取完整的工作流列表（内置 + 自定义） */
+    function allWorkflows() {
+      const builtin = [
+        { id: 'self', name: '自制内容', stages: WORKFLOWS.self, isBuiltin: true },
+        { id: 'commercial', name: '商单', stages: WORKFLOWS.commercial, isBuiltin: true }
+      ];
+      const custom = getCustomWorkflows().map(w => ({ ...w, isBuiltin: false }));
+      return [...builtin, ...custom];
+    }
+
+    /** 根据 id 获取工作流定义 */
+    function getWorkflowById(id) {
+      if (id === 'self') return WORKFLOWS.self;
+      if (id === 'commercial') return WORKFLOWS.commercial;
+      const cw = getCustomWorkflows().find(w => w.id === id);
+      return cw ? cw.stages : null;
+    }
+
+    function renderWorkflowList() {
+      const el = document.getElementById('wf-list');
+      const all = allWorkflows();
+      el.innerHTML = all.map(w => `
+        <div class="wf-item">
+          <span class="wf-item-name">${esc(w.name)}</span>
+          <span class="wf-item-tag">${w.isBuiltin ? '内置' : '自定义'} · ${w.stages.length} 节点</span>
+          <div class="wf-item-actions">
+            <button class="wf-icon-btn" data-wf-edit="${w.id}" title="编辑">✎</button>
+            ${!w.isBuiltin ? `<button class="wf-icon-btn danger" data-wf-del="${w.id}" title="删除">✕</button>` : ''}
+          </div>
+        </div>
+      `).join('');
+      // 编辑按钮
+      el.querySelectorAll('[data-wf-edit]').forEach(btn => {
+        btn.addEventListener('click', () => openWorkflowEditor(btn.dataset.wfEdit));
+      });
+      // 删除按钮
+      el.querySelectorAll('[data-wf-del]').forEach(btn => {
+        btn.addEventListener('click', () => deleteWorkflow(btn.dataset.wfDel));
+      });
+    }
+
+    function openWorkflowEditor(wfId) {
+      _editingWfId = wfId;
+      const all = allWorkflows();
+      const wf = all.find(w => w.id === wfId);
+      if (!wf) return;
+      document.getElementById('wf-editor-name').value = wf.isBuiltin ? wf.name + '（内置，不可删）' : wf.name;
+      if (wf.isBuiltin) document.getElementById('wf-editor-name').disabled = true;
+      else document.getElementById('wf-editor-name').disabled = false;
+      // 渲染节点编辑器
+      const stagesEl = document.getElementById('wf-editor-stages');
+      const stages = wf.stages.filter(s => !['cover','copy','publish'].includes(s.id));
+      stagesEl.innerHTML = stages.map(s => `
+        <div class="wf-stage-row">
+          <input type="text" value="${esc(s.name)}" placeholder="节点名" data-wf-sname="${s.id}" />
+          <input type="number" value="${s.days}" min="1" max="30" class="wf-days" placeholder="天" />
+          <input type="color" value="${s.color}" title="颜色" />
+          <button class="wf-icon-btn danger" data-wf-sdel="${s.id}">✕</button>
+        </div>
+      `).join('');
+      document.getElementById('wf-editor').style.display = 'block';
+    }
+
+    function addWorkflowStageRow() {
+      const stagesEl = document.getElementById('wf-editor-stages');
+      const idx = Date.now();
+      const row = document.createElement('div');
+      row.className = 'wf-stage-row';
+      row.innerHTML = `
+        <input type="text" placeholder="节点名" />
+        <input type="number" value="1" min="1" max="30" class="wf-days" placeholder="天" />
+        <input type="color" value="#B0A090" title="颜色" />
+        <button class="wf-icon-btn danger">✕</button>
+      `;
+      row.querySelector('.wf-icon-btn').addEventListener('click', () => row.remove());
+      stagesEl.appendChild(row);
+    }
+
+    function saveWorkflowFromEditor() {
+      const name = document.getElementById('wf-editor-name').value.trim();
+      if (!name) { toast('请输入工作流名称'); return; }
+      const rows = document.querySelectorAll('#wf-editor-stages .wf-stage-row');
+      const stages = [];
+      rows.forEach(row => {
+        const inputs = row.querySelectorAll('input');
+        const sname = inputs[0].value.trim();
+        if (!sname) return;
+        stages.push({
+          id: 's' + Date.now() + Math.random().toString(36).slice(2,5),
+          name: sname,
+          days: Math.max(1, parseInt(inputs[1].value) || 1),
+          color: inputs[2].value
+        });
+      });
+      if (!stages.length) { toast('请至少添加一个节点'); return; }
+      // 自动追加封面/文案/发布
+      stages.push(
+        { id: 'cover', name: '封面', days: 1, color: '#C8B8A0' },
+        { id: 'copy', name: '文案', days: 1, color: '#D4C0B0' },
+        { id: 'publish', name: '发布', days: 1, color: '#A09080' }
+      );
+      const customWfs = getCustomWorkflows();
+      if (_editingWfId && customWfs.find(w => w.id === _editingWfId)) {
+        const wf = customWfs.find(w => w.id === _editingWfId);
+        wf.name = name;
+        wf.stages = stages;
+      } else if (_editingWfId === 'self' || _editingWfId === 'commercial') {
+        // 编辑内置工作流：存为覆盖
+        WORKFLOWS[_editingWfId] = stages;
+        toast(`已更新「${name}」工作流`);
+      } else {
+        // 新建
+        customWfs.push({ id: 'cw_' + Date.now(), name, stages });
+      }
+      saveCustomWorkflows(customWfs);
+      // 更新新增选题下拉框
+      updateTypeSelect();
+      _editingWfId = null;
+      document.getElementById('wf-editor').style.display = 'none';
+      renderWorkflowList();
+      toast(`已保存工作流「${name}」`);
+    }
+
+    function deleteWorkflow(wfId) {
+      const customWfs = getCustomWorkflows();
+      const wf = customWfs.find(w => w.id === wfId);
+      if (!wf) return;
+      // 检查是否有选题在使用
+      const usingTopics = state.topics.filter(t => t.type === wfId && calcProgress(t) > 0);
+      if (usingTopics.length) {
+        alert(`无法删除：${usingTopics.length} 个选题正在使用此工作流（进度 > 0%）。请等待选题执行完毕后再删除。`);
+        return;
+      }
+      if (!confirm(`确定删除工作流「${wf.name}」？`)) return;
+      saveCustomWorkflows(customWfs.filter(w => w.id !== wfId));
+      // 将使用此工作流的选题回退为自制
+      state.topics.forEach(t => { if (t.type === wfId) t.type = 'self'; });
+      updateTypeSelect();
+      renderWorkflowList();
+      save(); render();
+      toast(`已删除「${wf.name}」`);
+    }
+
+    /** 更新新增选题弹窗的工作流类型下拉 */
+    function updateTypeSelect() {
+      const sel = document.getElementById('modal-type');
+      if (!sel) return;
+      const all = allWorkflows();
+      sel.innerHTML = all.map(w => `<option value="${w.id}">${esc(w.name)}</option>`).join('');
+      // 也更新已有选题卡里的下拉
+      document.querySelectorAll('[data-type-select]').forEach(cardSel => {
+        const current = cardSel.value;
+        cardSel.innerHTML = all.map(w => `<option value="${w.id}" ${w.id === current ? 'selected' : ''}>${esc(w.name)}</option>`).join('');
+      });
+    }
+
+    // ── 初始化主题 ──
+    function initTheme() {
+      if (!localStorage.getItem('npiedraft-mode')) localStorage.setItem('npiedraft-mode', 'light');
+      if (!localStorage.getItem('npiedraft-theme')) localStorage.setItem('npiedraft-theme', 'warm');
+      applyTheme();
+      updateTypeSelect();
+    }
+
     /** 初始化 */
     function init() {
       if (!load()) seedData();
@@ -1835,6 +2064,47 @@
         reader.readAsText(file);
         e.target.value = '';
       });
+
+      // 设置弹窗事件
+      document.getElementById('settings-modal-overlay').addEventListener('click', e => {
+        if (e.target.id === 'settings-modal-overlay') closeSettingsModal();
+      });
+      document.getElementById('settings-modal-close').onclick = closeSettingsModal;
+      document.querySelectorAll('.settings-tab').forEach(tab => {
+        tab.addEventListener('click', () => switchSettingsTab(tab.dataset.stab));
+      });
+      // 外观
+      document.getElementById('mode-light').addEventListener('click', () => {
+        localStorage.setItem('npiedraft-mode', 'light');
+        applyTheme(); updateModeUI();
+      });
+      document.getElementById('mode-dark').addEventListener('click', () => {
+        localStorage.setItem('npiedraft-mode', 'dark');
+        applyTheme(); updateModeUI();
+      });
+      // 主题
+      document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          localStorage.setItem('npiedraft-theme', btn.dataset.theme);
+          applyTheme(); updateThemeUI();
+        });
+      });
+      // 工作流
+      document.getElementById('btn-add-workflow').addEventListener('click', () => {
+        _editingWfId = null;
+        document.getElementById('wf-editor-name').value = '';
+        document.getElementById('wf-editor-name').disabled = false;
+        document.getElementById('wf-editor-stages').innerHTML = '';
+        document.getElementById('wf-editor').style.display = 'block';
+      });
+      document.getElementById('btn-wf-add-stage').addEventListener('click', addWorkflowStageRow);
+      document.getElementById('btn-wf-save').addEventListener('click', saveWorkflowFromEditor);
+      document.getElementById('btn-wf-cancel').addEventListener('click', () => {
+        _editingWfId = null;
+        document.getElementById('wf-editor').style.display = 'none';
+      });
+      // 初始化主题
+      initTheme();
 
       render();
     }
