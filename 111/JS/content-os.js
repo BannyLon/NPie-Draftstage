@@ -554,7 +554,7 @@
         const progress = calcProgress(topic);
         rowsHtml += `<div class="timeline-row" data-row-id="${topic.id}">`;
         rowsHtml += `<div class="topic-label ${sel ? 'selected' : ''} ${urgent ? 'tl-urgent' : ''}" draggable="true" data-label-id="${topic.id}">
-          <div class="topic-label-card" style="border-left-color: ${urgent ? '#E08840' : colorObj.main}; background-color: ${colorObj.bg};">
+          <div class="topic-label-card" style="border-left-color: ${urgent ? '#E08840' : colorObj.main}; background-color: ${colorObj.bg}; position: relative;">
             <span class="tl-type-dot dot-${topic.type}">${topic.type === 'self' ? '自' : '商'}</span>
             <div class="topic-label-name" data-rename-label="${topic.id}" title="${esc(topic.title)}">${esc(topic.title)}</div>
             <div class="topic-label-meta">
