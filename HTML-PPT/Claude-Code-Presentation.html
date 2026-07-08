@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code - 从补全到治理</title>
+    <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@700&family=Satoshi:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        /* ===========================================
+           CSS 自定义属性 (主题配置)
+           =========================================== */
+        :root {
+            /* Neon Cyber 色彩系统 */
+            --bg-primary: #0a0f1c;
+            --bg-secondary: #111827;
+            --accent-cyan: #00ffcc;
+            --accent-magenta: #ff00aa;
+            --accent-glow: rgba(0, 255, 204, 0.3);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.8);
+
+            /* 排版 - 必须使用 clamp() */
+            --font-display: 'Clash Display', sans-serif;
+            --font-body: 'Satoshi', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            
+            --title-size: clamp(2rem, 6vw, 5rem);
+            --h2-size: clamp(1.25rem, 3.5vw, 2.5rem);
+            --h3-size: clamp(1rem, 2.5vw, 1.75rem);
+            --body-size: clamp(0.75rem, 1.5vw, 1.125rem);
+            --small-size: clamp(0.65rem, 1vw, 0.875rem);
+
+            /* 间距 - 响应式 */
+            --slide-padding: clamp(1rem, 4vw, 4rem);
+            --content-gap: clamp(0.5rem, 2vw, 2rem);
+            
+            /* 动画 */
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+            --duration-normal: 0.6s;
+        }
+
+        /* ===========================================
+           VIEWPORT FITTING 基础样式（必须包含）
+           =========================================== */
+        html, body {
+            height: 100%;
+            overflow-x: hidden;
+        }
+
+        html {
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* 每张幻灯片 = 精确的视口高度 */
+        .slide {
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            scroll-snap-align: start;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: var(--bg-primary);
+        }
+
+        .slide-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            max-height: 100%;
+            overflow: hidden;
+            padding: var(--slide-padding);
+            text-align: center;
+        }
+
+        /* ===========================================
+           基础样式
+           =========================================== */
+        body {
+            font-family: var(--font-body);
+            color: var(--text-primary);
+            background: var(--bg-primary);
+            position: relative;
+        }
+
+        /* 网格背景 */
+        .grid-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 255, 204, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 204, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* 扫描线效果 */
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 255, 204, 0.03),
+                rgba(0, 255, 204, 0.03) 2px,
+                transparent 2px,
+                transparent 4px
+            );
+            pointer-events: none;
+            z-index: 8;
+        }
+
+        /* 发光粒子背景 */
+        .glow-particle {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.15;
+            pointer-events: none;
+        }
+
+        .glow-1 {
+            width: 300px;
+            height: 300px;
+            background: var(--accent-cyan);
+            animation: float 12s infinite ease-in-out;
+        }
+
+        .glow-2 {
+            width: 250px;
+            height: 250px;
+            background: var(--accent-magenta);
+            animation: float 15s infinite ease-in-out reverse;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-40px); }
+        }
+
+        /* ===========================================
+           排版样式
+           =========================================== */
+        h1 {
+            font-family: var(--font-display);
+            font-size: var(--title-size);
+            font-weight: 700;
+            color: var(--accent-cyan);
+            text-shadow: 0 0 20px rgba(0, 255, 204, 0.5),
+                        0 0 40px rgba(0, 255, 204, 0.2);
+            letter-spacing: -1px;
+            line-height: 1.1;
+            margin-bottom: var(--content-gap);
+        }
+
+        h2 {
+            font-family: var(--font-display);
+            font-size: var(--h2-size);
+            font-weight: 700;
+            color: var(--accent-magenta);
+            text-shadow: 0 0 15px rgba(255, 0, 170, 0.3);
+            margin-bottom: var(--content-gap);
+            letter-spacing: -0.5px;
+        }
+
+        h3 {
+            font-family: var(--font-body);
+            font-size: var(--h3-size);
+            font-weight: 700;
+            color: var(--accent-cyan);
+            margin-bottom: var(--content-gap);
+        }
+
+        p {
+            font-size: var(--body-size);
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: var(--content-gap);
+            max-width: 90%;
+        }
+
+        .tag {
+            display: inline-block;
+            font-size: var(--small-size);
+            color: var(--accent-cyan);
+            border: 2px solid var(--accent-cyan);
+            padding: clamp(0.4rem, 1vh, 0.6rem) clamp(0.8rem, 2vw, 1.2rem);
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 700;
+            margin-bottom: var(--content-gap);
+            animation: glitch 3s ease-in-out infinite;
+            font-family: var(--font-mono);
+        }
+
+        .subtitle {
+            font-size: clamp(0.9rem, 2vh, 1.2rem);
+            color: var(--accent-magenta);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: 700;
+            margin-bottom: var(--content-gap);
+            font-family: var(--font-mono);
+        }
+
+        /* ===========================================
+           动画效果
+           =========================================== */
+        @keyframes glitch {
+            0%, 100% { 
+                box-shadow: -2px 0 var(--accent-magenta), 2px 0 var(--accent-cyan);
+            }
+            25% { 
+                box-shadow: -2px 0 var(--accent-magenta), 2px 0 var(--accent-cyan);
+                transform: translate(-2px, 2px);
+            }
+            50% { 
+                box-shadow: 2px 0 var(--accent-cyan), -2px 0 var(--accent-magenta);
+            }
+            75% { 
+                box-shadow: 2px 0 var(--accent-cyan), -2px 0 var(--accent-magenta);
+                transform: translate(2px, -2px);
+            }
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity var(--duration-normal) var(--ease-out-expo),
+                        transform var(--duration-normal) var(--ease-out-expo);
+        }
+
+        .slide.visible .reveal {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal:nth-child(1) { transition-delay: 0.1s; }
+        .reveal:nth-child(2) { transition-delay: 0.2s; }
+        .reveal:nth-child(3) { transition-delay: 0.3s; }
+        .reveal:nth-child(4) { transition-delay: 0.4s; }
+        .reveal:nth-child(5) { transition-delay: 0.5s; }
+
+        /* ===========================================
+           导航和页码
+           =========================================== */
+        .page-number {
+            position: absolute;
+            top: clamp(1.5rem, 3vh, 2rem);
+            right: clamp(1.5rem, 4vw, 2.5rem);
+            font-size: clamp(1.5rem, 4vh, 2.5rem);
+            color: var(--accent-cyan);
+            font-weight: 700;
+            font-family: var(--font-display);
+            text-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+            z-index: 10;
+        }
+
+        .nav-dots {
+            position: fixed;
+            left: clamp(1rem, 3vw, 2rem);
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            z-index: 100;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(0, 255, 204, 0.3);
+            border: 2px solid var(--accent-cyan);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dot.active {
+            background: var(--accent-cyan);
+            box-shadow: 0 0 10px var(--accent-cyan);
+            transform: scale(1.2);
+        }
+
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-magenta));
+            z-index: 101;
+            transition: width 0.1s ease;
+        }
+
+        /* ===========================================
+           内容块样式
+           =========================================== */
+        .content-block {
+            max-width: 85%;
+            z-index: 2;
+        }
+
+        .bullet-list {
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: clamp(0.6rem, 1.5vh, 1.2rem);
+            max-width: 85%;
+            margin: 0 auto;
+        }
+
+        .bullet-list li {
+            font-size: var(--body-size);
+            color: var(--text-secondary);
+            line-height: 1.5;
+            padding-left: 1.5em;
+            position: relative;
+        }
+
+        .bullet-list li:before {
+            content: "▶";
+            position: absolute;
+            left: 0;
+            color: var(--accent-cyan);
+            font-size: 0.7em;
+        }
+
+        /* ===========================================
+           特殊幻灯片样式
+           =========================================== */
+        .title-slide .slide-content {
+            justify-content: space-around;
+        }
+
+        .code-block {
+            background: rgba(0, 0, 0, 0.5);
+            border-left: 3px solid var(--accent-cyan);
+            padding: clamp(0.75rem, 2vh, 1.5rem);
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: clamp(0.65rem, 1vh, 0.85rem);
+            text-align: left;
+            color: var(--accent-cyan);
+            overflow-x: auto;
+            margin: var(--content-gap) 0;
+            line-height: 1.4;
+        }
+
+        /* ===========================================
+           响应式断点
+           =========================================== */
+        @media (max-height: 700px) {
+            :root {
+                --slide-padding: clamp(0.75rem, 3vw, 2rem);
+                --content-gap: clamp(0.4rem, 1.5vw, 1rem);
+            }
+
+            .bullet-list {
+                gap: clamp(0.4rem, 1vh, 0.8rem);
+            }
+
+            .page-number {
+                font-size: clamp(1rem, 3vh, 1.5rem);
+            }
+        }
+
+        @media (max-height: 600px) {
+            .glow-1, .glow-2 {
+                display: none;
+            }
+
+            p {
+                margin-bottom: 0.5rem;
+            }
+        }
+
+        /* ===========================================
+           编辑模式
+           =========================================== */
+        .edit-mode {
+            position: fixed;
+            top: clamp(0.5rem, 2vh, 1rem);
+            right: clamp(0.5rem, 2vw, 1rem);
+            z-index: 100;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .edit-btn {
+            padding: 0.5rem 1rem;
+            background: var(--accent-cyan);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            transition: all 0.3s ease;
+        }
+
+        .edit-btn:hover {
+            box-shadow: 0 0 15px var(--accent-cyan);
+            transform: scale(1.05);
+        }
+
+        .edit-btn:active {
+            opacity: 0.8;
+        }
+
+        .editable {
+            position: relative;
+            cursor: text;
+            border-bottom: 1px dashed var(--accent-cyan);
+            opacity: 0.9;
+        }
+
+        .editable:focus {
+            outline: 1px dashed var(--accent-magenta);
+            background: rgba(0, 255, 204, 0.1);
+            outline-offset: 2px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar"></div>
+    
+    <!-- Slide 1: Title Slide -->
+    <section class="slide title-slide">
+        <div class="grid-bg"></div>
+        <div class="scanlines"></div>
+        <div class="glow-particle glow-1" style="top: 5%; left: 10%;"></div>
+        <div class="glow-particle glow-2" style="bottom: 10%; right: 5%;"></div>
+        <div class="page-number">00</div>
+        <div class="nav-dots"></div>
+        
+        <div class="slide-content">
+            <div class="content-block">
+                <div class="tag reveal">CLAUDE CODE 深度剖析</div>
+                <h1 class="reveal">从补全<br>到治理</h1>
+                <h2 class="reveal">深度解构 Harness 架构哲学</h2>
+                <p class="reveal subtitle" style="margin-top: 2rem; font-size: 0.9rem;">系统 FIRST，模型 SECOND</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 2: Crisis -->
+    <section class="slide">
+        <div class="grid-bg"></div>
+        <div class="scanlines"></div>
+        <div class="glow-particle glow-1" style="top: 15%; right: 5%;"></div>
+        <div class="page-number">01</div>
+        
+        <div class="slide-content">
+            <div class="content-block">
+                <h2 class="reveal">现状与危机</h2>
+                <p class="reveal">为什么万能提示词必将失效？</p>
+                
+                <ul class="bullet-list">
+                    <li class="reveal">长对话中的膨胀与冲突不可避免</li>
+                    <li class="reveal">单纯堆叠规则导致系统行为不可预测</li>
+                    <li class="reveal">src/constants/prompts.ts 中的静态与动态片段拼接逻辑已到极限</li>
+                    <li class="reveal">需要从"高级提示词"升级到"系统架构"</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 3: Harness Engineering -->
+    <section class="slide">
+        <div class="grid-bg"></div>
+        <div class="scanlines"></div>
+        <div class="glow-particle glow-2" style="bottom: 5%; left: 10%;"></div>
+        <div class="page-number">02</div>
+        
+        <div class="slide-content">
+            <div class="content-block">
+                <h2 class="reveal">什么是 Harness Engineering？</h2>
+                <p class="reveal">给模型装上"外骨骼"</p>
+                
+                <p class="reveal subtitle" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">控制面五层过滤</p>
+                <ul class="bullet-list">
+                    <li class="reveal">🔒 受约束会话 - 隔离与回溯</li>
+                    <li class="reveal">🔄 依赖持续循环 - 确保连续性</li>
+                    <li class="reveal">🎛️ 工具调度规则 - 精确的能力委派</li>
+                    <li class="reveal">⚠️ 高危操作审计 - 事前防御</li>
+                    <li class="reveal">🔙 错误路径回归 - 事后恢复</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 4: QueryLoop -->
+    <section class="slide">
+        <div class="grid-bg"></div>
+        <div class="scanlines"></div>
+        <div class="glow-particle glow-1" style="top: 10%; left: 5%;"></div>
+        <div class="glow-particle glow-2" style="bottom: 15%; right: 10%;"></div>
+        <div class="page-number">03</div>
+        
+        <div class="slide-content">
+            <div class="content-block">
+                <h2 class="reveal">运行时的秩序</h2>
+                <p class="reveal">解密 queryLoop 与状态收口</p>
+                
+                <p class="reveal subtitle" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">秩序住在运行时</p>
+                <ul class="bullet-list">
+                    <li class="reveal">分析 src/query.ts 中的 queryLoop() 机制</li>
+                    <li class="reveal">autocompact 的熔断机制保障稳定性</li>
+                    <li class="reveal">模型只需理解上下文</li>
+                    <li class="reveal">连续性由系统底层的循环和状态落地保证</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 5: CLAUDE.md -->
+    <section class="slide">
+        <div class="grid-bg"></div>
+        <div class="scanlines"></div>
+        <div class="glow-particle glow-2" style="top: 20%; right: 5%;"></div>
+        <div class="page-number">04</div>
+        
+        <div class="slide-content">
+            <div class="content-block">
+                <h2 class="reveal">数字宪法</h2>
+                <p class="reveal">CLAUDE.md 的分层落地艺术</p>
+                
+                <p class="reveal subtitle" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">从个人经验到团队制度</p>
+                <ul class="bullet-list">
+                    <li class="reveal">分层加载机制确保优先级</li>
+                    <li class="reveal">.local.md 覆盖规则实现个性化</li>
+                    <li class="reveal">将个人能力"硬化"为团队制度</li>
+                    <li class="reveal">解决"个人能用，团队不能承受"的规模化痛点</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 6: Skills & MCP -->
+    <section class="slide">
+        <div class="grid-bg"></div>
+        <div class="scanlines"></div>
+        <div class="glow-particle glow-1" style="bottom: 10%; left: 15%;"></div>
+        <div class="page-number">05</div>
+        
+        <div class="slide-content">
+            <div class="content-block">
+                <h2 class="reveal">从 Skills 到 MCP</h2>
+                <p class="reveal">构建可复用的制度切片</p>
+                
+                <p class="reveal subtitle" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">原子化功能块</p>
+                <ul class="bullet-list">
+                    <li class="reveal">Skills ≠ Prompt 收藏夹</li>
+                    <li class="reveal">具备执行边界和审批逻辑的原子化功能</li>
+                    <li class="reveal">周报自动化是 Skills 威力的最佳案例</li>
+                    <li class="reveal">MCP 打通 Slack 等外部工具，延伸能力边界</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 7: Conclusion -->
+    <section class="slide">
+        <div class="grid-bg"></div>
+        <div class="scanlines"></div>
+        <div class="glow-particle glow-1" style="top: 5%; right: 10%;"></div>
+        <div class="glow-particle glow-2" style="bottom: 10%; left: 5%;"></div>
+        <div class="page-number">06</div>
+        
+        <div class="slide-content">
+            <div class="content-block">
+                <h2 class="reveal">终局思考</h2>
+                <p class="reveal">工程师角色的进化 — 秩序架构师</p>
+                
+                <p class="reveal subtitle" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">核心竞争力转移</p>
+                <ul class="bullet-list">
+                    <li class="reveal">从"编写更优秀的提示词"到"构建稳健的 Harness"</li>
+                    <li class="reveal">源码中的负面情绪正则检测（速度比 LLM 快万倍）</li>
+                    <li class="reveal">只要规矩立得住，残局就能接得住</li>
+                    <li class="reveal">未来的工程师是"秩序架构师"</li>
+                </ul>
+                
+                <p class="reveal" style="margin-top: 2rem; color: var(--accent-cyan); font-size: 1rem; font-weight: 700;">
+                    系统 FIRST，模型 SECOND
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        /* ===========================================
+           演示文稿控制器
+           =========================================== */
+        class SlidePresentation {
+            constructor() {
+                this.slides = Array.from(document.querySelectorAll('.slide'));
+                this.currentSlide = 0;
+                this.isEditMode = false;
+                this.setupIntersectionObserver();
+                this.setupKeyboardNav();
+                this.setupNavDots();
+                this.setupProgressBar();
+                this.setupEditMode();
+                this.restoreEditContent();
+                this.initializeFirstSlide();
+            }
+
+            setupIntersectionObserver() {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('visible');
+                            const slideIndex = this.slides.indexOf(entry.target);
+                            if (slideIndex !== -1) {
+                                this.currentSlide = slideIndex;
+                                this.updateNavDots();
+                                this.updateProgressBar();
+                            }
+                        }
+                    });
+                }, { threshold: 0.5 });
+
+                this.slides.forEach(slide => observer.observe(slide));
+            }
+
+            setupKeyboardNav() {
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'ArrowRight' || e.key === ' ') {
+                        e.preventDefault();
+                        this.nextSlide();
+                    } else if (e.key === 'ArrowLeft') {
+                        e.preventDefault();
+                        this.prevSlide();
+                    }
+                });
+            }
+
+            setupNavDots() {
+                const dotsContainer = document.querySelector('.nav-dots');
+                this.slides.forEach((_, index) => {
+                    const dot = document.createElement('div');
+                    dot.className = 'dot';
+                    if (index === 0) dot.classList.add('active');
+                    dot.addEventListener('click', () => this.goToSlide(index));
+                    dotsContainer.appendChild(dot);
+                });
+            }
+
+            setupProgressBar() {
+                this.progressBar = document.querySelector('.progress-bar');
+            }
+
+            setupEditMode() {
+                // 创建编辑按钮
+                const editContainer = document.createElement('div');
+                editContainer.className = 'edit-mode';
+                
+                const editBtn = document.createElement('button');
+                editBtn.className = 'edit-btn';
+                editBtn.textContent = '✎ 编辑';
+                editBtn.addEventListener('click', () => this.toggleEditMode());
+                
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'edit-btn';
+                downloadBtn.textContent = '⬇️ 导出';
+                downloadBtn.addEventListener('click', () => this.downloadPresentation());
+                
+                editContainer.appendChild(editBtn);
+                editContainer.appendChild(downloadBtn);
+                document.body.appendChild(editContainer);
+
+                // 使所有文本元素可编辑
+                this.setupEditableElements();
+            }
+
+            setupEditableElements() {
+                document.querySelectorAll('h1, h2, p, li').forEach(element => {
+                    if (!element.classList.contains('reveal')) {
+                        element.addEventListener('focus', () => {
+                            element.contentEditable = true;
+                        });
+
+                        element.addEventListener('blur', () => {
+                            element.contentEditable = false;
+                            this.saveEditContent();
+                        });
+                    }
+                });
+            }
+
+            toggleEditMode() {
+                this.isEditMode = !this.isEditMode;
+                document.body.style.userSelect = this.isEditMode ? 'text' : 'none';
+                
+                document.querySelectorAll('h1, h2, p, li').forEach(element => {
+                    if (this.isEditMode) {
+                        element.classList.add('editable');
+                        element.addEventListener('click', (e) => {
+                            e.target.focus();
+                        });
+                    } else {
+                        element.classList.remove('editable');
+                    }
+                });
+            }
+
+            saveEditContent() {
+                const content = {};
+                document.querySelectorAll('[data-edit-id]').forEach(element => {
+                    content[element.dataset.editId] = element.innerHTML;
+                });
+                localStorage.setItem('slideContent', JSON.stringify(content));
+            }
+
+            restoreEditContent() {
+                const saved = localStorage.getItem('slideContent');
+                if (saved) {
+                    const content = JSON.parse(saved);
+                    Object.entries(content).forEach(([id, html]) => {
+                        const element = document.querySelector(`[data-edit-id="${id}"]`);
+                        if (element) element.innerHTML = html;
+                    });
+                }
+            }
+
+            downloadPresentation() {
+                const html = document.documentElement.outerHTML;
+                const blob = new Blob([html], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'Claude-Code-Presentation.html';
+                link.click();
+                URL.revokeObjectURL(url);
+            }
+
+            nextSlide() {
+                if (this.currentSlide < this.slides.length - 1) {
+                    this.goToSlide(this.currentSlide + 1);
+                }
+            }
+
+            prevSlide() {
+                if (this.currentSlide > 0) {
+                    this.goToSlide(this.currentSlide - 1);
+                }
+            }
+
+            goToSlide(index) {
+                const slide = this.slides[index];
+                slide.scrollIntoView({ behavior: 'smooth' });
+            }
+
+            updateNavDots() {
+                document.querySelectorAll('.dot').forEach((dot, index) => {
+                    if (index === this.currentSlide) {
+                        dot.classList.add('active');
+                    } else {
+                        dot.classList.remove('active');
+                    }
+                });
+            }
+
+            updateProgressBar() {
+                if (this.progressBar) {
+                    const progress = ((this.currentSlide + 1) / this.slides.length) * 100;
+                    this.progressBar.style.width = progress + '%';
+                }
+            }
+
+            initializeFirstSlide() {
+                this.slides[0].classList.add('visible');
+                this.updateNavDots();
+                this.updateProgressBar();
+            }
+        }
+
+        // 初始化演示文稿
+        document.addEventListener('DOMContentLoaded', () => {
+            new SlidePresentation();
+        });
+    </script>
+</body>
+</html>

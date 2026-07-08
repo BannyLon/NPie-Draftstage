@@ -1,11 +1,32 @@
 {
   "name": "Snake English 英语贪吃蛇",
   "short_name": "SnakeEnglish",
+  "description": "贪吃蛇游戏 + 单词卡学习：吃到食物弹出音标、释义、例句与发音。",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#0a0f1f",
+  "orientation": "any",
+  "background_color": "#050816",
   "theme_color": "#0a0f1f",
-  "icons": []
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }
-
-

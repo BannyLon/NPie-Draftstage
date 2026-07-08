@@ -22,9 +22,9 @@ body.light{background:
 .main{display:grid;place-items:center;padding:24px}
 .app-shell{display:grid;grid-template-columns:1fr min(320px,30vw);gap:18px;align-items:start;padding:24px;max-width:1080px;margin:0 auto}
 .game-area{display:grid;gap:12px}
-.board-card{background:linear-gradient(180deg,#0b1220,#0c1222);border:1px solid #141c34;border-radius:16px;box-shadow:0 20px 80px rgba(0,0,0,.55),inset 0 0 0 1px rgba(255,255,255,.03);padding:14px}
+.board-card{background:linear-gradient(180deg,#0b1220,#0c1222);border:1px solid #141c34;border-radius:16px;box-shadow:0 20px 80px rgba(0,0,0,.55),inset 0 0 0 1px rgba(255,255,255,.03);padding:14px;display:flex;justify-content:center}
 body.light .board-card{background:linear-gradient(180deg,#ffffff,#f7f9ff);border-color:#e5e7eb;box-shadow:0 16px 48px rgba(0,0,0,.08),inset 0 0 0 1px rgba(0,0,0,.02)}
-canvas{background:radial-gradient(120% 70% at 50% 0%,#0a0f1f,#090e1e 50%,#070b17);border:1px solid #11182c;border-radius:14px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03),0 30px 80px rgba(0,0,0,.45)}
+canvas{display:block;width:100%;height:auto;max-width:640px;background:radial-gradient(120% 70% at 50% 0%,#0a0f1f,#090e1e 50%,#070b17);border:1px solid #11182c;border-radius:14px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03),0 30px 80px rgba(0,0,0,.45)}
 body.light canvas{background:radial-gradient(120% 70% at 50% 0%,#eef4ff,#eaf1ff 55%,#e9f0ff);border-color:#e5e7eb;box-shadow:inset 0 0 0 1px rgba(0,0,0,.03),0 24px 60px rgba(0,0,0,.08)}
 .sidebar{display:grid;gap:14px}
 .card{background:linear-gradient(180deg,#0b1220,#0c1222);border:1px solid #141c34;border-radius:14px;box-shadow:0 18px 70px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.03);padding:14px}
@@ -78,6 +78,31 @@ body.light .toast{background:#ffffff;border-color:#e5e7eb;color:#111827;box-shad
 @media (min-width: 900px){
   .touchpad{display:none}
 }
+
+/* ---- 响应式布局 ---- */
+/* 平板及以下：侧栏移到下方，工具栏允许换行 */
+@media (max-width: 880px){
+  .app-shell{grid-template-columns:1fr;max-width:680px}
+  .sidebar{grid-template-columns:1fr 1fr;display:grid}
+  .toolbar{flex-wrap:wrap;gap:8px}
+}
+/* 手机：画布充满、统计卡单列、D-pad 更紧凑居底 */
+@media (max-width: 560px){
+  .app-shell{padding:14px;gap:12px}
+  .sidebar{grid-template-columns:1fr}
+  .topbar{flex-direction:column;align-items:stretch;gap:8px;padding:10px}
+  .brand .brand-text{font-size:15px}
+  .tool-group{flex-wrap:wrap}
+  .card-title{font-size:15px}
+  .touchpad{left:50%;transform:translateX(-50%);bottom:10px}
+  .dpad,.dpad .spacer{grid-template-columns:42px 42px 42px;grid-template-rows:42px 42px 42px}
+  .dpad .spacer{width:42px;height:42px}
+  .btn.dir{width:42px;height:42px;font-size:16px}
+  /* 画布占据全宽，但不超过逻辑宽度 */
+  canvas{max-width:100%}
+  .word-title{font-size:22px}
+  .modal-content{padding:14px}
+}
 /* 设置面板 */
 .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .settings-grid section{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));border:1px solid #18213a;border-radius:12px;padding:12px}
@@ -85,6 +110,7 @@ body.light .toast{background:#ffffff;border-color:#e5e7eb;color:#111827;box-shad
 .row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;gap:12px}
 body.light .settings-grid section{background:#fff;border-color:#e5e7eb}
 body.light .settings-grid h3{color:#111827}
+@media (max-width: 560px){ .settings-grid{grid-template-columns:1fr} }
 
 /* 动效 */
 @keyframes overlayIn{from{opacity:0}to{opacity:1}}

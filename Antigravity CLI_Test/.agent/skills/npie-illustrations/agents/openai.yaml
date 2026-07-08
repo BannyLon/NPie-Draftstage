@@ -1,0 +1,6 @@
+interface:
+  display_name: "Ian 嗯哌哌配图"
+  short_description: "为中文文章生成温暖手绘、有嗯哌哌IP的正文配图资产"
+  default_prompt: "Use $ian-enpaipai-illustrations to 为这篇中文文章设计并生成几张嗯哌哌温暖手绘正文配图。"
+policy:
+  allow_implicit_invocation: true

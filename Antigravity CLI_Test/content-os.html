@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CONTENT OS — 内容项目管理看板</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: 'Poppins', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      --bg: #F4EFE6;
+      --surface: #FFFFFF;
+      --surface-muted: #FCF7EE;
+      --border: #D9D1C5;
+      --text: #2C2A29;
+      --text-muted: #6F655F;
+      --muted-2: #A69B91;
+      --accent: #B08A53;
+      --accent-soft: #E8D8BC;
+      --green: #8B9B7A;
+      --red: #A46858;
+      --blue: #7C8E99;
+      --yellow: #C6A25C;
+      --shadow: 0 20px 50px rgba(44, 42, 41, 0.08);
+    }
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; background: var(--bg); color: var(--text); }
+    body { margin: 0; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    button, input, select { font: inherit; }
+    .app-shell { min-height: 100vh; display: flex; }
+    .sidebar { width: 284px; background: rgba(255,255,255,0.98); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+    .sidebar-inner { padding: 28px 22px 20px; display: flex; flex-direction: column; gap: 18px; }
+    .brand-title { letter-spacing: 0.22em; text-transform: uppercase; font-size: 1rem; font-weight: 800; color: var(--text); }
+    .brand-subtitle { font-size: 0.85rem; color: var(--text-muted); letter-spacing: 0.08em; }
+    .nav-pill { display: block; width: 100%; text-align: left; padding: 12px 14px; border-radius: 14px; border: 1px solid transparent; color: var(--text); font-size: 0.95rem; font-weight: 600; transition: all 0.2s ease; }
+    .nav-pill:hover { border-color: rgba(44,42,41,0.1); background: rgba(216,203,180,0.18); }
+    .nav-pill.active { background: rgba(176,138,83,0.1); border-color: rgba(176,138,83,0.22); color: var(--text); }
+    .topic-list { flex: 1; overflow-y: auto; display: grid; gap: 10px; padding-right: 4px; }
+    .topic-list::-webkit-scrollbar { width: 6px; }
+    .topic-list::-webkit-scrollbar-thumb { background: rgba(44,42,41,0.16); border-radius: 999px; }
+    .sidebar-topic { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; background: var(--surface); border: 1px solid rgba(217,209,197,0.95); border-radius: 14px; cursor: grab; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .sidebar-topic:hover { transform: translateY(-1px); box-shadow: 0 12px 28px rgba(44,42,41,0.06); }
+    .sidebar-topic-title { font-size: 0.95rem; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sidebar-topic-date { font-size: 0.8rem; color: var(--muted-2); min-width: 72px; text-align: right; }
+    .sidebar-add { background: var(--surface); border: 1px solid rgba(217,209,197,0.95); border-radius: 18px; padding: 16px; display: grid; gap: 12px; }
+    .sidebar-add input[type="text"], .sidebar-add input[type="date"] { width: 100%; border: 1px solid rgba(217,209,197,0.95); border-radius: 12px; background: #fff; padding: 12px 14px; color: var(--text); font-size: 0.94rem; }
+    .sidebar-add label { display: inline-flex; align-items: center; gap: 8px; font-size: 0.88rem; color: var(--text-muted); }
+    .sidebar-add button { border: none; border-radius: 12px; padding: 12px 16px; background: var(--text); color: #fff; font-weight: 700; cursor: pointer; transition: background 0.2s ease; }
+    .sidebar-add button:hover { background: #1E1C1B; }
+    .sidebar-tools { display: grid; gap: 10px; }
+    .tool-btn { width: 100%; border-radius: 12px; border: 1px solid rgba(217,209,197,0.95); padding: 12px 14px; background: #fff; color: var(--text); text-align: center; font-weight: 700; cursor: pointer; transition: all 0.2s ease; }
+    .tool-btn:hover { background: rgba(216,203,180,0.14); }
+    .main-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .section-card { background: var(--surface); border: 1px solid rgba(217,209,197,0.95); box-shadow: var(--shadow); border-radius: 28px; overflow: hidden; }
+    .section-header { padding: 26px 28px 18px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+    .section-header-left { display: flex; flex-direction: column; gap: 8px; }
+    .section-title { font-size: 1.15rem; font-weight: 800; letter-spacing: -0.03em; }
+    .section-subtitle { color: var(--text-muted); font-size: 0.92rem; line-height: 1.6; max-width: 680px; }
+    .timeline-card { background: var(--surface); border: 1px solid rgba(217,209,197,0.95); border-radius: 28px; box-shadow: var(--shadow); overflow: hidden; }
+    .timeline-grid { display: grid; grid-template-columns: 220px minmax(0, 1fr); }
+    .timeline-labels { background: var(--surface-muted); border-right: 1px solid rgba(217,209,197,0.95); padding: 20px 14px; position: sticky; top: 0; z-index: 10; }
+    .timeline-labels-header { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 20px; }
+    .timeline-day-row { display: grid; grid-template-columns: repeat(var(--timeline-day-count), minmax(60px, 1fr)); gap: 0; }
+    .day-cell { min-width: 60px; min-height: 56px; border-right: 1px solid rgba(217,209,197,0.8); border-bottom: 1px solid rgba(217,209,197,0.8); background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px 4px; font-size: 0.75rem; color: var(--text-muted); position: relative; cursor: pointer; }
+    .day-cell:hover { background: rgba(216,203,180,0.12); }
+    .day-cell.current { background: rgba(176,138,83,0.12); }
+    .day-week { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+    .day-date { font-size: 0.97rem; font-weight: 700; color: var(--text); }
+    .day-add { position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; border-radius: 8px; background: #fff; border: 1px solid rgba(217,209,197,0.95); display: grid; place-items: center; color: var(--text-muted); font-size: 0.95rem; }
+    .day-add:hover { background: var(--accent-soft); color: var(--text); }
+    .timeline-row { display: grid; grid-template-columns: 220px minmax(0, 1fr); }
+    .topic-label-row { height: 96px; padding: 20px 18px; border-bottom: 1px solid rgba(217,209,197,0.85); display: flex; flex-direction: column; justify-content: center; gap: 8px; cursor: pointer; background: var(--surface); }
+    .topic-track-row { position: relative; min-height: 96px; border-bottom: 1px solid rgba(217,209,197,0.85); }
+    .track-cells { display: grid; grid-template-columns: repeat(var(--timeline-day-count), minmax(60px, 1fr)); }
+    .track-cell { min-width: 60px; min-height: 96px; border-right: 1px solid rgba(217,209,197,0.85); background: #fff; position: relative; }
+    .track-cell.weekend { background: rgba(247,241,226,0.8); }
+    .track-cell.active { background: rgba(176,138,83,0.1); }
+    .task-block { position: absolute; top: 12px; height: 72px; border-radius: 18px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; font-size: 0.82rem; font-weight: 600; color: var(--text); cursor: grab; box-shadow: 0 18px 36px rgba(44,42,41,0.08); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .task-block:hover { transform: translateY(-2px); }
+    .task-block.completed { opacity: 0.7; }
+    .task-dot { width: 10px; height: 10px; border-radius: 999px; }
+    .task-block .task-name { flex: 1; min-width: 0; line-height: 1.1; }
+    .task-block .task-range { font-size: 0.74rem; color: var(--text-muted); }
+    .task-block.stage-research { background: #E7DCC9; border: 1px solid rgba(176,138,83,0.18); }
+    .task-block.stage-script { background: #F4E2DD; border: 1px solid rgba(164,106,88,0.18); }
+    .task-block.stage-a_roll { background: #E7E5D3; border: 1px solid rgba(139,155,122,0.18); }
+    .task-block.stage-b_roll { background: #DDE2E4; border: 1px solid rgba(124,142,153,0.18); }
+    .task-block.stage-edit1, .task-block.stage-edit2 { background: #F4EDD8; border: 1px solid rgba(198,162,92,0.18); }
+    .task-block.stage-pack { background: #EDE7E0; border: 1px solid rgba(176,138,83,0.18); }
+    .task-block.stage-cover { background: #EFE7DD; border: 1px solid rgba(176,138,83,0.18); }
+    .task-block.stage-publish { background: #E0E8DE; border: 1px solid rgba(139,155,122,0.18); }
+    .task-block.stage-brief, .task-block.stage-outline { background: #E8E3DB; border: 1px solid rgba(176,138,83,0.18); }
+    .task-label { font-size: 0.82rem; color: var(--text); }
+    .task-progress { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+    .progress-track { flex: 1; height: 8px; border-radius: 999px; background: rgba(217,209,197,0.45); overflow: hidden; }
+    .progress-bar { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #B08A53 0%, #8B9B7A 100%); }
+    .progress-label { font-size: 0.82rem; color: var(--text-muted); }
+    .add-topic-footer { padding: 18px 24px; display: flex; justify-content: flex-start; background: var(--surface-muted); }
+    .add-topic-footer button { display: inline-flex; align-items: center; gap: 8px; background: rgba(44,42,41,0.9); color: #fff; border-radius: 14px; border: none; padding: 12px 18px; font-weight: 700; cursor: pointer; }
+    .cards-section { padding: 28px 28px 24px; overflow: hidden; }
+    .cards-grid { display: grid; gap: 18px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .topic-card { border-radius: 24px; border: 1px solid rgba(217,209,197,0.95); background: #fff; padding: 22px; box-shadow: 0 24px 52px rgba(44,42,41,0.08); display: flex; flex-direction: column; gap: 18px; }
+    .topic-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+    .topic-card-title { font-size: 1rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.2; }
+    .topic-card-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .badge { padding: 6px 12px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.03em; }
+    .badge-commercial { background: rgba(164,106,88,0.14); color: #A46858; }
+    .badge-date { background: rgba(124,142,153,0.1); color: var(--text-muted); }
+    .topic-card-status { min-width: 78px; text-align: right; font-size: 0.86rem; color: var(--text-muted); }
+    .topic-card-status strong { display: block; font-size: 1.15rem; font-weight: 800; color: var(--text); }
+    .topic-card-section { display: grid; gap: 10px; }
+    .topic-card-section-title { font-size: 0.82rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; }
+    .prep-list { display: grid; gap: 10px; }
+    .prep-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(217,209,197,0.9); background: var(--surface-muted); }
+    .prep-item input { width: 16px; height: 16px; accent-color: var(--accent); }
+    .prep-item .prep-text { flex: 1; line-height: 1.3; color: var(--text); font-size: 0.9rem; }
+    .prep-remove { border: none; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 0.95rem; }
+    .prep-add-row { display: flex; gap: 10px; align-items: center; }
+    .prep-add-row input { flex: 1; padding: 12px 14px; border-radius: 14px; background: #F7F3EC; border: 1px solid rgba(217,209,197,0.9); }
+    .prep-add-row button { width: 44px; height: 44px; border-radius: 14px; border: none; background: var(--text); color: #fff; cursor: pointer; }
+    .workflow-list { display: grid; gap: 10px; }
+    .workflow-item { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 16px; border-radius: 16px; border: 1px solid rgba(217,209,197,0.9); background: var(--surface-muted); }
+    .workflow-item.completed { background: rgba(139,155,122,0.12); }
+    .workflow-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .workflow-indicator { width: 10px; height: 10px; border-radius: 999px; flex-shrink: 0; }
+    .workflow-text { min-width: 0; }
+    .workflow-name { font-size: 0.95rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .workflow-date { font-size: 0.8rem; color: var(--text-muted); }
+    .workflow-checkbox { width: 18px; height: 18px; accent-color: var(--accent); }
+    .card-progress { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 0.85rem; color: var(--text-muted); }
+    .card-progress-bar { width: 100%; height: 10px; border-radius: 999px; background: rgba(217,209,197,0.35); overflow: hidden; }
+    .card-progress-bar-inner { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #B08A53 0%, #8B9B7A 100%); }
+    .card-footer-note { font-size: 0.86rem; line-height: 1.6; color: var(--text-muted); }
+    .selected-label { outline: 2px solid rgba(176,138,83,0.24); }
+    .drop-highlight { background: rgba(176,138,83,0.12); }
+    @media (max-width: 1280px) { .cards-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 1024px) { .sidebar { width: 100%; position: relative; } .app-shell { flex-direction: column; } .main-panel { min-height: calc(100vh - 360px); } .timeline-grid { display: block; } .timeline-labels, .topic-track-row { width: 100%; } .topic-label-row { position: relative; } .track-cells { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); } }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-inner" id="sidebar-inner"></div>
+    </aside>
+    <main class="main-panel">
+      <section class="section-card" id="timeline-section">
+        <div class="section-header">
+          <div class="section-header-left">
+            <div class="section-title">内容排期日历</div>
+            <div class="section-subtitle">同屏倒排期矩阵，横向自动扩展到更晚发布日期。拖拽左侧选题移动整条排期，拖拽单块调整单阶段。</div>
+          </div>
+          <div class="section-action"></div>
+        </div>
+        <div class="timeline-card" id="timeline-card"></div>
+      </section>
+      <section class="section-card" id="topics-section">
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-header-left">
+              <div class="section-title">选题卡</div>
+              <div class="section-subtitle">前置准备可以自由增加、勾选和删除。正式流程保持统一，避免每条内容出现一套不同的复杂清单。</div>
+            </div>
+          </div>
+          <div class="cards-section">
+            <div class="cards-grid" id="topic-cards"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <input type="file" id="import-file" accept="application/json" style="display:none" />
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 rounded-full bg-[#2C2A29] text-white px-5 py-3 text-sm shadow-2xl opacity-0 transition-all duration-300"></div>
+  <script>
+    const TODAY = new Date(); TODAY.setHours(0,0,0,0);
+    const YEAR = TODAY.getFullYear();
+    const JULY_FIRST = new Date(YEAR, 6, 1);
+    const DECEMBER_END = new Date(YEAR, 11, 31);
+    const DEFAULT_START = TODAY < JULY_FIRST ? JULY_FIRST : JULY_FIRST;
+    const MS_DAY = 24 * 60 * 60 * 1000;
+
+    const WORKFLOWS = {
+      self: [
+        { id: 'research', name: '研究学习', days: 1, color: '#B08A53' },
+        { id: 'script', name: '撰写脚本', days: 1, color: '#A46858' },
+        { id: 'a_roll', name: 'A-roll 拍摄', days: 1, color: '#8B9B7A' },
+        { id: 'b_roll', name: 'B-roll 拍摄', days: 1, color: '#7C8E99' },
+        { id: 'edit1', name: '剪辑 1/2', days: 2, color: '#C6A25C' },
+        { id: 'edit2', name: '剪辑 2/2', days: 1, color: '#C6A25C' },
+        { id: 'pack', name: '包装', days: 1, color: '#B08A53' },
+        { id: 'cover', name: '封面', days: 1, color: '#E8D8BC' },
+        { id: 'publish', name: '发布', days: 1, color: '#8B9B7A' }
+      ],
+      commercial: [
+        { id: 'brief', name: '收到 Brief', days: 1, color: '#D8C5AC' },
+        { id: 'outline', name: '完成大纲', days: 1, color: '#D8C5AC' },
+        { id: 'research', name: '研究学习', days: 1, color: '#B08A53' },
+        { id: 'script', name: '撰写脚本', days: 1, color: '#A46858' },
+        { id: 'a_roll', name: 'A-roll 拍摄', days: 1, color: '#8B9B7A' },
+        { id: 'b_roll', name: 'B-roll 拍摄', days: 1, color: '#7C8E99' },
+        { id: 'edit1', name: '剪辑 1/2', days: 2, color: '#C6A25C' },
+        { id: 'edit2', name: '剪辑 2/2', days: 1, color: '#C6A25C' },
+        { id: 'pack', name: '包装', days: 1, color: '#B08A53' },
+        { id: 'cover', name: '封面', days: 1, color: '#E8D8BC' },
+        { id: 'publish', name: '发布', days: 1, color: '#8B9B7A' }
+      ]
+    };
+
+    const state = {
+      topics: [
+        { id: 't1', title: 'DJI Mic Mini 2s', publishDate: formatDate(addDays(TODAY, 6)), type: 'self', prep: ['产品功能研究'], tasks: [] },
+        { id: 't2', title: '夏日充电器分享', publishDate: formatDate(addDays(TODAY, 13)), type: 'commercial', prep: ['客户资料确认'], tasks: [] },
+        { id: 't3', title: '用 AI 做 BGM', publishDate: formatDate(addDays(TODAY, 21)), type: 'self', prep: ['音乐风格探索'], tasks: [] },
+        { id: 't4', title: 'WAIC 大会内容', publishDate: formatDate(addDays(TODAY, 28)), type: 'commercial', prep: ['品牌定位拆解'], tasks: [] }
+      ],
+      selectedTopicId: null,
+      dragTopicId: null,
+      dragTask: null,
+      viewStart: DEFAULT_START,
+      viewEnd: DECEMBER_END,
+    };
+
+    const sidebarInner = document.getElementById('sidebar-inner');
+    const timelineCard = document.getElementById('timeline-card');
+    const topicCards = document.getElementById('topic-cards');
+
+    const importFile = document.getElementById('import-file');
+
+    function addDays(date, amount) {
+      const next = new Date(date.getTime());
+      next.setDate(next.getDate() + amount);
+      return next;
+    }
+
+    function formatDate(date) {
+      return date.toISOString().slice(0, 10);
+    }
+
+    function parseDate(value) {
+      return new Date(value + 'T00:00:00');
+    }
+
+    function daysBetween(start, end) {
+      return Math.round((parseDate(end).getTime() - parseDate(start).getTime()) / MS_DAY) + 1;
+    }
+
+    function lerp(min, max, t) {
+      return min + (max - min) * t;
+    }
+
+    function taskRange(stage, publishDate, workflow) {
+      const index = workflow.findIndex(item => item.id === stage.id);
+      const laterDuration = workflow.slice(index + 1).reduce((sum, item) => sum + item.days, 0);
+      const stageEnd = addDays(parseDate(publishDate), -laterDuration);
+      const stageStart = addDays(stageEnd, -(stage.days - 1));
+      return { startDate: formatDate(stageStart), endDate: formatDate(stageEnd) };
+    }
+
+    function buildWorkflow(topic) {
+      const workflow = topic.type === 'commercial' ? WORKFLOWS.commercial : WORKFLOWS.self;
+      return workflow.map(stage => ({
+        id: stage.id,
+        name: stage.name,
+        days: stage.days,
+        color: stage.color,
+        completed: false,
+        ...taskRange(stage, topic.publishDate, workflow)
+      }));
+    }
+
+    function initTasks() {
+      state.topics = state.topics.map(topic => ({ ...topic, tasks: buildWorkflow(topic) }));
+    }
+
+    function getMaxPublishDate() {
+      return state.topics.reduce((max, topic) => {
+        const date = parseDate(topic.publishDate);
+        return date > max ? date : max;
+      }, DECEMBER_END);
+    }
+
+    function normalizeTimelineBounds() {
+      const maxPublish = getMaxPublishDate();
+      const end = maxPublish > DECEMBER_END ? maxPublish : DECEMBER_END;
+      state.viewEnd = end;
+      state.viewStart = DEFAULT_START;
+    }
+
+    function getTimelineDates() {
+      const dates = [];
+      const start = new Date(state.viewStart.getTime());
+      const end = new Date(state.viewEnd.getTime());
+      const count = Math.round((end.getTime() - start.getTime()) / MS_DAY) + 1;
+      for (let i = 0; i < count; i += 1) {
+        dates.push(addDays(start, i));
+      }
+      document.documentElement.style.setProperty('--timeline-day-count', dates.length);
+      return dates;
+    }
+
+    function formatMonthLabel(date) {
+      return `${date.getMonth() + 1}月`;
+    }
+
+    function formatPublishLabel(topic) {
+      return topic.publishDate ? `发布 ${topic.publishDate}` : '未排期';
+    }
+
+    function getTopicProgress(topic) {
+      const total = topic.tasks.length + topic.prep.length;
+      const done = topic.tasks.filter(task => task.completed).length + topic.prep.filter(item => item.completed).length;
+      return total === 0 ? 0 : Math.round((done / total) * 100);
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('opacity-100');
+      toast.classList.remove('opacity-0');
+      clearTimeout(window.toastTimer);
+      window.toastTimer = setTimeout(() => {
+        toast.classList.add('opacity-0');
+      }, 2600);
+    }
+
+    function saveState() {
+      try {
+        window.localStorage.setItem('content-os-state', JSON.stringify(state.topics));
+      } catch (error) {
+        console.warn('存储失败', error);
+      }
+    }
+
+    function loadState() {
+      try {
+        const saved = window.localStorage.getItem('content-os-state');
+        if (!saved) return;
+        const topics = JSON.parse(saved);
+        if (Array.isArray(topics) && topics.length) {
+          state.topics = topics.map(topic => ({ ...topic, tasks: topic.tasks || [] }));
+        }
+      } catch (error) { }
+    }
+
+    function getTimelineCellClass(date) {
+      const todayStr = formatDate(TODAY);
+      if (formatDate(date) === todayStr) return 'current';
+      return date.getDay() === 0 || date.getDay() === 6 ? 'weekend' : '';
+    }
+
+    function renderSidebar() {
+      sidebarInner.innerHTML = `
+        <div>
+          <div class="brand-title">CONTENT OS</div>
+          <div class="brand-subtitle">内容项目看板</div>
+        </div>
+        <div class="grid gap-4">
+          <button class="nav-pill active" data-scroll="timeline">排期日历</button>
+          <button class="nav-pill" data-scroll="topics">选题卡</button>
+        </div>
+        <div class="topic-list" id="sidebar-topic-list"></div>
+        <div class="sidebar-tools">
+          <button class="tool-btn" id="export-btn">导出备份</button>
+          <button class="tool-btn" id="import-btn">导入恢复</button>
+        </div>
+      `;
+
+      const list = document.getElementById('sidebar-topic-list');
+      list.innerHTML = state.topics.map(topic => `
+        <div class="sidebar-topic" draggable="true" data-topic-id="${topic.id}">
+          <div class="sidebar-topic-title">${escapeHtml(topic.title)}</nobr></div>
+          <div class="sidebar-topic-date">${formatPublishLabel(topic)}</div>
+        </div>
+      `).join('');
+
+      list.querySelectorAll('.sidebar-topic').forEach(item => {
+        item.addEventListener('click', () => {
+          state.selectedTopicId = item.dataset.topicId;
+          render();
+          scrollToTopicCard(item.dataset.topicId);
+        });
+        item.addEventListener('dragstart', event => {
+          event.dataTransfer.setData('topicId', item.dataset.topicId);
+          event.dataTransfer.effectAllowed = 'copy';
+        });
+      });
+
+      sidebarInner.querySelectorAll('[data-scroll]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const target = btn.dataset.scroll === 'topics' ? document.getElementById('topics-section') : document.getElementById('timeline-section');
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      });
+
+      document.getElementById('export-btn').addEventListener('click', exportData);
+      document.getElementById('import-btn').addEventListener('click', () => importFile.click());
+      importFile.addEventListener('change', handleImportFile);
+    }
+
+    function scrollToTopicCard(topicId) {
+      const card = document.querySelector(`[data-card-id="${topicId}"]`);
+      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function addTopicFromSidebar() {
+      const titleInput = document.getElementById('sidebar-title-input');
+      const typeCheckbox = document.getElementById('sidebar-type-checkbox');
+      const dateInput = document.getElementById('sidebar-publish-input');
+      const title = titleInput.value.trim();
+      const publishDate = dateInput.value;
+      const type = typeCheckbox.checked ? 'commercial' : 'self';
+      if (!title || !publishDate) {
+        showToast('请填写选题名称与发布日期');
+        return;
+      }
+      const topic = { id: `topic-${Date.now()}`, title, publishDate, type, prep: [], tasks: [] };
+      topic.tasks = buildWorkflow(topic);
+      state.topics.push(topic);
+      titleInput.value = '';
+      dateInput.value = '';
+      typeCheckbox.checked = false;
+      normalizeTimelineBounds();
+      saveState();
+      render();
+      showToast('已添加新选题');
+    }
+
+    function exportData() {
+      const blob = new Blob([JSON.stringify({ topics: state.topics }, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `content-os-backup-${formatDate(new Date())}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast('已导出备份');
+    }
+
+    function handleImportFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const payload = JSON.parse(e.target.result);
+          if (!Array.isArray(payload.topics)) throw new Error('格式不对');
+          state.topics = payload.topics.map(topic => ({ ...topic, tasks: topic.tasks || []}));
+          state.topics.forEach(topic => { if (!topic.tasks || topic.tasks.length === 0) topic.tasks = buildWorkflow(topic); });
+          normalizeTimelineBounds();
+          render();
+          showToast('已导入恢复');
+        } catch (err) {
+          showToast('导入失败，文件格式错误');
+        }
+      };
+      reader.readAsText(file);
+      importFile.value = '';
+    }
+
+    function renderTimeline() {
+      normalizeTimelineBounds();
+      const dates = getTimelineDates();
+      const todayStr = formatDate(TODAY);
+      const months = [];
+      dates.forEach(date => {
+        const key = `${date.getFullYear()}-${date.getMonth()}`;
+        if (!months.some(item => item.key === key)) {
+          months.push({ key, label: formatMonthLabel(date), count: 0 });
+        }
+        months[months.length - 1].count += 1;
+      });
+
+      const headerHtml = `
+        <div class="timeline-grid">
+          <div class="timeline-labels">
+            <div class="timeline-labels-header">选题 / 阶段</div>
+            <div class="topic-label-row" style="height: 72px;"></div>
+          </div>
+          <div>
+            <div class="timeline-day-row">${dates.map(date => `
+              <div class="day-cell ${getTimelineCellClass(date)}" data-date="${formatDate(date)}">
+                <span class="day-week">周${'日一二三四五六'[date.getDay()]}</span>
+                <span class="day-date">${date.getDate()}</span>
+                <div class="day-add">+</div>
+              </div>
+            `).join('')}</div>
+          </div>
+        </div>
+      `;
+
+      const rowsHtml = state.topics.map(topic => {
+        const progress = getTopicProgress(topic);
+        return `
+          <div class="timeline-row" data-topic-id="${topic.id}">
+            <div class="topic-label-row ${state.selectedTopicId === topic.id ? 'selected-label' : ''}" data-topic-id="${topic.id}">
+              <div style="font-size:0.95rem;font-weight:700;">${escapeHtml(topic.title)}</div>
+              <div style="font-size:0.82rem;color:var(--text-muted);">${formatPublishLabel(topic)}</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
+                <span class="badge ${topic.type === 'commercial' ? 'badge-commercial' : ''}">${topic.type === 'commercial' ? '商单' : '自制内容'}</span>
+                <span style="font-size:.82rem;color:var(--text-muted);">${progress}%</span>
+              </div>
+            </div>
+            <div class="topic-track-row" data-topic-id="${topic.id}">
+              <div class="track-cells">${dates.map(date => `
+                <div class="track-cell ${formatDate(date) === todayStr ? 'current' : ''}" data-date="${formatDate(date)}" data-topic-id="${topic.id}"></div>
+              `).join('')}</div>
+              ${topic.tasks.map(task => renderTaskBlock(task, topic.id, dates)).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      timelineCard.innerHTML = `${headerHtml}${rowsHtml}<div class="add-topic-footer"><button id="timeline-add-topic">+ 增加选题</button></div>`;
+
+      timelineCard.querySelectorAll('.day-add').forEach(button => {
+        button.addEventListener('click', event => {
+          event.stopPropagation();
+          const cell = button.closest('.day-cell');
+          const date = cell.dataset.date;
+          setDateToNewTopic(date);
+        });
+      });
+
+      timelineCard.querySelectorAll('.topic-label-row').forEach(label => {
+        label.addEventListener('click', () => {
+          state.selectedTopicId = label.dataset.topicId;
+          render();
+        });
+        label.addEventListener('dragstart', event => {
+          event.dataTransfer.setData('topicId', label.dataset.topicId);
+          event.dataTransfer.effectAllowed = 'copy';
+        });
+        label.setAttribute('draggable', 'true');
+      });
+
+      timelineCard.querySelectorAll('.track-cell').forEach(cell => {
+        cell.addEventListener('click', () => {
+          if (!state.selectedTopicId) return;
+          const topic = state.topics.find(item => item.id === state.selectedTopicId);
+          if (!topic) return;
+          topic.publishDate = cell.dataset.date;
+          topic.tasks = buildWorkflow(topic);
+          normalizeTimelineBounds();
+          saveState();
+          render();
+          showToast('已移动整条排期');
+        });
+        cell.addEventListener('dragover', event => {
+          event.preventDefault();
+          cell.classList.add('drop-highlight');
+        });
+        cell.addEventListener('dragleave', () => cell.classList.remove('drop-highlight'));
+        cell.addEventListener('drop', event => {
+          event.preventDefault();
+          cell.classList.remove('drop-highlight');
+          const topicId = event.dataTransfer.getData('topicId');
+          const taskInfo = event.dataTransfer.getData('taskData');
+          const targetDate = cell.dataset.date;
+          if (taskInfo) {
+            const parsed = JSON.parse(taskInfo);
+            adjustSingleTask(parsed.topicId, parsed.taskId, targetDate);
+            return;
+          }
+          if (!topicId) return;
+          const topic = state.topics.find(item => item.id === topicId);
+          if (!topic) return;
+          topic.publishDate = targetDate;
+          topic.tasks = buildWorkflow(topic);
+          normalizeTimelineBounds();
+          saveState();
+          render();
+          showToast('已重排整条任务');
+        });
+      });
+
+      document.getElementById('timeline-add-topic').addEventListener('click', () => {
+        const date = formatDate(TODAY);
+        setDateToNewTopic(date);
+      });
+    }
+
+    function renderTaskBlock(task, topicId, dates) {
+      const startIndex = dates.findIndex(date => formatDate(date) === task.startDate);
+      const endIndex = dates.findIndex(date => formatDate(date) === task.endDate);
+      if (startIndex === -1 || endIndex === -1) return '';
+      const width = endIndex - startIndex + 1;
+      const left = startIndex * 60;
+      return `<div class="task-block stage-${task.id} ${task.completed ? 'completed' : ''}" draggable="true" style="left:${left}px; width:calc(${width}*60px - 12px);" data-topic-id="${topicId}" data-task-id="${task.id}" data-duration="${task.days}">
+          <div class="task-dot" style="background:${task.color}"></div>
+          <div class="task-name">${escapeHtml(task.name)}</div>
+          <div class="task-range">${task.startDate} → ${task.endDate}</div>
+        </div>`;
+    }
+
+    function adjustSingleTask(topicId, taskId, targetDate) {
+      const topic = state.topics.find(item => item.id === topicId);
+      if (!topic) return;
+      const task = topic.tasks.find(item => item.id === taskId);
+      if (!task) return;
+      task.startDate = targetDate;
+      task.endDate = formatDate(addDays(parseDate(targetDate), task.days - 1));
+      saveState();
+      render();
+      showToast('已微调该阶段日期');
+    }
+
+    function renderTopicCards() {
+      topicCards.innerHTML = state.topics.map(topic => {
+        const progress = getTopicProgress(topic);
+        return `
+          <div class="topic-card" data-card-id="${topic.id}" draggable="true">
+            <div class="topic-card-head">
+              <div>
+                <div class="topic-card-title">${escapeHtml(topic.title)}</div>
+                <div class="topic-card-meta">
+                  <span class="badge ${topic.type === 'commercial' ? 'badge-commercial' : ''}">${topic.type === 'commercial' ? '商单' : '自制内容'}</span>
+                  <span class="badge badge-date">${formatPublishLabel(topic)}</span>
+                </div>
+              </div>
+              <div class="topic-card-status"><strong>${progress}%</strong> 进度</div>
+            </div>
+            <div class="topic-card-section">
+              <div class="topic-card-section-title">前置准备</div>
+              <div class="prep-add-row">
+                <input type="text" placeholder="添加前置准备" data-prep-input="${topic.id}" />
+                <button data-prep-add="${topic.id}">+</button>
+              </div>
+              <div class="prep-list">
+                ${topic.prep.map((item, index) => `
+                  <div class="prep-item">
+                    <input type="checkbox" data-prep-toggle="${topic.id}#${index}" ${item.completed ? 'checked' : ''} />
+                    <div class="prep-text">${escapeHtml(item.text)}</div>
+                    <button class="prep-remove" data-prep-remove="${topic.id}#${index}">✕</button>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+            <div class="topic-card-section">
+              <div class="topic-card-section-title">固定流程</div>
+              <div class="workflow-list">
+                ${topic.tasks.map(task => `
+                  <div class="workflow-item ${task.completed ? 'completed' : ''}">
+                    <div class="workflow-left">
+                      <input type="checkbox" class="workflow-checkbox" data-task-toggle="${topic.id}#${task.id}" ${task.completed ? 'checked' : ''} />
+                      <div class="workflow-text">
+                        <div class="workflow-name">${escapeHtml(task.name)}</div>
+                        <div class="workflow-date">${task.startDate} → ${task.endDate}</div>
+                      </div>
+                    </div>
+                    <div class="workflow-status" style="color: ${task.completed ? '#8B9B7A' : '#6F655F'}; font-size: 0.82rem;">${task.completed ? '已完成' : '待完成'}</div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+            <div class="card-progress">
+              <div class="progress-label">固定流程与前置准备同步完成</div>
+              <div class="card-progress-bar"><div class="card-progress-bar-inner" style="width: ${progress}%"></div></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      topicCards.querySelectorAll('.topic-card').forEach(card => {
+        card.addEventListener('click', () => {
+          state.selectedTopicId = card.dataset.cardId;
+          render();
+        });
+        card.addEventListener('dragstart', event => {
+          event.dataTransfer.setData('reorderTopicId', card.dataset.cardId);
+          event.dataTransfer.effectAllowed = 'move';
+        });
+        card.addEventListener('dragover', event => {
+          event.preventDefault();
+          card.classList.add('drop-highlight');
+        });
+        card.addEventListener('dragleave', () => card.classList.remove('drop-highlight'));
+        card.addEventListener('drop', event => {
+          event.preventDefault();
+          card.classList.remove('drop-highlight');
+          const draggedId = event.dataTransfer.getData('reorderTopicId');
+          const targetId = card.dataset.cardId;
+          if (!draggedId || draggedId === targetId) return;
+          reorderTopics(draggedId, targetId);
+        });
+      });
+
+      topicCards.querySelectorAll('[data-prep-add]').forEach(button => {
+        button.addEventListener('click', () => {
+          const topicId = button.dataset.prepAdd;
+          const inputEl = document.querySelector(`[data-prep-input="${topicId}"]`);
+          if (!inputEl) return;
+          const text = inputEl.value.trim();
+          if (!text) return;
+          const topic = state.topics.find(item => item.id === topicId);
+          topic.prep.push({ text, completed: false });
+          inputEl.value = '';
+          saveState();
+          render();
+        });
+      });
+
+      topicCards.querySelectorAll('[data-prep-remove]').forEach(button => {
+        button.addEventListener('click', () => {
+          const [topicId, index] = button.dataset.prepRemove.split('#');
+          const topic = state.topics.find(item => item.id === topicId);
+          if (!topic) return;
+          topic.prep.splice(Number(index), 1);
+          saveState();
+          render();
+        });
+      });
+
+      topicCards.querySelectorAll('[data-prep-toggle]').forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+          const [topicId, index] = checkbox.dataset.prepToggle.split('#');
+          const topic = state.topics.find(item => item.id === topicId);
+          if (!topic) return;
+          topic.prep[Number(index)].completed = checkbox.checked;
+          saveState();
+          render();
+        });
+      });
+
+      topicCards.querySelectorAll('[data-task-toggle]').forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+          const [topicId, taskId] = checkbox.dataset.taskToggle.split('#');
+          const topic = state.topics.find(item => item.id === topicId);
+          if (!topic) return;
+          const task = topic.tasks.find(item => item.id === taskId);
+          if (!task) return;
+          task.completed = checkbox.checked;
+          saveState();
+          render();
+        });
+      });
+    }
+
+    function reorderTopics(draggedId, targetId) {
+      const fromIndex = state.topics.findIndex(item => item.id === draggedId);
+      const toIndex = state.topics.findIndex(item => item.id === targetId);
+      if (fromIndex === -1 || toIndex === -1) return;
+      const [moved] = state.topics.splice(fromIndex, 1);
+      state.topics.splice(toIndex, 0, moved);
+      saveState();
+      render();
+      showToast('已调整选题顺序');
+    }
+
+    function setDateToNewTopic(date) {
+      const title = prompt('请输入新增选题名称：', '新选题');
+      if (!title) return;
+      const topic = { id: `topic-${Date.now()}`, title, publishDate: date, type: 'self', prep: [], tasks: [] };
+      topic.tasks = buildWorkflow(topic);
+      state.topics.push(topic);
+      normalizeTimelineBounds();
+      saveState();
+      render();
+      showToast('已创建新的选题');
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function render() {
+      renderSidebar();
+      renderTimeline();
+      renderTopicCards();
+      saveState();
+    }
+
+    loadState();
+    initTasks();
+    normalizeTimelineBounds();
+    render();
+
+    document.addEventListener('DOMContentLoaded', () => {
+      render();
+    });
+  </script>
+</body>
+</html>

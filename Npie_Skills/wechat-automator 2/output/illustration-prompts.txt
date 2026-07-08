@@ -1,0 +1,64 @@
+苹果涨价文章 × 4 张配图提示词
+═══════════════════════════════════════
+
+01 — 三层金字塔（放在「产业链三层」段落后）
+────────────────────────────────────
+
+【中文】
+16:9 横版正文配图。纯白背景。温暖手绘线稿风格，柔软铅笔线条 + 彩铅轻水彩填充。
+画面中央一个三层金字塔结构，手绘虚线分隔三层：
+  顶层（小）：芯片/云服务器的简化手绘图标，标注"芯片·算力"
+  中层（中）：讲台上一人拿着喇叭，标注"课程·焦虑"
+  底层（大）：嗯哌哌站在金字塔底座上，双手向上托举，表情无奈但坚定，长发微乱
+整体配色温暖克制，少量红色小字手写批注："上游吃肉""下游买单"。大量留白。禁止 PPT 感、禁止左上角标题。
+
+【English】
+16:9 horizontal illustration for a Chinese article. Pure white background. Warm hand-drawn line art style, soft pencil lines + colored pencil light watercolor fill.
+A three-tier pyramid structure in the center, hand-drawn dashed lines separating the layers:
+  Top (small): simplified icons of chips/cloud servers, labeled
+  Middle: a person on a podium with a megaphone
+  Bottom (large): Enpaipai (young woman with long straight dark hair, white knit sweater) standing at the base, both hands pushing upward, expression resigned but determined
+Warm restrained colors, tiny red handwritten annotations. Lots of negative space. No PPT aesthetics, no title in top-left corner.
+
+
+02 — 四重税（放在「四重税」段落后）
+────────────────────────────────────
+
+【中文】
+16:9 横版正文配图。纯白背景。温暖手绘线稿 + 彩铅淡彩。
+嗯哌哌侧身站立在画面左边，背上叠着四个包裹/包袱，分别手写标注"硬件税""订阅税""内卷税""焦虑税"。身体微微前倾但没倒下，右手扶着一面墙。表情疲惫但眼神坚定。包袱用不同彩铅颜色区分（青蓝/暖金/灰绿/淡红）。右上角留白处一行手写小红字："AI时代的普通人，只有消费者不是受益者"。禁止 PPT 感。
+
+【English】
+16:9 horizontal. Pure white background. Warm hand-drawn line art + colored pencil wash.
+Enpaipai (long dark hair, white sweater) shown in profile on the left side, carrying four bundles stacked on her back, each labeled in handwritten Chinese. Body leaning forward but not falling, right hand bracing against a wall. Expression tired but eyes determined. Bundles colored differently (teal/gold/sage/rose). Red handwritten annotation in upper right. Lots of white space.
+
+
+03 — 止血（放在「先止血」段落后）
+────────────────────────────────────
+
+【中文】
+16:9 横版正文配图。纯白背景。温暖手绘线稿 + 彩铅淡彩。
+画面中央，嗯哌哌双手举着一把大剪刀，正在剪断一条粗链条。链条的每一节上写着"付费课程""会员订阅""新模型""新插件"。剪刀刀刃处有几颗火星脱落，表示"正在切断"。她表情果断坚决，嘴角微抿。前景散落的断链。右上角手写红字："止损"。画面干净，留白充分。
+
+【English】
+16:9 horizontal. Pure white background. Warm hand-drawn + colored pencil.
+Center frame: Enpaipai holding large scissors with both hands, cutting through a thick chain. Chain links labeled with small text. Sparks flying from the cutting point. Expression decisive and firm. Broken chain pieces scattered in foreground. Red handwritten annotation: "Stop the bleeding". Clean composition, generous white space.
+
+
+04 — 杠杆与支点（放在「最后」段落后）
+────────────────────────────────────
+
+【中文】
+16:9 横版正文配图。纯白背景。温暖手绘线稿 + 彩铅淡彩。
+嗯哌哌双脚稳稳站在一块大石头上，石头侧面手写标注"行业经验 × 客户关系"。她双手握一根长杠杆，杠杆上写"AI"，正在撬动远处一块巨大沉重的石头（标注"收入/业务"）。身体后倾发力的姿态，手臂肌肉线条微微紧绷。画面左下到右上形成一条对角线构图。右下角红色手写小字："没有支点，再长的杠杆也撬不动任何东西"。画面干净，大量留白。
+
+【English】
+16:9 horizontal. Pure white background. Warm hand-drawn + colored pencil.
+Enpaipai standing firmly on a large rock labeled "Industry Experience × Client Relations". She grips a long lever labeled "AI" with both hands, prying against a massive heavy boulder in the distance (labeled "Revenue/Business"). Body leaning back with effort. Diagonal composition from lower-left to upper-right. Small red handwritten text in lower right: "Without a fulcrum, even the longest lever moves nothing." Clean, lots of white space.
+
+
+═══════════════════════════════════════
+使用：拿这些提示词去 Midjourney / DALL-E / 即梦 生成，
+生成后放到 assets/apple-price-hike-illustrations/，
+按 01-三层金字塔.png  02-四重税.png  03-止血.png  04-杠杆支点.png 命名，
+跑 upload.py 即可自动注入正文。

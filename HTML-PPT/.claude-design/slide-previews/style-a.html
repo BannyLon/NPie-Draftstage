@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code - Creative Voltage 风格</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Mono', monospace;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .slide {
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            display: flex;
+            position: relative;
+        }
+
+        /* 左面板 - 电蓝 */
+        .left-panel {
+            flex: 1;
+            background: linear-gradient(135deg, #0066ff 0%, #0052cc 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 右面板 - 深暗 */
+        .right-panel {
+            flex: 1;
+            background: #1a1a2e;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 霓虹黄装饰 */
+        .neon-accent {
+            position: absolute;
+            background: #d4ff00;
+            border-radius: 50%;
+            opacity: 0.1;
+            filter: blur(60px);
+        }
+
+        .accent-1 { 
+            width: 300px; 
+            height: 300px; 
+            top: -100px; 
+            right: -100px; 
+        }
+
+        .accent-2 { 
+            width: 250px; 
+            height: 250px; 
+            bottom: -80px; 
+            left: -80px; 
+        }
+
+        /* 标题 */
+        .main-title {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(2.5rem, 8vw, 4.5rem);
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: clamp(1rem, 3vh, 2rem);
+            letter-spacing: -2px;
+            animation: slideInLeft 1s ease-out;
+        }
+
+        .left-panel .main-title {
+            z-index: 2;
+        }
+
+        /* 副标题 */
+        .subtitle {
+            font-size: clamp(0.9rem, 2vh, 1.2rem);
+            color: #d4ff00;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            font-weight: 700;
+            animation: fadeIn 1s ease-out 0.3s both;
+            margin-bottom: clamp(0.5rem, 2vh, 1rem);
+        }
+
+        .right-panel .main-title {
+            color: #d4ff00;
+            z-index: 2;
+        }
+
+        .right-panel .subtitle {
+            color: #ffffff;
+        }
+
+        /* 描述文本 */
+        .description {
+            font-size: clamp(0.8rem, 1.5vh, 1rem);
+            color: rgba(255, 255, 255, 0.8);
+            max-width: 90%;
+            text-align: center;
+            line-height: 1.6;
+            animation: fadeIn 1s ease-out 0.6s both;
+            z-index: 2;
+        }
+
+        .left-panel .description {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .right-panel .description {
+            color: rgba(212, 255, 0, 0.8);
+        }
+
+        /* 动画 */
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* 页码 */
+        .page-number {
+            position: absolute;
+            top: clamp(1rem, 3vh, 2rem);
+            right: clamp(1.5rem, 4vw, 2rem);
+            font-size: clamp(0.8rem, 2vh, 1.2rem);
+            color: #d4ff00;
+            font-weight: 700;
+            letter-spacing: 2px;
+            z-index: 10;
+        }
+
+        @media (max-height: 700px) {
+            .main-title { margin-bottom: 0.5rem; }
+            .subtitle { margin-bottom: 0.3rem; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * { animation: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="slide">
+        <!-- 左面板 -->
+        <div class="left-panel">
+            <div class="neon-accent accent-1"></div>
+            <div class="subtitle">CLAUDE CODE</div>
+            <h1 class="main-title">从补全<br>到治理</h1>
+            <p class="description">深度解构 Harness 架构哲学</p>
+        </div>
+
+        <!-- 右面板 -->
+        <div class="right-panel">
+            <div class="neon-accent accent-2"></div>
+            <div class="page-number">01</div>
+            <div class="subtitle">Creative Voltage 风格</div>
+            <h2 class="main-title">能量四射</h2>
+            <p class="description">电蓝 × 霓虹黄的激进创意组合</p>
+        </div>
+    </div>
+</body>
+</html>

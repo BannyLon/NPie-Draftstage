@@ -1,0 +1,225 @@
+{
+  "description": "Excalidraw 风格预设 v2，基于 Open Color 色值（Excalidraw 内置调色板）",
+  "version": 2,
+  "note": "所有色值来自 Open Color v1.9.1，与 Excalidraw 内置调色板一致",
+  "presets": {
+    "professional": {
+      "name": "专业简报",
+      "description": "蓝青色调，适合正式报告、系统设计、技术架构",
+      "colors": {
+        "stroke": "#212529",
+        "text": "#212529",
+        "arrow": "#495057",
+        "accent": "#364fc7",
+        "yes": "#2b8a3e",
+        "no": "#c92a2a",
+        "background": "#ffffff",
+        "line": "#adb5bd",
+        "indigo": "#e5dbff",
+        "blue": "#d0ebff",
+        "cyan": "#c5f6fa",
+        "teal": "#c3fae8"
+      },
+      "fills": {
+        "process": "#d0ebff",
+        "decision": "#fff3bf",
+        "terminal": "#d3f9d8",
+        "highlight": "#e5dbff",
+        "left_col": "#d0ebff",
+        "right_col": "#fff0f6",
+        "row_even": "#f8f9fa",
+        "container": "#f1f3f5",
+        "accent_fill": "#e5dbff"
+      },
+      "decorations": {
+        "node_roundness": {"type": 3},
+        "arrow_style": "arrow",
+        "stroke_width": 2,
+        "roughness": 2,
+        "fill_style": "solid",
+        "opacity_primary": 100,
+        "opacity_secondary": 60,
+        "opacity_decorative": 40
+      },
+      "typography": {
+        "font_family": 1,
+        "title_size": 20,
+        "node_label_size": 16,
+        "detail_size": 12,
+        "caption_size": 10
+      }
+    },
+    "warm": {
+      "name": "温暖手绘",
+      "description": "粉橙色调 + hachure 纹理，适合用户旅程、创意提案、内容创作",
+      "colors": {
+        "stroke": "#2d2d2d",
+        "text": "#2d2d2d",
+        "arrow": "#868e96",
+        "accent": "#d6336c",
+        "yes": "#2b8a3e",
+        "no": "#c92a2a",
+        "background": "#fff9db",
+        "line": "#dee2e6",
+        "pink": "#fcc2d7",
+        "orange": "#ffd8a8",
+        "yellow": "#ffec99",
+        "grape": "#eebefa"
+      },
+      "fills": {
+        "process": "#fff5f5",
+        "decision": "#fff9db",
+        "terminal": "#ebfbee",
+        "highlight": "#f8f0fc",
+        "left_col": "#d0ebff",
+        "right_col": "#fff0f6",
+        "row_even": "#fff5f5",
+        "container": "#fef9ef",
+        "accent_fill": "#fce4ec"
+      },
+      "decorations": {
+        "node_roundness": {"type": 3},
+        "arrow_style": "arrow",
+        "stroke_width": 2,
+        "roughness": 2,
+        "fill_style": "hachure",
+        "opacity_primary": 100,
+        "opacity_secondary": 60,
+        "opacity_decorative": 50
+      },
+      "typography": {
+        "font_family": 1,
+        "title_size": 22,
+        "node_label_size": 16,
+        "detail_size": 13,
+        "caption_size": 11
+      }
+    },
+    "minimal": {
+      "name": "极简线稿",
+      "description": "Helvetica + 细线 + 透明填充，适合技术文档、流程图",
+      "colors": {
+        "stroke": "#495057",
+        "text": "#495057",
+        "arrow": "#868e96",
+        "accent": "#1971c2",
+        "yes": "#2b8a3e",
+        "no": "#e03131",
+        "background": "#ffffff",
+        "line": "#dee2e6"
+      },
+      "fills": {
+        "process": "transparent",
+        "decision": "transparent",
+        "terminal": "transparent",
+        "highlight": "transparent",
+        "left_col": "transparent",
+        "right_col": "transparent",
+        "row_even": "#f8f9fa",
+        "container": "#f8f9fa",
+        "accent_fill": "#d0ebff"
+      },
+      "decorations": {
+        "node_roundness": null,
+        "arrow_style": "arrow",
+        "stroke_width": 1,
+        "roughness": 1,
+        "fill_style": "solid",
+        "opacity_primary": 100,
+        "opacity_secondary": 80,
+        "opacity_decorative": 50
+      },
+      "typography": {
+        "font_family": 2,
+        "title_size": 18,
+        "node_label_size": 14,
+        "detail_size": 11,
+        "caption_size": 9
+      }
+    },
+    "vivid": {
+      "name": "鲜艳明快",
+      "description": "高饱和度 + cross-hatch 纹理，适合教学材料、面向大众的信息图",
+      "colors": {
+        "stroke": "#1e1e1e",
+        "text": "#1e1e1e",
+        "arrow": "#495057",
+        "accent": "#f76707",
+        "yes": "#2b8a3e",
+        "no": "#c92a2a",
+        "background": "#ffffff",
+        "line": "#adb5bd"
+      },
+      "fills": {
+        "process": "#a5d8ff",
+        "decision": "#ffec99",
+        "terminal": "#b2f2bb",
+        "highlight": "#da77f2",
+        "left_col": "#d0ebff",
+        "right_col": "#fcc2d7",
+        "row_even": "#f8f9fa",
+        "container": "#fff5f5",
+        "accent_fill": "#ffe8cc"
+      },
+      "decorations": {
+        "node_roundness": {"type": 3},
+        "arrow_style": "arrow",
+        "stroke_width": 2,
+        "roughness": 2,
+        "fill_style": "cross-hatch",
+        "opacity_primary": 100,
+        "opacity_secondary": 70,
+        "opacity_decorative": 45
+      },
+      "typography": {
+        "font_family": 1,
+        "title_size": 22,
+        "node_label_size": 17,
+        "detail_size": 13,
+        "caption_size": 11
+      }
+    },
+    "dark": {
+      "name": "深色主题",
+      "description": "暗色背景 + Open Color 高对比度，适合深色模式科技展示",
+      "colors": {
+        "stroke": "#dee2e6",
+        "text": "#dee2e6",
+        "arrow": "#adb5bd",
+        "accent": "#748ffc",
+        "yes": "#69db7c",
+        "no": "#ff8787",
+        "background": "#212529",
+        "line": "#495057"
+      },
+      "fills": {
+        "process": "#1c2b36",
+        "decision": "#3d3522",
+        "terminal": "#1c3829",
+        "highlight": "#2f2b3d",
+        "left_col": "#1c2b36",
+        "right_col": "#36232b",
+        "row_even": "#2b2f36",
+        "container": "#25292e",
+        "accent_fill": "#25233d"
+      },
+      "decorations": {
+        "node_roundness": {"type": 3},
+        "arrow_style": "arrow",
+        "stroke_width": 2,
+        "roughness": 2,
+        "fill_style": "solid",
+        "opacity_primary": 100,
+        "opacity_secondary": 70,
+        "opacity_decorative": 50
+      },
+      "typography": {
+        "font_family": 1,
+        "title_size": 20,
+        "node_label_size": 16,
+        "detail_size": 12,
+        "caption_size": 10
+      }
+    }
+  }
+}

@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CONTENT OS — 内容项目管理看板</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: 'Poppins', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+      --bg: #F4EFE6;
+      --surface: #FFFFFF;
+      --surface-muted: #FCF7EE;
+      --border: #D9D1C5;
+      --text: #2C2A29;
+      --text-muted: #6F655F;
+      --muted-2: #A69B91;
+      --accent: #B08A53;
+      --accent-soft: #E8D8BC;
+      --green: #8B9B7A;
+      --red: #A46858;
+      --blue: #7C8E99;
+      --yellow: #C6A25C;
+      --shadow: 0 12px 32px rgba(44, 42, 41, 0.06);
+    }
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; background: var(--bg); color: var(--text); }
+    body { margin: 0; -webkit-font-smoothing: antialiased; }
+    button, input, select { font: inherit; }
+    .app-shell { min-height: 100vh; display: flex; }
+    .sidebar {
+      width: 220px; flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+    .sidebar-top { padding: 20px 16px 16px; }
+    .brand-title {
+      letter-spacing: 0.18em; text-transform: uppercase;
+      font-size: 0.88rem; font-weight: 800; color: var(--text);
+    }
+    .brand-subtitle { font-size: 0.78rem; color: var(--text-muted); margin-top: 4px; }
+    .nav-list { padding: 0 12px; display: grid; gap: 4px; }
+    .topic-list {
+      flex: 0 0 auto;
+      overflow: visible;
+      padding: 0 12px 8px 12px;
+      display: grid;
+      gap: 4px;
+      background: var(--surface-muted);
+      margin: 0 12px;
+      border-radius: 12px;
+      padding-top: 8px;
+      padding-bottom: 8px;
+    }
+    .topic-item {
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      background: var(--surface);
+      color: var(--text);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.12s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .topic-item:hover { background: rgba(216, 203, 180, 0.3); }
+    .topic-item.selected {
+      background: rgba(176,138,83,0.12);
+      border-color: rgba(176,138,83,0.25);
+    }
+    .topic-item-title { font-size: 0.8rem; font-weight: 600; line-height: 1.2; }
+    .topic-item-meta { font-size: 0.68rem; color: var(--text-muted); }
+    .topic-item-badge {
+      display: inline-block; font-size: 0.62rem; font-weight: 700;
+      padding: 2px 6px; border-radius: 4px;
+      background: rgba(139,155,122,0.15); color: var(--green);
+      width: fit-content;
+    }
+    .topic-item-badge.commercial { background: rgba(164,106,88,0.14); color: var(--red); }
+    .nav-pill {
+      display: block; width: 100%; text-align: left;
+      padding: 9px 12px; border-radius: 8px;
+      border: 1px solid transparent; background: transparent;
+      color: var(--text); font-size: 0.84rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s ease;
+    }
+    .nav-pill:hover { background: rgba(216,203,180,0.2); }
+    .nav-pill.active {
+      background: rgba(176,138,83,0.12);
+      border-color: rgba(176,138,83,0.25);
+    }
+    .sidebar-bottom {
+      margin-top: auto;
+      padding: 12px;
+      border-top: 1px solid var(--border);
+      display: grid;
+      gap: 6px;
+    }
+    .sidebar-bottom-text {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+      margin-top: 6px;
+    }
+    .tool-btn {
+      width: 100%; border-radius: 8px;
+      border: 1px solid var(--border); padding: 8px 10px;
+      background: var(--surface); color: var(--text);
+      font-size: 0.8rem; font-weight: 600; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .tool-btn:hover { background: rgba(216,203,180,0.18); }
+    .main-panel {
+      flex: 1; display: flex; flex-direction: column;
+      overflow: hidden; gap: 0;
+    }
+    .panel-section { padding: 16px 16px 0; flex-shrink: 0; }
+    .panel-section:last-child { padding-bottom: 16px; flex: 1; min-height: 0; }
+    .panel-section-topics {
+      background: var(--surface-muted);
+      padding: 24px 16px 16px;
+      overflow: auto;
+    }
+    .panel-section-topics .section-card {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+    }
+    .topics-title-area {
+      padding: 0 0 16px 0;
+    }
+    .topics-title-large {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 4px;
+    }
+    .topics-title-small {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+    .section-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: flex; flex-direction: column;
+      height: 100%;
+    }
+    .section-header {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid rgba(217,209,197,0.6);
+      flex-shrink: 0;
+    }
+    .section-title { font-size: 0.95rem; font-weight: 800; letter-spacing: -0.02em; }
+    .section-subtitle {
+      color: var(--text-muted); font-size: 0.76rem;
+      line-height: 1.5; margin-top: 4px;
+    }
+    /* Timeline */
+    .timeline-scroll { 
+      overflow: auto; 
+      position: relative; 
+      flex: 1;
+      min-height: 0;
+    }
+    .timeline-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
+    .timeline-scroll::-webkit-scrollbar-thumb { background: rgba(44,42,41,0.15); border-radius: 99px; }
+    .timeline-inner { 
+      position: relative; 
+      display: inline-block;
+    }
+    .timeline-month-row {
+      display: flex; border-bottom: 1px solid var(--border);
+      background: var(--surface-muted); position: sticky; top: 0; z-index: 10;
+    }
+    .month-label-cell {
+      padding: 6px 8px; font-size: 0.72rem; font-weight: 700;
+      color: var(--text-muted); letter-spacing: 0.06em;
+      border-right: 1px solid var(--border);
+      text-transform: uppercase;
+    }
+    .month-corner {
+      width: 280px; min-width: 280px; border-right: 1px solid var(--border);
+      position: sticky; left: 0; z-index: 15; background: var(--surface-muted);
+    }
+    .timeline-header-row {
+      display: flex; border-bottom: 1px solid var(--border);
+      background: var(--surface-muted); position: sticky; top: 32px; z-index: 9;
+    }
+    .timeline-corner {
+      width: 280px; min-width: 280px;
+      padding: 6px 10px; font-size: 0.68rem; font-weight: 700;
+      color: var(--text-muted); letter-spacing: 0.08em;
+      text-transform: uppercase; border-right: 1px solid var(--border);
+      display: flex; align-items: center;
+      position: sticky; left: 0; z-index: 14; background: var(--surface-muted);
+    }
+    .day-cell {
+      width: 44px; min-width: 44px; min-height: 44px;
+      border-right: 1px solid rgba(217,209,197,0.7);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 3px 2px; font-size: 0.68rem;
+      color: var(--text-muted);
+    }
+    .day-week { font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .day-date { font-size: 0.82rem; font-weight: 700; color: var(--text); }
+    .day-cell.today { background: rgba(176,138,83,0.14); }
+    .day-cell.weekend { background: rgba(247,241,226,0.7); }
+    .timeline-row {
+      display: flex;
+      border-bottom: 1px solid rgba(217,209,197,0.7);
+      min-height: 80px;
+    }
+    .topic-label {
+      width: 280px; min-width: 280px;
+      padding: 10px 14px; border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: 4px;
+      cursor: grab;
+      transition: filter 0.15s, outline 0.15s;
+      user-select: none; -webkit-user-select: none;
+      position: sticky; left: 0; z-index: 8;
+      border-left: 5px solid;
+    }
+    .topic-label:hover { filter: brightness(0.97); }
+    .topic-label.selected { outline: 2px solid rgba(176,138,83,0.45); outline-offset: -2px; }
+    .topic-label.dragging { opacity: 0.5; }
+    .topic-label-name {
+      font-size: 1rem; font-weight: 700; line-height: 1.2;
+    }
+    .topic-label-meta {
+      display: flex; align-items: center; gap: 6px;
+    }
+    .topic-label-icon {
+      width: 14px; height: 14px; opacity: 0.6; flex-shrink: 0;
+    }
+    .topic-label-date {
+      font-size: 0.8rem; color: var(--text-muted);
+      flex: 1;
+    }
+    .topic-label-progress {
+      font-size: 0.8rem; font-weight: 700; color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .track-area {
+      position: relative;
+      display: flex;
+      min-height: 64px;
+      flex: 1;
+    }
+    .track-cell {
+      width: 44px; min-width: 44px;
+      border-right: 1px solid rgba(217,209,197,0.55);
+      cursor: pointer; transition: background 0.12s;
+    }
+    .track-cell:hover { background: rgba(176,138,83,0.06); }
+    .track-cell.drop-target { background: rgba(176,138,83,0.18); }
+    .track-cell.today { background: rgba(176,138,83,0.05); }
+    .track-cell.weekend { background: rgba(247,241,226,0.5); }
+    .task-block {
+      position: absolute; top: 8px; height: 48px;
+      border-radius: 6px; padding: 5px 8px;
+      display: flex; flex-direction: column; justify-content: center;
+      font-size: 0.68rem; font-weight: 600; color: var(--text);
+      cursor: grab; overflow: hidden;
+      box-shadow: 0 4px 12px rgba(44,42,41,0.08);
+      transition: opacity 0.15s, transform 0.15s;
+      z-index: 2; user-select: none; -webkit-user-select: none;
+      border: 1px solid transparent;
+    }
+    .task-block:hover { transform: translateY(-1px); z-index: 3; }
+    .task-block.completed { opacity: 0.55; text-decoration: line-through; }
+    .task-block-name { line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .task-block-date { font-size: 0.58rem; color: var(--text-muted); font-weight: 500; margin-top: 1px; }
+    .task-block.stage-prep, .task-block.stage-research { background: #E7DCC9; border-color: rgba(176,138,83,0.2); }
+    .task-block.stage-script { background: #F4E2DD; border-color: rgba(164,106,88,0.2); }
+    .task-block.stage-a_roll { background: #E7E5D3; border-color: rgba(139,155,122,0.2); }
+    .task-block.stage-b_roll { background: #DDE2E4; border-color: rgba(124,142,153,0.2); }
+    .task-block.stage-edit1, .task-block.stage-edit2 { background: #F4EDD8; border-color: rgba(198,162,92,0.2); }
+    .task-block.stage-package { background: #EDE7E0; border-color: rgba(176,138,83,0.2); }
+    .task-block.stage-cover { background: #EFE7DD; border-color: rgba(176,138,83,0.2); }
+    .task-block.stage-copy { background: #F3EAEA; border-color: rgba(164,106,88,0.2); }
+    .task-block.stage-publish { background: #E0E8DE; border-color: rgba(139,155,122,0.25); }
+    .task-block.stage-brief, .task-block.stage-outline { background: #E8E3DB; border-color: rgba(176,138,83,0.2); }
+    /* 垂直堆叠的任务块样式 */
+    .task-block.stacked-top { top: 8px; height: 15px; padding: 2px 6px; }
+    .task-block.stacked-middle-1 { top: 24px; height: 15px; padding: 2px 6px; }
+    .task-block.stacked-middle-2 { top: 40px; height: 15px; padding: 2px 6px; }
+    .task-block.stacked-bottom { top: 56px; height: 15px; padding: 2px 6px; }
+    /* 让堆叠任务的日期小一点或者不显示 */
+    .task-block.stacked-top .task-block-date, 
+    .task-block.stacked-middle-1 .task-block-date, 
+    .task-block.stacked-middle-2 .task-block-date,
+    .task-block.stacked-bottom .task-block-date {
+      display: none;
+    }
+    .add-topic-bar {
+      padding: 10px 14px; background: var(--surface-muted);
+      border-top: 1px solid var(--border);
+    }
+    .add-topic-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--text); color: #fff;
+      border: none; border-radius: 8px;
+      padding: 8px 14px; font-size: 0.8rem; font-weight: 700;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .add-topic-btn:hover { background: #1E1C1B; }
+    /* Topic Cards */
+    .cards-wrap { padding: 12px; }
+    .cards-grid { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .topic-card {
+      border-radius: 10px; border: 1px solid var(--border);
+      background: var(--surface); padding: 14px;
+      display: flex; flex-direction: column; gap: 12px;
+      box-shadow: var(--shadow);
+      transition: outline 0.15s;
+    }
+    .topic-card.selected { outline: 2px solid rgba(176,138,83,0.35); }
+    .topic-card.drag-over { outline: 2px dashed rgba(176,138,83,0.5); }
+    .card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .card-head-left { flex: 1; min-width: 0; }
+    .card-title { font-size: 0.9rem; font-weight: 800; letter-spacing: -0.02em; }
+    .card-type-select {
+      margin-top: 6px; padding: 4px 8px;
+      border: 1px solid var(--border); border-radius: 6px;
+      font-size: 0.76rem; font-weight: 600;
+      background: var(--surface-muted); color: var(--text);
+      cursor: pointer;
+    }
+    .card-progress-wrap { min-width: 72px; text-align: right; }
+    .card-progress-pct { font-size: 1rem; font-weight: 800; color: var(--text); }
+    .card-progress-label { font-size: 0.66rem; color: var(--text-muted); }
+    .card-progress-bar {
+      width: 100%; height: 6px; border-radius: 99px;
+      background: rgba(217,209,197,0.4); overflow: hidden; margin-top: 8px;
+    }
+    .card-progress-fill {
+      height: 100%; border-radius: 99px;
+      background: linear-gradient(90deg, #B08A53, #8B9B7A);
+      transition: width 0.25s ease;
+    }
+    .card-section-title {
+      font-size: 0.68rem; font-weight: 700; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;
+    }
+    .prep-row { display: flex; gap: 6px; margin-bottom: 6px; }
+    .prep-input {
+      flex: 1; padding: 7px 10px; border-radius: 6px;
+      border: 1px solid var(--border); background: var(--surface-muted);
+      font-size: 0.78rem;
+    }
+    .prep-add-btn {
+      width: 32px; height: 32px; border-radius: 6px;
+      border: none; background: var(--text); color: #fff;
+      font-weight: 700; cursor: pointer; font-size: 0.9rem;
+    }
+    .prep-item, .workflow-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 10px; border-radius: 6px;
+      border: 1px solid rgba(217,209,197,0.8);
+      background: var(--surface-muted); margin-bottom: 4px;
+    }
+    .workflow-item.done { background: rgba(139,155,122,0.1); }
+    .item-checkbox { width: 14px; height: 14px; accent-color: var(--accent); flex-shrink: 0; }
+    .item-text { flex: 1; font-size: 0.78rem; line-height: 1.3; min-width: 0; }
+    .item-date { font-size: 0.66rem; color: var(--text-muted); white-space: nowrap; }
+    .item-remove {
+      border: none; background: transparent; color: var(--muted-2);
+      cursor: pointer; font-size: 0.8rem; padding: 2px;
+    }
+    .workflow-dot { width: 6px; height: 6px; border-radius: 99px; flex-shrink: 0; }
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(44,42,41,0.35);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: auto; }
+    .modal-box {
+      background: var(--surface); border-radius: 12px;
+      padding: 20px; width: 320px; max-width: 90vw;
+      box-shadow: 0 24px 48px rgba(44,42,41,0.15);
+    }
+    .modal-title { font-size: 0.95rem; font-weight: 800; margin-bottom: 12px; }
+    .modal-field { margin-bottom: 10px; }
+    .modal-field label { display: block; font-size: 0.72rem; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; }
+    .modal-field input, .modal-field select {
+      width: 100%; padding: 8px 10px; border-radius: 6px;
+      border: 1px solid var(--border); font-size: 0.82rem;
+    }
+    .modal-actions { display: flex; gap: 8px; margin-top: 14px; }
+    .modal-btn {
+      flex: 1; padding: 8px; border-radius: 6px; border: none;
+      font-weight: 700; font-size: 0.82rem; cursor: pointer;
+    }
+    .modal-btn-primary { background: var(--text); color: #fff; }
+    .modal-btn-cancel { background: var(--surface-muted); color: var(--text); border: 1px solid var(--border); }
+    #toast {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: var(--text); color: #fff; padding: 8px 16px;
+      border-radius: 99px; font-size: 0.78rem; font-weight: 600;
+      opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 200;
+    }
+    #toast.show { opacity: 1; }
+    @media (max-width: 1100px) { .cards-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 768px) {
+      .app-shell { flex-direction: column; }
+      .sidebar { width: 100%; flex-direction: row; flex-wrap: wrap; }
+      .sidebar-top { flex: 1; }
+      .nav-list { display: flex; gap: 4px; padding: 8px; }
+      .sidebar-bottom { margin-top: 0; border-top: none; display: flex; flex: 1; justify-content: flex-end; border-left: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main-panel">
+      <div class="panel-section" id="timeline-section">
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-title">排期日历</div>
+            <div class="section-subtitle">同屏倒排期矩阵。拖动左侧标签移动整条排期；拖动任务块微调单阶段；点击标签后点日期格可触屏移动。</div>
+          </div>
+          <div class="timeline-scroll" id="timeline-scroll">
+            <div class="timeline-inner" id="timeline-inner"></div>
+          </div>
+          <div class="add-topic-bar">
+            <button class="add-topic-btn" id="btn-add-topic">+ 增加选题</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel-section panel-section-topics" id="topics-section">
+        <div class="section-card">
+          <div class="topics-title-area">
+            <div class="topics-title-large">选题卡</div>
+            <div class="topics-title-small">前置准备可以自由增加、勾选和删除。正式流程保持统一，避免每条内容出现一套不同的复杂清单。</div>
+          </div>
+          <div class="cards-wrap">
+            <div class="cards-grid" id="cards-grid"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-title">新增选题</div>
+      <div class="modal-field">
+        <label>选题名称</label>
+        <input type="text" id="modal-title" placeholder="如 DJI Mic Mini 2s" />
+      </div>
+      <div class="modal-field">
+        <label>工作流类型</label>
+        <select id="modal-type">
+          <option value="self">自制内容</option>
+          <option value="commercial">商单</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label>发布日期</label>
+        <input type="date" id="modal-date" />
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn modal-btn-cancel" id="modal-cancel">取消</button>
+        <button class="modal-btn modal-btn-primary" id="modal-confirm">确认添加</button>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="import-file" accept="application/json" hidden />
+  <div id="toast"></div>
+
+  <script>
+    /**
+     * @file CONTENT OS — 内容项目管理看板
+     * @description 单文件原生 JS 实现，含倒排日历与选题卡联动
+     */
+
+    const MS_DAY = 86400000;
+    const TODAY = (() => { const d = new Date(); d.setHours(0,0,0,0); return d; })();
+    const YEAR = TODAY.getFullYear();
+    const DEFAULT_START = new Date(YEAR, 6, 1);
+    const DEFAULT_END = new Date(YEAR, 11, 31);
+
+    /** @type {Record<string, Array<{id:string,name:string,days:number,color:string,desc?:string}>>} */
+    const WORKFLOWS = {
+      self: [
+        { id: 'prep', name: '前置准备', days: 1, color: '#B08A53', desc: '前置准备阶段' },
+        { id: 'script', name: '脚本', days: 1, color: '#A46858', desc: '撰写脚本阶段' },
+        { id: 'a_roll', name: 'A-roll', days: 1, color: '#8B9B7A' },
+        { id: 'b_roll', name: 'B-roll', days: 1, color: '#7C8E99' },
+        { id: 'edit1', name: '剪辑 1/2', days: 1, color: '#C6A25C', desc: '剪辑第一阶段' },
+        { id: 'edit2', name: '剪辑 2/2', days: 1, color: '#C6A25C', desc: '剪辑第二阶段' },
+        { id: 'package', name: '包装', days: 1, color: '#EDE7E0' },
+        { id: 'cover', name: '封面', days: 1, color: '#EFE7DD' },
+        { id: 'copy', name: '文案', days: 1, color: '#F3EAEA' },
+        { id: 'publish', name: '发布', days: 1, color: '#E0E8DE' }
+      ],
+      commercial: [
+        { id: 'brief', name: '收到并拆解 Brief', days: 1, color: '#D8C5AC' },
+        { id: 'outline', name: '完成大纲', days: 1, color: '#D8C5AC' },
+        { id: 'prep', name: '前置准备', days: 1, color: '#B08A53', desc: '前置准备阶段' },
+        { id: 'script', name: '脚本', days: 1, color: '#A46858', desc: '撰写脚本阶段' },
+        { id: 'a_roll', name: 'A-roll', days: 1, color: '#8B9B7A' },
+        { id: 'b_roll', name: 'B-roll', days: 1, color: '#7C8E99' },
+        { id: 'edit1', name: '剪辑 1/2', days: 1, color: '#C6A25C', desc: '剪辑第一阶段' },
+        { id: 'edit2', name: '剪辑 2/2', days: 1, color: '#C6A25C', desc: '剪辑第二阶段' },
+        { id: 'package', name: '包装', days: 1, color: '#EDE7E0' },
+        { id: 'cover', name: '封面', days: 1, color: '#EFE7DD' },
+        { id: 'copy', name: '文案', days: 1, color: '#F3EAEA' },
+        { id: 'publish', name: '发布', days: 1, color: '#E0E8DE' }
+      ]
+    };
+
+    /** @type {{topics: Topic[], selectedTopicId: string|null, viewStart: Date, viewEnd: Date, activeNav: string, drag: object|null}} */
+    const state = {
+      topics: [],
+      selectedTopicId: null,
+      viewStart: DEFAULT_START,
+      viewEnd: DEFAULT_END,
+      activeNav: 'topics',
+      drag: null
+    };
+
+    /**
+     * @typedef {{text: string, completed: boolean}} PrepItem
+     * @typedef {{id: string, name: string, days: number, color: string, startDate: string, endDate: string, completed: boolean}} Task
+     * @typedef {{id: string, title: string, publishDate: string, type: 'self'|'commercial', prep: PrepItem[], tasks: Task[]}} Topic
+     */
+
+    /** @returns {string} */
+    function uid() { return 't' + Date.now() + Math.random().toString(36).slice(2, 6); }
+
+    /** @param {Date} d @param {number} n @returns {Date} */
+    function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+
+    /** @param {Date} d @returns {string} */
+    function fmt(d) { return d.toISOString().slice(0, 10); }
+
+    /** @param {string} s @returns {Date} */
+    function parse(s) { return new Date(s + 'T00:00:00'); }
+
+    /** @param {string} s @returns {string} */
+    function esc(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    /** 颜色数组 */
+    const TOPIC_COLORS = [
+      { main: '#B08A53', bg: '#F5EFE6' },
+      { main: '#A46858', bg: '#F3EAE7' },
+      { main: '#8B9B7A', bg: '#E7ECE4' },
+      { main: '#7C8E99', bg: '#E5E9EC' },
+      { main: '#C6A25C', bg: '#F8F3E7' },
+      { main: '#9B8AA5', bg: '#ECE8EF' },
+      { main: '#6B8E8F', bg: '#E3EAEA' },
+      { main: '#D4A373', bg: '#F8F1E8' }
+    ];
+
+    /** 获取选题颜色 */
+    function getTopicColor(index) {
+      return TOPIC_COLORS[index % TOPIC_COLORS.length];
+    }
+
+    /** 格式化日期为 M/D 格式 */
+    function fmtShortDate(dateStr) {
+      const d = parse(dateStr);
+      return `${d.getMonth() + 1}/${d.getDate()}`;
+    }
+
+    /**
+     * 倒排计算单个阶段日期区间
+     * @param {{id:string,days:number}} stage
+     * @param {string} publishDate
+     * @param {typeof WORKFLOWS.self} workflow
+     */
+    function taskRange(stage, publishDate, workflow) {
+      // 包装、封面、文案、发布都在发布日期当天
+      if (['package', 'cover', 'copy', 'publish'].includes(stage.id)) {
+        return { startDate: publishDate, endDate: publishDate };
+      }
+      
+      const idx = workflow.findIndex(s => s.id === stage.id);
+      // 找到从当前阶段到发布阶段（不包括发布阶段）的总天数
+      let laterDays = 0;
+      for (let i = idx + 1; i < workflow.length; i++) {
+        const s = workflow[i];
+        // 只计算非堆叠的任务
+        if (!['package', 'cover', 'copy', 'publish'].includes(s.id)) {
+          laterDays += s.days;
+        }
+      }
+      const end = addDays(parse(publishDate), -laterDays);
+      const start = addDays(end, -(stage.days - 1));
+      return { startDate: fmt(start), endDate: fmt(end) };
+    }
+
+    /**
+     * 根据发布日期重建工作流任务
+     * @param {Topic} topic
+     * @returns {Task[]}
+     */
+    function buildWorkflow(topic) {
+      const wf = topic.type === 'commercial' ? WORKFLOWS.commercial : WORKFLOWS.self;
+      return wf.map(stage => {
+        const existing = (topic.tasks || []).find(t => t.id === stage.id);
+        const range = taskRange(stage, topic.publishDate, wf);
+        return {
+          id: stage.id,
+          name: stage.name,
+          days: stage.days,
+          color: stage.color,
+          completed: existing ? existing.completed : false,
+          ...range
+        };
+      });
+    }
+
+    /** @param {Topic} topic @returns {number} */
+    function calcProgress(topic) {
+      const total = topic.prep.length + topic.tasks.length;
+      if (!total) return 0;
+      const done = topic.prep.filter(p => p.completed).length + topic.tasks.filter(t => t.completed).length;
+      return Math.round((done / total) * 100);
+    }
+
+    /** 规范化前置准备数据结构 */
+    function normalizePrep(prep) {
+      if (!Array.isArray(prep)) return [];
+      return prep.map(p => typeof p === 'string' ? { text: p, completed: false } : { text: p.text || '', completed: !!p.completed });
+    }
+
+    /** 初始化模拟数据 */
+    function seedData() {
+      const base = addDays(TODAY, 14);
+      state.topics = [
+        {
+          id: 't1', title: 'DJI Mic Mini 2s', type: 'self',
+          publishDate: fmt(addDays(base, 0)),
+          prep: [
+            { text: '产品功能研究与竞品对比', completed: true },
+            { text: '收集官方素材与参数', completed: false }
+          ],
+          tasks: []
+        },
+        {
+          id: 't2', title: '夏日充电器横评', type: 'commercial',
+          publishDate: fmt(addDays(base, 7)),
+          prep: [
+            { text: '客户 Brief 确认', completed: true },
+            { text: '品牌审核节点预留', completed: false }
+          ],
+          tasks: []
+        },
+        {
+          id: 't3', title: '用 AI 做 BGM 教程', type: 'self',
+          publishDate: fmt(addDays(base, 14)),
+          prep: [{ text: '音乐风格探索与工具调研', completed: false }],
+          tasks: []
+        },
+        {
+          id: 't4', title: 'WAIC 大会现场报道', type: 'commercial',
+          publishDate: fmt(addDays(base, 21)),
+          prep: [
+            { text: '展会日程与采访名单', completed: false },
+            { text: '媒体证件与设备清单', completed: false }
+          ],
+          tasks: []
+        },
+        {
+          id: 't5', title: '桌面收纳好物分享', type: 'self',
+          publishDate: fmt(addDays(base, 28)),
+          prep: [{ text: '选品清单整理', completed: false }],
+          tasks: []
+        },
+        {
+          id: 't6', title: '智能手表续航实测', type: 'self',
+          publishDate: fmt(addDays(base, 35)),
+          prep: [{ text: '测试方案设计', completed: false }],
+          tasks: []
+        }
+      ];
+      state.topics.forEach(t => {
+        t.prep = normalizePrep(t.prep);
+        t.tasks = buildWorkflow(t);
+      });
+    }
+
+    /** 扩展时间轴右边界 */
+    function updateBounds() {
+      let maxEnd = DEFAULT_END;
+      state.topics.forEach(t => {
+        const pd = parse(t.publishDate);
+        if (pd > maxEnd) maxEnd = pd;
+        t.tasks.forEach(task => {
+          const ed = parse(task.endDate);
+          if (ed > maxEnd) maxEnd = ed;
+        });
+      });
+      state.viewEnd = maxEnd;
+      state.viewStart = DEFAULT_START;
+    }
+
+    /** @returns {Date[]} */
+    function getDates() {
+      const dates = [];
+      const n = Math.round((state.viewEnd - state.viewStart) / MS_DAY) + 1;
+      for (let i = 0; i < n; i++) dates.push(addDays(state.viewStart, i));
+      document.documentElement.style.setProperty('--timeline-day-count', n);
+      return dates;
+    }
+
+    /** @param {string} msg */
+    function toast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(el._timer);
+      el._timer = setTimeout(() => el.classList.remove('show'), 2400);
+    }
+
+    /** 持久化 */
+    function save() {
+      try { localStorage.setItem('content-os-v2', JSON.stringify(state.topics)); } catch (_) {}
+    }
+
+    function load() {
+      try {
+        const raw = localStorage.getItem('content-os-v2');
+        if (!raw) return false;
+        const topics = JSON.parse(raw);
+        if (!Array.isArray(topics) || !topics.length) return false;
+        
+        // 为每个 topic 重建工作流任务，但保留完成状态
+        state.topics = topics.map(t => {
+          // 先创建新的工作流任务
+          const newTopic = { ...t, prep: normalizePrep(t.prep) };
+          newTopic.tasks = buildWorkflow(newTopic);
+          
+          // 如果旧任务有完成状态，我们尽量保留
+          if (Array.isArray(t.tasks)) {
+            const oldTasksMap = {};
+            t.tasks.forEach(task => {
+              oldTasksMap[task.id] = task.completed;
+            });
+            
+            newTopic.tasks.forEach(newTask => {
+              if (oldTasksMap.hasOwnProperty(newTask.id)) {
+                newTask.completed = oldTasksMap[newTask.id];
+              }
+            });
+          }
+          
+          return newTopic;
+        });
+        return true;
+      } catch (_) { return false; }
+    }
+
+    /** 渲染侧边栏 */
+    function renderSidebar() {
+      document.getElementById('sidebar').innerHTML = `
+        <div class="sidebar-top">
+          <div class="brand-title">CONTENT OS</div>
+          <div class="brand-subtitle">内容项目看板</div>
+        </div>
+        
+        <nav class="nav-list">
+          <button class="nav-pill ${state.activeNav === 'timeline' ? 'active' : ''}" data-nav="timeline">排期日历</button>
+          <button class="nav-pill ${state.activeNav === 'topics' ? 'active' : ''}" data-nav="topics">选题卡</button>
+        </nav>
+        
+        <div style="padding: 0 12px; margin-top: 8px;">
+          <div class="card-section-title" style="padding: 12px 0 4px 0;">选题目录</div>
+        </div>
+        
+        <div class="topic-list" id="sidebar-topic-list">
+          ${state.topics.map(topic => {
+            const sel = state.selectedTopicId === topic.id;
+            return `
+              <div class="topic-item ${sel ? 'selected' : ''}" data-sidebar-topic="${topic.id}">
+                <div class="topic-item-title">${esc(topic.title)}</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+        
+        <div class="sidebar-bottom">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+            <button class="tool-btn" id="btn-export">导出备份</button>
+            <button class="tool-btn" id="btn-import">导入恢复</button>
+          </div>
+          <div class="sidebar-bottom-text">
+            建议把备份文件保存到 iCloud 或其他云盘<br>
+            拖动选题到日历日期，即可修改发布日期并自动倒排。手机上可先点选题，再点日期。
+          </div>
+        </div>
+      `;
+
+      // 绑定导航事件
+      document.querySelectorAll('[data-nav]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.activeNav = btn.dataset.nav;
+          state.selectedTopicId = null;
+          document.getElementById(state.activeNav === 'timeline' ? 'timeline-section' : 'topics-section')
+            .scrollIntoView({ behavior: 'smooth', block: 'start' });
+          render();
+        });
+      });
+
+      // 绑定侧边栏选题点击事件
+      document.querySelectorAll('[data-sidebar-topic]').forEach(item => {
+        item.addEventListener('click', () => {
+          state.selectedTopicId = item.dataset.sidebarTopic;
+          state.activeNav = 'topics';
+          render();
+          // 等待渲染完成后滚动到对应选题卡
+          setTimeout(() => {
+            const cardEl = document.querySelector(`[data-card-id="${item.dataset.sidebarTopic}"]`);
+            if (cardEl) {
+              cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              // 高亮效果
+              cardEl.style.transition = 'box-shadow 0.3s ease';
+              cardEl.style.boxShadow = '0 0 0 3px rgba(176, 138, 83, 0.4)';
+              setTimeout(() => {
+                cardEl.style.boxShadow = '';
+              }, 1500);
+            } else {
+              document.getElementById('topics-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }, 50);
+        });
+      });
+
+      document.getElementById('btn-export').onclick = () => {
+        const blob = new Blob([JSON.stringify({ topics: state.topics }, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `content-os-${fmt(new Date())}.json`;
+        a.click();
+        toast('已导出备份');
+      };
+      document.getElementById('btn-import').onclick = () => document.getElementById('import-file').click();
+    }
+
+    /**
+     * 渲染排期日历
+     */
+    function renderTimeline() {
+      updateBounds();
+      const dates = getDates();
+      const todayStr = fmt(TODAY);
+      const CELL = 44;
+
+      /** 月份分组 */
+      const months = [];
+      dates.forEach(d => {
+        const key = `${d.getFullYear()}-${d.getMonth()}`;
+        const last = months[months.length - 1];
+        if (!last || last.key !== key) months.push({ key, label: `${d.getMonth() + 1}月`, span: 1 });
+        else last.span++;
+      });
+
+      let monthHtml = '<div class="month-corner"></div>';
+      months.forEach(m => {
+        monthHtml += `<div class="month-label-cell" style="width:${m.span * CELL}px;min-width:${m.span * CELL}px">${m.label}</div>`;
+      });
+
+      let headerHtml = '<div class="timeline-corner">选题</div>';
+      dates.forEach(d => {
+        const cls = [d.getDay() === 0 || d.getDay() === 6 ? 'weekend' : '', fmt(d) === todayStr ? 'today' : ''].filter(Boolean).join(' ');
+        headerHtml += `<div class="day-cell ${cls}"><span class="day-week">${'日一二三四五六'[d.getDay()]}</span><span class="day-date">${d.getDate()}</span></div>`;
+      });
+
+      let rowsHtml = '';
+      state.topics.forEach((topic, index) => {
+        const sel = state.selectedTopicId === topic.id;
+        const colorObj = getTopicColor(index);
+        const progress = calcProgress(topic);
+        rowsHtml += `<div class="timeline-row" data-row-id="${topic.id}">`;
+        rowsHtml += `<div class="topic-label ${sel ? 'selected' : ''}" draggable="true" data-label-id="${topic.id}" style="border-left-color: ${colorObj.main}; background-color: ${colorObj.bg};">
+          <div class="topic-label-name">${esc(topic.title)}</div>
+          <div class="topic-label-meta">
+            <svg class="topic-label-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+            <span class="topic-label-date">${fmtShortDate(topic.publishDate)}</span>
+            <span class="topic-label-progress">${progress}%</span>
+          </div>
+        </div>`;
+        rowsHtml += `<div class="track-area" data-track-id="${topic.id}">`;
+        dates.forEach(d => {
+          const ds = fmt(d);
+          const cls = [ds === todayStr ? 'today' : '', d.getDay() === 0 || d.getDay() === 6 ? 'weekend' : ''].filter(Boolean).join(' ');
+          rowsHtml += `<div class="track-cell ${cls}" data-date="${ds}" data-track="${topic.id}"></div>`;
+        });
+        // 先收集需要堆叠的任务
+        const packageTask = topic.tasks.find(t => t.id === 'package');
+        const coverTask = topic.tasks.find(t => t.id === 'cover');
+        const copyTask = topic.tasks.find(t => t.id === 'copy');
+        const publishTask = topic.tasks.find(t => t.id === 'publish');
+        
+        // 检查这些任务是否都在同一天
+        const allSameDate = packageTask && coverTask && copyTask && publishTask && 
+          packageTask.startDate === coverTask.startDate && 
+          packageTask.startDate === copyTask.startDate && 
+          packageTask.startDate === publishTask.startDate;
+        
+        topic.tasks.forEach(task => {
+          const si = dates.findIndex(d => fmt(d) === task.startDate);
+          const ei = dates.findIndex(d => fmt(d) === task.endDate);
+          if (si < 0 || ei < 0) return;
+          const left = si * CELL + 2;
+          const width = (ei - si + 1) * CELL - 4;
+          const label = task.id === 'publish' ? 'D-Day' : `${task.startDate.slice(5)}`;
+          
+          let stackClass = '';
+          // 检查是否是需要堆叠的任务
+          if (allSameDate) {
+            if (task.id === 'package') {
+              stackClass = 'stacked-top';
+            } else if (task.id === 'cover') {
+              stackClass = 'stacked-middle-1';
+            } else if (task.id === 'copy') {
+              stackClass = 'stacked-middle-2';
+            } else if (task.id === 'publish') {
+              stackClass = 'stacked-bottom';
+            }
+          }
+          
+          rowsHtml += `<div class="task-block stage-${task.id} ${task.completed ? 'completed' : ''} ${stackClass}"
+            draggable="true" data-task-topic="${topic.id}" data-task-id="${task.id}"
+            style="left:${left}px;width:${width}px">
+            <div class="task-block-name">${esc(task.name)}</div>
+            <div class="task-block-date">${label}</div>
+          </div>`;
+        });
+        rowsHtml += '</div></div>';
+      });
+
+      document.getElementById('timeline-inner').innerHTML =
+        `<div class="timeline-month-row">${monthHtml}</div>` +
+        `<div class="timeline-header-row">${headerHtml}</div>` +
+        rowsHtml;
+
+      bindTimelineEvents(dates, CELL);
+    }
+
+    /**
+     * 绑定日历区交互事件
+     * @param {Date[]} dates
+     * @param {number} cellW
+     */
+    function bindTimelineEvents(dates, cellW) {
+      const inner = document.getElementById('timeline-inner');
+
+      /** 选题标签：选中 / 整条移动 / 顺序调整 */
+      inner.querySelectorAll('.topic-label').forEach(label => {
+        const topicId = label.dataset.labelId;
+
+        label.addEventListener('click', e => {
+          if (state.drag?.moved) return;
+          state.selectedTopicId = topicId;
+          render();
+        });
+
+        label.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('application/x-topic-move', topicId);
+          e.dataTransfer.setData('application/x-topic-reorder', topicId);
+          e.dataTransfer.effectAllowed = 'move';
+          label.classList.add('dragging');
+          state.drag = { type: 'topic', id: topicId, moved: false };
+        });
+
+        label.addEventListener('dragend', () => {
+          label.classList.remove('dragging');
+          state.drag = null;
+        });
+
+        label.addEventListener('dragover', e => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+        });
+
+        label.addEventListener('drop', e => {
+          e.preventDefault();
+          const srcId = e.dataTransfer.getData('application/x-topic-reorder');
+          const tgtId = label.dataset.labelId;
+          if (srcId && tgtId && srcId !== tgtId) reorderTopics(srcId, tgtId);
+        });
+
+        /** 触屏：点击选中 */
+        label.addEventListener('touchend', e => {
+          e.preventDefault();
+          state.selectedTopicId = topicId;
+          render();
+          toast('已选中，点击目标日期移动排期');
+        });
+      });
+
+      /** 轨道格：整条排期落点 / 触屏落点 */
+      inner.querySelectorAll('.track-cell').forEach(cell => {
+        cell.addEventListener('dragover', e => {
+          e.preventDefault();
+          cell.classList.add('drop-target');
+        });
+        cell.addEventListener('dragleave', () => cell.classList.remove('drop-target'));
+        cell.addEventListener('drop', e => {
+          e.preventDefault();
+          cell.classList.remove('drop-target');
+          const taskPayload = e.dataTransfer.getData('application/x-task-move');
+          if (taskPayload) {
+            const { topicId, taskId } = JSON.parse(taskPayload);
+            moveSingleTask(topicId, taskId, cell.dataset.date);
+            return;
+          }
+          const topicId = e.dataTransfer.getData('application/x-topic-move');
+          if (topicId) {
+            moveWholeSchedule(topicId, cell.dataset.date);
+            if (state.drag) state.drag.moved = true;
+          }
+        });
+        cell.addEventListener('click', () => {
+          if (!state.selectedTopicId) return;
+          moveWholeSchedule(state.selectedTopicId, cell.dataset.date);
+        });
+        cell.addEventListener('touchend', e => {
+          e.preventDefault();
+          if (!state.selectedTopicId) return;
+          moveWholeSchedule(state.selectedTopicId, cell.dataset.date);
+        });
+      });
+
+      /** 任务块：单块微调 */
+      inner.querySelectorAll('.task-block').forEach(block => {
+        block.addEventListener('dragstart', e => {
+          e.stopPropagation();
+          const payload = { topicId: block.dataset.taskTopic, taskId: block.dataset.taskId };
+          e.dataTransfer.setData('application/x-task-move', JSON.stringify(payload));
+          e.dataTransfer.effectAllowed = 'move';
+        });
+        block.addEventListener('click', e => e.stopPropagation());
+      });
+
+      /** 鼠标拖拽整条排期（增强体验） */
+      inner.querySelectorAll('.topic-label').forEach(label => {
+        let dragging = false;
+        let topicId = label.dataset.labelId;
+
+        label.addEventListener('mousedown', e => {
+          if (e.button !== 0) return;
+          dragging = true;
+          topicId = label.dataset.labelId;
+          state.selectedTopicId = topicId;
+        });
+
+        document.addEventListener('mouseup', () => { dragging = false; });
+
+        label.addEventListener('mouseenter', () => {
+          if (!dragging) return;
+          const row = label.closest('.timeline-row');
+          if (row) row.style.background = 'rgba(176,138,83,0.04)';
+        });
+        label.addEventListener('mouseleave', () => {
+          const row = label.closest('.timeline-row');
+          if (row) row.style.background = '';
+        });
+      });
+    }
+
+    /**
+     * 移动整条排期至新发布日
+     * @param {string} topicId
+     * @param {string} newDate
+     */
+    function moveWholeSchedule(topicId, newDate) {
+      const topic = state.topics.find(t => t.id === topicId);
+      if (!topic || !newDate) return;
+      topic.publishDate = newDate;
+      topic.tasks = buildWorkflow(topic);
+      save();
+      render();
+      toast(`「${topic.title}」发布日 → ${newDate}`);
+    }
+
+    /**
+     * 微调单个任务块日期
+     * @param {string} topicId
+     * @param {string} taskId
+     * @param {string} newStart
+     */
+    function moveSingleTask(topicId, taskId, newStart) {
+      const topic = state.topics.find(t => t.id === topicId);
+      if (!topic) return;
+      
+      // 如果是拖动"发布"任务
+      if (taskId === 'publish') {
+        // 只改变发布日期，其他任务保持不动
+        topic.publishDate = newStart;
+        
+        // 找到包装、文案、封面、发布这几个任务
+        const publishTask = topic.tasks.find(t => t.id === 'publish');
+        const coverTask = topic.tasks.find(t => t.id === 'cover');
+        const copyTask = topic.tasks.find(t => t.id === 'copy');
+        const packageTask = topic.tasks.find(t => t.id === 'package');
+        
+        // 计算日期偏移
+        const dateOffset = daysBetween(parse(publishTask.startDate), parse(newStart));
+        
+        // 更新这几个任务的日期到同一天
+        if (publishTask) {
+          publishTask.startDate = newStart;
+          publishTask.endDate = fmt(addDays(parse(newStart), publishTask.days - 1));
+        }
+        if (coverTask) {
+          coverTask.startDate = newStart;
+          coverTask.endDate = fmt(addDays(parse(newStart), coverTask.days - 1));
+        }
+        if (copyTask) {
+          copyTask.startDate = newStart;
+          copyTask.endDate = fmt(addDays(parse(newStart), copyTask.days - 1));
+        }
+        if (packageTask) {
+          packageTask.startDate = newStart;
+          packageTask.endDate = fmt(addDays(parse(newStart), packageTask.days - 1));
+        }
+      } else {
+        // 其他任务正常移动
+        const task = topic.tasks.find(t => t.id === taskId);
+        if (!task) return;
+        task.startDate = newStart;
+        task.endDate = fmt(addDays(parse(newStart), task.days - 1));
+      }
+      
+      save();
+      render();
+      toast(`已调整「${topic.title}」日期`);
+    }
+
+    /** @param {string} fromId @param {string} toId */
+    function reorderTopics(fromId, toId) {
+      const fi = state.topics.findIndex(t => t.id === fromId);
+      const ti = state.topics.findIndex(t => t.id === toId);
+      if (fi < 0 || ti < 0 || fi === ti) return;
+      const [item] = state.topics.splice(fi, 1);
+      state.topics.splice(ti, 0, item);
+      save();
+      render();
+      toast('已调整选题顺序');
+    }
+
+    /** 渲染选题卡网格 */
+    function renderCards() {
+      const grid = document.getElementById('cards-grid');
+      grid.innerHTML = state.topics.map(topic => {
+        const pct = calcProgress(topic);
+        const sel = state.selectedTopicId === topic.id;
+        return `
+        <div class="topic-card ${sel ? 'selected' : ''}" draggable="true" data-card-id="${topic.id}">
+          <div class="card-head">
+            <div class="card-head-left">
+              <div class="card-title">${esc(topic.title)}</div>
+              <select class="card-type-select" data-type-select="${topic.id}">
+                <option value="self" ${topic.type === 'self' ? 'selected' : ''}>自制内容</option>
+                <option value="commercial" ${topic.type === 'commercial' ? 'selected' : ''}>商单</option>
+              </select>
+            </div>
+            <div class="card-progress-wrap">
+              <div class="card-progress-pct">${pct}%</div>
+              <div class="card-progress-label">完成进度</div>
+            </div>
+          </div>
+          <div class="card-progress-bar"><div class="card-progress-fill" style="width:${pct}%"></div></div>
+
+          <div>
+            <div class="card-section-title">前置准备</div>
+            <div class="prep-row">
+              <input class="prep-input" placeholder="添加准备项…" data-prep-in="${topic.id}" />
+              <button class="prep-add-btn" data-prep-add="${topic.id}">+</button>
+            </div>
+            ${topic.prep.map((p, i) => `
+              <div class="prep-item">
+                <input type="checkbox" class="item-checkbox" data-prep-chk="${topic.id}:${i}" ${p.completed ? 'checked' : ''} />
+                <span class="item-text">${esc(p.text)}</span>
+                <button class="item-remove" data-prep-rm="${topic.id}:${i}">✕</button>
+              </div>
+            `).join('')}
+          </div>
+
+          <div>
+            <div class="card-section-title">固定制作流程</div>
+            ${topic.tasks.map(task => `
+              <div class="workflow-item ${task.completed ? 'done' : ''}">
+                <input type="checkbox" class="item-checkbox" data-task-chk="${topic.id}:${task.id}" ${task.completed ? 'checked' : ''} />
+                <span class="workflow-dot" style="background:${task.color}"></span>
+                <span class="item-text">${esc(task.name)}</span>
+                <span class="item-date">${task.startDate.slice(5)} → ${task.endDate.slice(5)}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>`;
+      }).join('');
+
+      /** 卡片拖拽排序 */
+      grid.querySelectorAll('.topic-card').forEach(card => {
+        card.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('application/x-card-reorder', card.dataset.cardId);
+          e.dataTransfer.effectAllowed = 'move';
+        });
+        card.addEventListener('dragover', e => { e.preventDefault(); card.classList.add('drag-over'); });
+        card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+        card.addEventListener('drop', e => {
+          e.preventDefault();
+          card.classList.remove('drag-over');
+          const src = e.dataTransfer.getData('application/x-card-reorder');
+          if (src && src !== card.dataset.cardId) reorderTopics(src, card.dataset.cardId);
+        });
+        card.addEventListener('click', () => {
+          state.selectedTopicId = card.dataset.cardId;
+          render();
+        });
+      });
+
+      /** 工作流类型切换 */
+      grid.querySelectorAll('[data-type-select]').forEach(sel => {
+        sel.addEventListener('change', () => {
+          const topic = state.topics.find(t => t.id === sel.dataset.typeSelect);
+          if (!topic) return;
+          topic.type = sel.value;
+          topic.tasks = buildWorkflow(topic);
+          save();
+          render();
+          toast(`已切换为${sel.value === 'commercial' ? '商单' : '自制内容'}流程`);
+        });
+        sel.addEventListener('click', e => e.stopPropagation());
+      });
+
+      /** 前置准备 CRUD */
+      grid.querySelectorAll('[data-prep-add]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          const id = btn.dataset.prepAdd;
+          const input = document.querySelector(`[data-prep-in="${id}"]`);
+          const text = input?.value.trim();
+          if (!text) return;
+          const topic = state.topics.find(t => t.id === id);
+          topic.prep.push({ text, completed: false });
+          save(); 
+          render();
+        });
+      });
+
+      // 添加回车键支持
+      grid.querySelectorAll('[data-prep-in]').forEach(input => {
+        input.addEventListener('keypress', e => {
+          e.stopPropagation();
+          if (e.key === 'Enter') {
+            const id = input.dataset.prepIn;
+            const text = input?.value.trim();
+            if (!text) return;
+            const topic = state.topics.find(t => t.id === id);
+            topic.prep.push({ text, completed: false });
+            save(); 
+            render();
+          }
+        });
+        input.addEventListener('click', e => {
+          e.stopPropagation();
+        });
+      });
+      grid.querySelectorAll('[data-prep-rm]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          const [id, idx] = btn.dataset.prepRm.split(':');
+          state.topics.find(t => t.id === id)?.prep.splice(+idx, 1);
+          save(); render();
+        });
+      });
+      grid.querySelectorAll('[data-prep-chk]').forEach(chk => {
+        chk.addEventListener('change', e => {
+          e.stopPropagation();
+          const [id, idx] = chk.dataset.prepChk.split(':');
+          const item = state.topics.find(t => t.id === id)?.prep[+idx];
+          if (item) item.completed = chk.checked;
+          save(); render();
+        });
+      });
+
+      /** 固定流程勾选 */
+      grid.querySelectorAll('[data-task-chk]').forEach(chk => {
+        chk.addEventListener('change', e => {
+          e.stopPropagation();
+          const [id, taskId] = chk.dataset.taskChk.split(':');
+          const task = state.topics.find(t => t.id === id)?.tasks.find(t => t.id === taskId);
+          if (task) task.completed = chk.checked;
+          save(); render();
+        });
+      });
+    }
+
+    /** 新增选题弹窗 */
+    function openAddModal(defaultDate) {
+      const overlay = document.getElementById('modal-overlay');
+      document.getElementById('modal-title').value = '';
+      document.getElementById('modal-type').value = 'self';
+      document.getElementById('modal-date').value = defaultDate || fmt(addDays(TODAY, 14));
+      overlay.classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('modal-overlay').classList.remove('open');
+    }
+
+    function confirmAdd() {
+      const title = document.getElementById('modal-title').value.trim();
+      const type = document.getElementById('modal-type').value;
+      const publishDate = document.getElementById('modal-date').value;
+      if (!title || !publishDate) { toast('请填写名称与发布日期'); return; }
+      const topic = { id: uid(), title, type, publishDate, prep: [], tasks: [] };
+      topic.tasks = buildWorkflow(topic);
+      state.topics.push(topic);
+      save();
+      closeModal();
+      render();
+      toast(`已添加「${title}」`);
+    }
+
+    /** 全局渲染 */
+    function render() {
+      renderSidebar();
+      renderTimeline();
+      renderCards();
+      // 确保 timeline 宽度正确
+      setTimeout(() => {
+        const timelineScroll = document.getElementById('timeline-scroll');
+        const timelineInner = document.getElementById('timeline-inner');
+        if (timelineScroll && timelineInner) {
+          const rows = timelineInner.querySelectorAll('.timeline-row');
+          let maxWidth = 0;
+          rows.forEach(row => {
+            maxWidth = Math.max(maxWidth, row.scrollWidth);
+          });
+          if (maxWidth > 0) {
+            timelineInner.style.minWidth = maxWidth + 'px';
+          }
+        }
+      }, 0);
+    }
+
+    /** 初始化 */
+    function init() {
+      if (!load()) seedData();
+      updateBounds();
+
+      document.getElementById('btn-add-topic').onclick = () => openAddModal();
+      document.getElementById('modal-cancel').onclick = closeModal;
+      document.getElementById('modal-confirm').onclick = confirmAdd;
+      document.getElementById('modal-overlay').addEventListener('click', e => {
+        if (e.target.id === 'modal-overlay') closeModal();
+      });
+
+      document.getElementById('import-file').addEventListener('change', e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+          try {
+            const data = JSON.parse(ev.target.result);
+            if (!Array.isArray(data.topics)) throw new Error('invalid');
+            state.topics = data.topics.map(t => ({
+              ...t, prep: normalizePrep(t.prep),
+              tasks: t.tasks?.length ? t.tasks : buildWorkflow(t)
+            }));
+            save(); render();
+            toast('导入成功');
+          } catch (_) { toast('导入失败'); }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+      });
+
+      render();
+    }
+
+    init();
+  </script>
+</body>
+</html>

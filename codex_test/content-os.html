@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CONTENT OS — 内容项目看板</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { poppins: ['Poppins', 'PingFang SC', 'Microsoft YaHei', 'sans-serif'] },
+      colors: { cream: '#F4EFE6', espresso: '#2C2A29', khaki: '#C4A882', rose: '#B5838D', sage: '#6D8B74', 'slate-blue': '#7B8FA1', gold: '#C9A96E', taupe: '#8B7E74', 'warm-brown': '#A0785C', lavender: '#9B8EA3' }
+    }
+  }
+};
+</script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: 'Poppins', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: #F4EFE6; color: #2C2A29;
+    -webkit-font-smoothing: antialiased; user-select: none;
+  }
+  .font-cn { font-family: 'PingFang SC', 'Microsoft YaHei', 'sans-serif'; }
+  ::-webkit-scrollbar { height: 5px; width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #C4A882; border-radius: 2px; }
+  .timeline-scroll { overflow-x: auto; overflow-y: hidden; }
+  .timeline-scroll::-webkit-scrollbar { height: 4px; }
+  .task-block {
+    position: absolute; top: 6px; height: 26px; border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 600; color: #fff; cursor: grab;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    padding: 0 4px; z-index: 2; transition: opacity 0.15s;
+    font-family: 'Poppins', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  }
+  .task-block:active { cursor: grabbing; }
+  .task-block.completed { opacity: 0.45; }
+  .task-block.completed::after { content: '\2713'; position: absolute; right: 3px; font-size: 8px; font-weight: 700; }
+  .task-block.dragging { opacity: 0.4; z-index: 100; }
+  .topic-label { cursor: grab; transition: background 0.15s; user-select: none; }
+  .topic-label:active { cursor: grabbing; }
+  .topic-label.selected { outline: 2px solid #2C2A29; outline-offset: -2px; background: #e8e0d4; }
+  .topic-label.drag-over { background: #e0d8c8; outline: 2px dashed #C4A882; outline-offset: -2px; }
+  .topic-card { transition: box-shadow 0.15s; }
+  .topic-card:hover { box-shadow: 0 1px 8px rgba(0,0,0,0.06); }
+  .topic-card.drag-over-card { outline: 2px dashed #C4A882; outline-offset: -1px; }
+  .progress-fill { transition: width 0.25s ease; }
+  .custom-checkbox {
+    appearance: none; -webkit-appearance: none; width: 13px; height: 13px;
+    border: 1.5px solid #C4A882; border-radius: 2px; cursor: pointer;
+    flex-shrink: 0; background: #fff; position: relative;
+  }
+  .custom-checkbox:checked { background: #2C2A29; border-color: #2C2A29; }
+  .custom-checkbox:checked::after {
+    content: ''; position: absolute; left: 3px; top: 0px;
+    width: 4px; height: 8px; border: solid #fff;
+    border-width: 0 1.5px 1.5px 0; transform: rotate(45deg);
+  }
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: #2C2A29; color: #F4EFE6; padding: 7px 18px; border-radius: 4px;
+    font-size: 11px; font-weight: 500; z-index: 999; opacity: 0;
+    transition: opacity 0.3s; pointer-events: none; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+  select {
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%232C2A29'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 7px center; padding-right: 22px;
+  }
+  .grid-v { position: absolute; top: 0; height: 100%; width: 1px; pointer-events: none; }
+</style>
+</head>
+<body class="flex h-full">
+
+<aside class="w-[190px] flex-shrink-0 bg-cream border-r border-[#e0d8c8] flex flex-col px-4 py-5">
+  <div class="mb-8">
+    <h1 class="text-[17px] font-extrabold tracking-tight text-espresso leading-tight font-poppins">CONTENT OS</h1>
+    <p class="text-[11px] text-[#8B7E74] mt-0.5 font-cn font-medium">内容项目看板</p>
+  </div>
+  <nav class="flex flex-col gap-0.5 flex-1">
+    <button class="nav-btn text-left px-3 py-2 text-[12px] font-semibold rounded-sm bg-white text-espresso font-cn" data-view="calendar">排期日历</button>
+    <button class="nav-btn text-left px-3 py-2 text-[12px] font-medium rounded-sm text-[#8B7E74] hover:bg-white/60 font-cn" data-view="cards">选题卡</button>
+  </nav>
+  <div class="flex flex-col gap-1.5 pt-3 border-t border-[#e0d8c8]">
+    <button onclick="exportData()" class="text-left px-3 py-1.5 text-[11px] font-semibold text-[#6D8B74] hover:bg-[#6D8B74]/10 rounded-sm font-cn transition-colors">导出备份</button>
+    <button onclick="importData()" class="text-left px-3 py-1.5 text-[11px] font-semibold text-[#7B8FA1] hover:bg-[#7B8FA1]/10 rounded-sm font-cn transition-colors">导入恢复</button>
+  </div>
+</aside>
+
+<main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+  <section class="flex-[0_0_52%] flex flex-col min-h-0 border-b border-[#e0d8c8]">
+    <div class="flex border-b border-[#e0d8c8]">
+      <div class="w-[142px] flex-shrink-0 px-3 py-1.5 border-r border-[#e0d8c8] flex items-end">
+        <span class="text-[10px] font-semibold text-[#8B7E74] tracking-wider uppercase font-poppins">Timeline</span>
+      </div>
+      <div id="monthHeader" class="flex-1 overflow-hidden timeline-scroll">
+        <div id="monthHeaderInner" class="relative" style="height:30px;"></div>
+      </div>
+    </div>
+    <div class="flex flex-1 min-h-0">
+      <div id="topicLabels" class="w-[142px] flex-shrink-0 border-r border-[#e0d8c8] overflow-y-auto"></div>
+      <div id="timelineBody" class="flex-1 timeline-scroll overflow-y-auto">
+        <div id="timelineContent" class="relative"></div>
+      </div>
+    </div>
+    <div class="flex border-t border-[#e0d8c8]">
+      <div class="w-[142px] flex-shrink-0 px-3 py-1.5 border-r border-[#e0d8c8]"></div>
+      <div class="flex-1 px-3 py-1.5">
+        <button onclick="addTopic()" class="text-[11px] font-semibold text-[#6D8B74] hover:text-[#4a6b52] font-cn transition-colors">+ 增加选题</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="flex-[0_0_48%] overflow-y-auto px-4 py-3">
+    <div class="mb-2">
+      <h2 class="text-[14px] font-bold text-espresso font-cn">选题卡</h2>
+      <p class="text-[10px] text-[#8B7E74] mt-0.5 font-cn leading-relaxed">前置准备可以自由增加、勾选和删除。正式流程保持统一，避免每条内容出现一套不同的复杂清单。</p>
+    </div>
+    <div id="topicCardsGrid" class="grid grid-cols-2 gap-3"></div>
+  </section>
+</main>
+
+<div id="toast" class="toast"></div>
+<input type="file" id="importFileInput" accept=".json" class="hidden" onchange="handleImport(event)">
+
+<script>
+// ========== DATA ==========
+const DAY_WIDTH = 14;
+const WORKFLOW_SELF = [
+  { name:'前置准备', daysBefore:7, color:'#C4A882' },
+  { name:'脚本', daysBefore:6, color:'#B5838D' },
+  { name:'A-roll', daysBefore:5, color:'#6D8B74' },
+  { name:'B-roll', daysBefore:4, color:'#7B8FA1' },
+  { name:'剪辑 1/2', daysBefore:3, color:'#C9A96E' },
+  { name:'剪辑 2/2', daysBefore:2, color:'#B5838D' },
+  { name:'包装', daysBefore:1, color:'#8B7E74' },
+  { name:'封面', daysBefore:1, color:'#6D8B74' },
+  { name:'发布', daysBefore:0, color:'#2C2A29' }
+];
+const WORKFLOW_COMMERCIAL = [
+  { name:'Brief 拆解', daysBefore:9, color:'#A0785C' },
+  { name:'完成大纲', daysBefore:8, color:'#9B8EA3' },
+  ...WORKFLOW_SELF
+];
+let topicIdCounter = 100;
+function newId() { return 't' + (topicIdCounter++); }
+function createTopic(title, type, publishDateStr) {
+  const preTasks = [
+    { id:'p0', text:'竞品分析调研', completed:false },
+    { id:'p1', text:'收集参考案例', completed:false },
+    { id:'p2', text:'确认拍摄场地/道具', completed:false }
+  ];
+  const wf = type === 'commercial' ? WORKFLOW_COMMERCIAL : WORKFLOW_SELF;
+  const tasks = wf.map((t, i) => ({ ...t, completed:false, idx:i }));
+  return { id:newId(), title, type, publishDate:publishDateStr, preTasks, tasks };
+}
+let topics = [
+  createTopic('DJI Mic Mini 2s 深度体验', 'self', '2026-07-20'),
+  createTopic('iPhone 17 Pro 影像评测', 'commercial', '2026-07-28'),
+  createTopic('Final Cut Pro 11 新功能详解', 'self', '2026-08-05'),
+  createTopic('Sony A7S4 首发上手体验', 'commercial', '2026-08-18'),
+  createTopic('达芬奇调色入门完全指南', 'self', '2026-09-01')
+];
+let selectedTopicId = null;
+
+// ========== DATE HELPERS ==========
+function parseDate(s) { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
+function fmtDate(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate()+n); return r; }
+function daysBetween(a, b) { return Math.round((b - a) / 86400000); }
+function getTimelineRange() {
+  if (!topics.length) { const s = new Date(2026,6,1), e = new Date(2026,11,31); return { start:s, end:e, totalDays:daysBetween(s,e)+1 }; }
+  let minD = null, maxD = null;
+  for (const t of topics) {
+    for (const tk of t.tasks) {
+      const d = addDays(parseDate(t.publishDate), -tk.daysBefore);
+      if (!minD || d < minD) minD = d;
+      if (!maxD || d > maxD) maxD = d;
+    }
+    const pd = parseDate(t.publishDate);
+    if (!maxD || pd > maxD) maxD = pd;
+  }
+  minD = addDays(minD, -3);
+  maxD = addDays(maxD, 3);
+  return { start:minD, end:maxD, totalDays:daysBetween(minD,maxD)+1 };
+}
+function pixelToDate(px, range) {
+  const di = Math.round(px / DAY_WIDTH);
+  return addDays(range.start, Math.max(0, Math.min(range.totalDays-1, di)));
+}
+function dateToPixel(date, range) { return daysBetween(range.start, date) * DAY_WIDTH; }
+const MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+
+// ========== RENDER TIMELINE ==========
+function renderTimeline() {
+  const range = getTimelineRange();
+  window._tlRange = range;
+  const totalW = range.totalDays * DAY_WIDTH;
+  const mh = document.getElementById('monthHeaderInner');
+  mh.style.width = totalW + 'px';
+  mh.style.height = '30px';
+  mh.style.position = 'relative';
+  let h = '';
+  let curM = -1;
+  for (let d = 0; d < range.totalDays; d++) {
+    const date = addDays(range.start, d);
+    const m = date.getMonth();
+    if (m !== curM) {
+      curM = m;
+      h += '<div style="position:absolute;left:' + (d*DAY_WIDTH) + 'px;top:2px;font-size:10px;font-weight:700;color:#2C2A29;font-family:Poppins,sans-serif;white-space:nowrap;">' + date.getFullYear() + '.' + MONTHS[m] + '</div>';
+      h += '<div class="grid-v" style="left:' + (d*DAY_WIDTH) + 'px;background:#C4A882;"></div>';
+    }
+    if (d % 7 === 0 && d > 0) {
+      h += '<div class="grid-v" style="left:' + (d*DAY_WIDTH) + 'px;background:#e8e0d4;"></div>';
+    }
+    if (d % 7 === 0) {
+      h += '<div style="position:absolute;left:' + (d*DAY_WIDTH+1) + 'px;top:17px;font-size:8px;font-weight:500;color:#8B7E74;font-family:Poppins,sans-serif;">' + date.getDate() + '</div>';
+    }
+  }
+  mh.innerHTML = h;
+
+  const tc = document.getElementById('timelineContent');
+  tc.style.width = totalW + 'px';
+  tc.style.minHeight = (topics.length * 38 + 2) + 'px';
+  let rows = '';
+  for (const topic of topics) {
+    let blocks = '';
+    for (const task of topic.tasks) {
+      const taskDate = addDays(parseDate(topic.publishDate), -task.daysBefore);
+      const left = dateToPixel(taskDate, range);
+      const w = Math.max(DAY_WIDTH - 2, DAY_WIDTH - 2);
+      const cls = task.completed ? 'completed' : '';
+      const title = task.name.length > 5 ? task.name.substring(0,5) + '\u2026' : task.name;
+      blocks += '<div class="task-block ' + cls + '" style="left:' + left + 'px;width:' + w + 'px;background:' + task.color + ';" draggable="true" data-topic-id="' + topic.id + '" data-task-idx="' + task.idx + '" title="' + task.name + ' \u00b7 ' + fmtDate(taskDate) + '">' + title + '</div>';
+    }
+    rows += '<div style="position:relative;height:38px;border-bottom:1px solid #f0ece4;">' + blocks + '</div>';
+  }
+  tc.innerHTML = rows;
+
+  const tlBody = document.getElementById('timelineBody');
+  const mhC = document.getElementById('monthHeader');
+  tlBody.onscroll = function() { mhC.scrollLeft = tlBody.scrollLeft; };
+  mhC.onscroll = function() { tlBody.scrollLeft = mhC.scrollLeft; };
+
+  renderTopicLabels();
+  attachDragEvents();
+}
+
+function renderTopicLabels() {
+  const ld = document.getElementById('topicLabels');
+  let h = '';
+  for (const t of topics) {
+    const cls = selectedTopicId === t.id ? 'selected' : '';
+    h += '<div class="topic-label ' + cls + ' border-b border-[#f0ece4] h-[38px] flex items-center px-3 text-[12px] font-semibold text-espresso font-cn" draggable="true" data-topic-id="' + t.id + '" onclick="selectTopicLabel(\'' + t.id + '\')">' + t.title + '</div>';
+  }
+  ld.innerHTML = h;
+
+  document.querySelectorAll('.topic-label').forEach(function(l) {
+    l.addEventListener('dragstart', function(e) {
+      e.dataTransfer.setData('text/plain', this.dataset.topicId);
+      e.dataTransfer.effectAllowed = 'move';
+      this.style.opacity = '0.5';
+    });
+    l.addEventListener('dragend', function(e) { this.style.opacity = ''; });
+    l.addEventListener('dragover', function(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; this.classList.add('drag-over'); });
+    l.addEventListener('dragleave', function(e) { this.classList.remove('drag-over'); });
+    l.addEventListener('drop', function(e) {
+      e.preventDefault(); this.classList.remove('drag-over');
+      var fid = e.dataTransfer.getData('text/plain');
+      if (fid && fid !== this.dataset.topicId) reorderTopics(fid, this.dataset.topicId);
+    });
+  });
+}
+
+function attachDragEvents() {
+  document.querySelectorAll('.task-block').forEach(function(b) {
+    b.addEventListener('dragstart', function(e) {
+      e.dataTransfer.setData('application/json', JSON.stringify({ topicId: this.dataset.topicId, taskIdx: parseInt(this.dataset.taskIdx) }));
+      e.dataTransfer.effectAllowed = 'move';
+      this.classList.add('dragging');
+      var self = this;
+      setTimeout(function() { if (self.classList) self.style.opacity = '0.4'; }, 0);
+    });
+    b.addEventListener('dragend', function(e) { this.classList.remove('dragging'); this.style.opacity = ''; });
+    b.addEventListener('touchstart', touchStartTB, { passive: false });
+    b.addEventListener('touchmove', touchMoveTB, { passive: false });
+    b.addEventListener('touchend', touchEndTB);
+  });
+
+  var tc = document.getElementById('timelineContent');
+  tc.onclick = function(e) {
+    if (e.target.classList.contains('task-block')) return;
+    if (!selectedTopicId) return;
+    var rect = tc.getBoundingClientRect();
+    var x = e.clientX - rect.left + document.getElementById('timelineBody').scrollLeft;
+    moveTimelineToDate(selectedTopicId, pixelToDate(x, window._tlRange));
+  };
+}
+
+var touchData = null, touchSX = 0, touchSY = 0, touchMoved = false;
+function touchStartTB(e) {
+  if (e.touches.length !== 1) return;
+  var b = e.target.closest('.task-block');
+  if (!b) return;
+  touchData = { topicId: b.dataset.topicId, taskIdx: parseInt(b.dataset.taskIdx), block: b };
+  touchSX = e.touches[0].clientX; touchSY = e.touches[0].clientY; touchMoved = false;
+}
+function touchMoveTB(e) {
+  if (!touchData) return;
+  if (Math.abs(e.touches[0].clientX - touchSX) > 5 || Math.abs(e.touches[0].clientY - touchSY) > 5) { touchMoved = true; e.preventDefault(); }
+  if (touchMoved && touchData.block) { touchData.block.style.transform = 'translateX(' + (e.touches[0].clientX - touchSX) + 'px)'; touchData.block.style.zIndex = '100'; touchData.block.style.opacity = '0.7'; }
+}
+function touchEndTB(e) {
+  if (!touchData) return;
+  if (touchMoved && touchData.block) {
+    var b = touchData.block; b.style.transform = ''; b.style.zIndex = ''; b.style.opacity = '';
+    var r = window._tlRange;
+    if (r) {
+      var tc = document.getElementById('timelineContent');
+      var br = b.getBoundingClientRect(), rc = tc.getBoundingClientRect();
+      var cx = br.left + br.width / 2 - rc.left + document.getElementById('timelineBody').scrollLeft;
+      updateSingleTaskDate(touchData.topicId, touchData.taskIdx, pixelToDate(cx + (e.changedTouches ? e.changedTouches[0].clientX : 0) - touchSX, r));
+    }
+  }
+  touchData = null; touchMoved = false;
+}
+
+// ========== ACTIONS ==========
+function selectTopicLabel(id) {
+  if (selectedTopicId === id) { selectedTopicId = null; showToast('\u5df2\u53d6\u6d88\u9009\u4e2d'); }
+  else { selectedTopicId = id; showToast('\u5df2\u9009\u4e2d\u9009\u9898\uff0c\u8bf7\u70b9\u51fb\u65f6\u95f4\u8f74\u4e0a\u7684\u76ee\u6807\u65e5\u671f\u6765\u79fb\u52a8\u6392\u671f'); }
+  renderTopicLabels();
+}
+function moveTimelineToDate(id, date) {
+  var t = topics.find(function(x) { return x.id === id; }); if (!t) return;
+  t.publishDate = fmtDate(date); selectedTopicId = null;
+  showToast('\u6392\u671f\u5df2\u79fb\u52a8\u81f3 ' + fmtDate(date));
+  renderAll();
+}
+function updateSingleTaskDate(id, idx, date) {
+  var t = topics.find(function(x) { return x.id === id; }); if (!t) return;
+  var tk = t.tasks.find(function(x) { return x.idx === idx; }); if (!tk) return;
+  tk.daysBefore = Math.max(0, daysBetween(date, parseDate(t.publishDate)));
+  showToast('\u4efb\u52a1\u65e5\u671f\u5df2\u8c03\u6574');
+  renderAll();
+}
+function reorderTopics(fid, tid) {
+  var fi = topics.findIndex(function(x) { return x.id === fid; });
+  var ti = topics.findIndex(function(x) { return x.id === tid; });
+  if (fi < 0 || ti < 0) return;
+  var mv = topics.splice(fi, 1); topics.splice(ti, 0, mv[0]);
+  showToast('\u987a\u5e8f\u5df2\u8c03\u6574'); renderAll();
+}
+
+// ========== RENDER CARDS ==========
+function renderTopicCards() {
+  var g = document.getElementById('topicCardsGrid');
+  if (!topics.length) { g.innerHTML = '<div class="col-span-2 text-center text-[11px] text-[#8B7E74] py-6 font-cn">\u6682\u65e0\u9009\u9898\uff0c\u8bf7\u70b9\u51fb\u4e0a\u65b9\u300c+ \u589e\u52a0\u9009\u9898\u300d</div>'; return; }
+  var html = '';
+  for (var ti = 0; ti < topics.length; ti++) {
+    var t = topics[ti];
+    var total = t.preTasks.length + t.tasks.length;
+    var done = t.preTasks.filter(function(p) { return p.completed; }).length + t.tasks.filter(function(x) { return x.completed; }).length;
+    var pct = total > 0 ? Math.round(done / total * 100) : 0;
+
+    var ptHtml = '';
+    for (var pi = 0; pi < t.preTasks.length; pi++) {
+      var pt = t.preTasks[pi];
+      ptHtml += '<div class="flex items-center gap-1.5 py-0.5 group">';
+      ptHtml += '<input type="checkbox" class="custom-checkbox" ' + (pt.completed ? 'checked' : '') + ' onchange="togglePreTask(\'' + t.id + '\',\'' + pt.id + '\')">';
+      ptHtml += '<span class="text-[10px] text-espresso font-cn flex-1 ' + (pt.completed ? 'line-through text-[#A0A0A0]' : '') + '">' + pt.text + '</span>';
+      ptHtml += '<button onclick="deletePreTask(\'' + t.id + '\',\'' + pt.id + '\')" class="text-[#B5838D] hover:text-[#8B5A5A] text-[13px] leading-none opacity-0 group-hover:opacity-100 transition-opacity font-poppins">&times;</button>';
+      ptHtml += '</div>';
+    }
+
+    var stHtml = '';
+    for (var si = 0; si < t.tasks.length; si++) {
+      var tk = t.tasks[si];
+      var d = fmtDate(addDays(parseDate(t.publishDate), -tk.daysBefore));
+      stHtml += '<div class="flex items-center gap-1.5 py-0.5">';
+      stHtml += '<input type="checkbox" class="custom-checkbox" ' + (tk.completed ? 'checked' : '') + ' onchange="toggleFixedTask(\'' + t.id + '\',' + tk.idx + ')">';
+      stHtml += '<span class="text-[10px] font-semibold text-espresso font-cn flex-1 ' + (tk.completed ? 'line-through text-[#A0A0A0]' : '') + '">' + tk.name + '</span>';
+      stHtml += '<span class="text-[8px] text-[#A0A0A0] font-medium font-poppins whitespace-nowrap">' + d + '</span>';
+      stHtml += '<span class="w-2 h-2 rounded-full flex-shrink-0" style="background:' + tk.color + ';"></span>';
+      stHtml += '</div>';
+    }
+
+    html += '<div class="topic-card bg-white rounded-sm border border-[#e8e0d4] p-3 flex flex-col gap-2" draggable="true" data-topic-id="' + t.id + '" style="min-width:0;">';
+    html += '<div class="flex items-center justify-between gap-2">';
+    html += '<div class="flex-1 min-w-0">';
+    html += '<h3 class="text-[12px] font-bold text-espresso font-cn truncate">' + t.title + '</h3>';
+    html += '<div class="flex items-center gap-2 mt-0.5">';
+    html += '<select onchange="changeWorkflowType(\'' + t.id + '\',this.value)" class="text-[9px] font-semibold text-[#8B7E74] bg-[#F4EFE6] border border-[#e0d8c8] rounded-sm px-2 py-0.5 font-cn cursor-pointer">';
+    html += '<option value="self" ' + (t.type === 'self' ? 'selected' : '') + '>01 \u81ea\u5236\u5185\u5bb9</option>';
+    html += '<option value="commercial" ' + (t.type === 'commercial' ? 'selected' : '') + '>02 \u5546\u5355</option>';
+    html += '</select>';
+    html += '<span class="text-[9px] font-medium text-[#A0A0A0] font-cn">\u53d1\u5e03: <span class="font-poppins text-espresso font-semibold">' + t.publishDate + '</span></span>';
+    html += '</div></div>';
+    html += '<div class="text-right flex-shrink-0">';
+    html += '<div class="text-[10px] font-bold text-espresso font-poppins">' + pct + '%</div>';
+    html += '<div class="w-[56px] h-[4px] bg-[#e8e0d4] rounded-full mt-0.5 overflow-hidden"><div class="progress-fill h-full bg-espresso rounded-full" style="width:' + pct + '%;"></div></div>';
+    html += '</div></div>';
+    html += '<div class="border-t border-[#f0ece4] pt-1.5">';
+    html += '<div class="flex items-center justify-between mb-0.5">';
+    html += '<span class="text-[9px] font-semibold text-[#8B7E74] font-cn uppercase tracking-wide">\u524d\u7f6e\u51c6\u5907</span>';
+    html += '<button onclick="addPreTask(\'' + t.id + '\')" class="text-[9px] font-bold text-[#6D8B74] hover:text-[#4a6b52] font-cn">+ \u589e\u52a0</button>';
+    html += '</div>' + ptHtml + '</div>';
+    html += '<div class="border-t border-[#f0ece4] pt-1.5">';
+    html += '<span class="text-[9px] font-semibold text-[#8B7E74] font-cn uppercase tracking-wide">\u56fa\u5b9a\u5236\u4f5c\u6d41\u7a0b</span>';
+    html += '<div class="mt-0.5">' + stHtml + '</div>';
+    html += '</div></div>';
+  }
+  g.innerHTML = html;
+
+  document.querySelectorAll('.topic-card').forEach(function(c) {
+    c.addEventListener('dragstart', function(e) {
+      e.dataTransfer.setData('text/plain', this.dataset.topicId);
+      e.dataTransfer.effectAllowed = 'move';
+      this.style.opacity = '0.5';
+    });
+    c.addEventListener('dragend', function(e) { this.style.opacity = ''; });
+    c.addEventListener('dragover', function(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; this.classList.add('drag-over-card'); });
+    c.addEventListener('dragleave', function(e) { this.classList.remove('drag-over-card'); });
+    c.addEventListener('drop', function(e) {
+      e.preventDefault(); e.stopPropagation(); this.classList.remove('drag-over-card');
+      var fid = e.dataTransfer.getData('text/plain');
+      if (fid && fid !== this.dataset.topicId) reorderTopics(fid, this.dataset.topicId);
+    });
+  });
+}
+
+// ========== CARD ACTIONS ==========
+function togglePreTask(tid, pid) {
+  var t = topics.find(function(x) { return x.id === tid; }); if (!t) return;
+  var p = t.preTasks.find(function(x) { return x.id === pid; }); if (!p) return;
+  p.completed = !p.completed; renderAll();
+}
+function toggleFixedTask(tid, idx) {
+  var t = topics.find(function(x) { return x.id === tid; }); if (!t) return;
+  var tk = t.tasks.find(function(x) { return x.idx === idx; }); if (!tk) return;
+  tk.completed = !tk.completed; renderAll();
+}
+function addPreTask(tid) {
+  var t = topics.find(function(x) { return x.id === tid; }); if (!t) return;
+  var tx = prompt('\u8f93\u5165\u524d\u7f6e\u51c6\u5907\u9879\uff1a'); if (!tx || !tx.trim()) return;
+  t.preTasks.push({ id: 'p' + Date.now(), text: tx.trim(), completed: false });
+  renderAll();
+}
+function deletePreTask(tid, pid) {
+  var t = topics.find(function(x) { return x.id === tid; }); if (!t) return;
+  t.preTasks = t.preTasks.filter(function(x) { return x.id !== pid; }); renderAll();
+}
+function changeWorkflowType(tid, nt) {
+  var t = topics.find(function(x) { return x.id === tid; }); if (!t || t.type === nt) return;
+  t.type = nt;
+  var wf = nt === 'commercial' ? WORKFLOW_COMMERCIAL : WORKFLOW_SELF;
+  t.tasks = wf.map(function(x, i) { return { name: x.name, daysBefore: x.daysBefore, color: x.color, completed: false, idx: i }; });
+  renderAll();
+}
+function addTopic() {
+  var tx = prompt('\u8f93\u5165\u9009\u9898\u540d\u79f0\uff1a'); if (!tx || !tx.trim()) return;
+  var dt = prompt('\u8f93\u5165\u53d1\u5e03\u65e5\u671f (YYYY-MM-DD)\uff1a', '2026-08-01');
+  if (!dt || !/^\d{4}-\d{2}-\d{2}$/.test(dt)) return;
+  topics.push(createTopic(tx.trim(), 'self', dt));
+  showToast('\u9009\u9898\u5df2\u6dfb\u52a0'); renderAll();
+}
+
+// ========== EXPORT / IMPORT ==========
+function exportData() {
+  var b = new Blob([JSON.stringify(topics, null, 2)], { type: 'application/json' });
+  var u = URL.createObjectURL(b);
+  var a = document.createElement('a'); a.href = u; a.download = 'content-os-backup-' + new Date().toISOString().slice(0,10) + '.json'; a.click();
+  URL.revokeObjectURL(u); showToast('\u5907\u4efd\u5df2\u5bfc\u51fa');
+}
+function importData() { document.getElementById('importFileInput').click(); }
+function handleImport(e) {
+  var f = e.target.files[0]; if (!f) return;
+  var r = new FileReader();
+  r.onload = function(ev) {
+    try {
+      var d = JSON.parse(ev.target.result);
+      if (!Array.isArray(d)) throw 0;
+      topics = d; selectedTopicId = null; renderAll();
+      showToast('\u6570\u636e\u5df2\u6062\u590d (' + topics.length + ' \u4e2a\u9009\u9898)');
+    } catch (_) { showToast('\u5bfc\u5165\u5931\u8d25\uff1a\u6587\u4ef6\u683c\u5f0f\u4e0d\u6b63\u786e'); }
+  };
+  r.readAsText(f); e.target.value = '';
+}
+
+function renderAll() { renderTimeline(); renderTopicCards(); }
+
+document.addEventListener('DOMContentLoaded', function() {
+  var tb = document.getElementById('timelineBody');
+  tb.addEventListener('dragover', function(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
+  tb.addEventListener('drop', function(e) {
+    e.preventDefault();
+    var r = window._tlRange; if (!r) return;
+    var tc = document.getElementById('timelineContent'), rc = tc.getBoundingClientRect();
+    var x = e.clientX - rc.left + tb.scrollLeft;
+    var td = e.dataTransfer.getData('application/json');
+    if (td) { try { var d = JSON.parse(td); updateSingleTaskDate(d.topicId, d.taskIdx, pixelToDate(x, r)); return; } catch (_) {} }
+    var lid = e.dataTransfer.getData('text/plain');
+    if (lid && lid.startsWith('t')) moveTimelineToDate(lid, pixelToDate(x, r));
+  });
+});
+
+var toastTimer;
+function showToast(msg) {
+  var el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(function() { el.classList.remove('show'); }, 1800);
+}
+
+renderAll();
+</script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="35%" r="75%">
+      <stop offset="0%" stop-color="#16203b"/>
+      <stop offset="55%" stop-color="#0b1224"/>
+      <stop offset="100%" stop-color="#050816"/>
+    </radialGradient>
+    <linearGradient id="snake" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
+    </linearGradient>
+    <radialGradient id="orb" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="60%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </radialGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="14" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+
+  <!-- 蛇身：从左下向右上盘绕的圆角折线 -->
+  <g filter="url(#glow)" fill="none" stroke="url(#snake)" stroke-width="46" stroke-linecap="round" stroke-linejoin="round" opacity="0.95">
+    <path d="M150 360 Q150 250 250 250 Q360 250 360 175 Q360 130 310 130"/>
+  </g>
+
+  <!-- 蛇头 -->
+  <circle cx="310" cy="130" r="40" fill="url(#snake)" filter="url(#glow)"/>
+  <!-- 蛇眼 -->
+  <circle cx="322" cy="118" r="9" fill="#0b1020"/>
+  <circle cx="296" cy="118" r="9" fill="#0b1020"/>
+  <circle cx="325" cy="116" r="3" fill="#fff"/>
+  <circle cx="299" cy="116" r="3" fill="#fff"/>
+
+  <!-- 发光食豆 -->
+  <circle cx="150" cy="360" r="34" fill="url(#orb)" filter="url(#glow)"/>
+  <circle cx="140" cy="350" r="8" fill="#fff" opacity="0.6"/>
+</svg>

@@ -89,6 +89,24 @@ let VOCAB = [
 /** 当前启用的活动词库（可被导入替换） */
 let activeVocab = [...VOCAB];
 
+// ---- 词库游标 / 再练权重（提前声明，避免 TDZ 与初始化顺序问题） ----
+let vocabIndex = 0; // 下一个要展示的单词在 activeVocab 中的下标
+/** word -> 权重，初始全为 1；“再练一下”会提升对应词的权重，使其更可能再次出现 */
+const vocabWeight = new Map();
+/** 取归一化的下一个词下标（按权重加权随机），并自增游标。 */
+function pickWeightedIndex() {
+  const ref = activeVocab;
+  if (!ref.length) return -1;
+  const weights = ref.map((it) => vocabWeight.get(it.word) ?? 1);
+  const total = weights.reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < ref.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return i;
+  }
+  return ref.length - 1;
+}
+
 // ---- DOM ----
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -153,6 +171,7 @@ let learnedCount = Number(localStorage.getItem("snake_learned") || 0);
 let timer = null;
 let tickMs = Number(speedSelect.value);
 let isPaused = true;
+let gameOverFlag = false;
 let lastTime = performance.now();
 let settings = loadSettings();
 applyTheme(settings.theme, settings.highContrast);
@@ -175,9 +194,11 @@ function initGame() {
   placeFood();
   draw();
   // 重置按钮状态
+  gameOverFlag = false;
   if (startBtn) {
     startBtn.disabled = false;
     startBtn.classList.remove("disabled");
+    startBtn.textContent = "▶ 开始";
   }
 }
 
@@ -188,7 +209,10 @@ function placeFood() {
     const y = Math.floor(Math.random() * GRID_ROWS);
     if (!snake.some((s) => s.x === x && s.y === y)) {
       food = { x, y };
-      foodHue = hashHue((activeVocab[vocabIndex % Math.max(1, activeVocab.length)]?.word) || "food");
+      // 食物色相按“下一个待学单词”稳定生成；词库为空时降级
+      const ref = activeVocab.length ? activeVocab : VOCAB;
+      const nextWord = ref[vocabIndex % Math.max(1, ref.length)]?.word || "food";
+      foodHue = hashHue(nextWord);
       return;
     }
   }
@@ -376,11 +400,13 @@ function startLoop() {
 function gameOver() {
   isPaused = true;
   toast("游戏结束，分数：" + score);
-  // 游戏结束时禁用“开始”按钮
+  // 游戏结束：把开始按钮置为“再来一局”状态，需手动点开始（或重开）恢复
   if (startBtn) {
-    startBtn.disabled = true;
-    startBtn.classList.add("disabled");
+    startBtn.disabled = false;            // 保持可点
+    startBtn.classList.remove("disabled");
+    startBtn.textContent = "↻ 再来一局";
   }
+  gameOverFlag = true;
 }
 
 // ---- 输入 ----
@@ -456,7 +482,14 @@ canvas.addEventListener("touchend", (e)=>{
 
 startBtn.addEventListener("click", () => {
   if (startBtn.disabled) return; // 禁用时不响应
-  isPaused = false;
+  // 游戏已结束：点开始等同于“再来一局”，重新开局
+  if (gameOverFlag) {
+    isPaused = false;
+    initGame();
+    isPaused = false;
+  } else {
+    isPaused = false;
+  }
   if (!timer) startLoop();
 });
 pauseBtn.addEventListener("click", () => (isPaused = true));
@@ -467,6 +500,10 @@ resetBtn.addEventListener("click", () => {
 speedSelect.addEventListener("change", () => {
   tickMs = Number(speedSelect.value);
   startLoop();
+  // 切换速度也解除“游戏结束”的按钮锁定状态
+  if (gameOverFlag && startBtn) {
+    startBtn.textContent = "▶ 开始";
+  }
 });
 
 // 导入词库（JSON）
@@ -490,6 +527,8 @@ importInput && importInput.addEventListener("change", async () => {
     }
     activeVocab = normalized;
     vocabIndex = 0;
+    vocabWeight.clear();
+    currentWord = "";
     toast(`已导入词库，共 ${activeVocab.length} 条`);
   } catch (err) {
     console.error(err);
@@ -541,11 +580,14 @@ function bindLiveSettings() {
 bindLiveSettings();
 
 // ---- 词卡弹窗 ----
-let vocabIndex = 0;
+/** 记录最近一次弹出的词卡内容，供“再练一下”使用。 */
+let currentWord = "";
 function showNextWord() {
   const ref = activeVocab.length ? activeVocab : VOCAB;
-  const item = ref[vocabIndex % ref.length];
+  const idx = pickWeightedIndex();
+  const item = ref[idx < 0 ? 0 : idx];
   vocabIndex++;
+  currentWord = item.word;
 
   wordTitle.textContent = item.word;
   wordIpa.textContent = item.ipa || "";
@@ -570,16 +612,13 @@ nextBtn.addEventListener("click", () => {
   isPaused = false;
 });
 
-// 再练一下（提升该词再次出现权重）
+// 再练一下：提升该词的加权随机权重，使其更可能再次出现。
+// （不再修改 activeVocab 数组本身，避免数组无限增长。）
 const againBtn = document.getElementById("againBtn");
 againBtn && againBtn.addEventListener("click", () => {
   closeModal(modal);
-  // 将当前词放入队列后面两次，简单提高再现概率
-  const ref = activeVocab.length ? activeVocab : VOCAB;
-  const lastIndex = (vocabIndex - 1 + ref.length) % ref.length;
-  const item = ref[lastIndex];
-  if (activeVocab === ref) {
-    activeVocab.splice(vocabIndex, 0, item, item);
+  if (currentWord) {
+    vocabWeight.set(currentWord, (vocabWeight.get(currentWord) ?? 1) + 1);
   }
   isPaused = false;
 });

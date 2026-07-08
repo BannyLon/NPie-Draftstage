@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Content OS — 内容项目管理看板</title>
+  <meta name="description" content="融合 Notion + Linear + 甘特图的内容排期系统，支持拖拽生成倒排期、进度追踪、阶段管理。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#F7F6F3;--surface:#FFFFFF;--border:#E8E6E1;--border-light:#F0EEE9;
+      --text-primary:#1A1917;--text-secondary:#6B6860;--text-tertiary:#9A9690;
+      --accent:#3B82F6;--accent-light:rgba(59,130,246,0.1);--accent-hover:#2563EB;
+      --research-color:#6B7280;--research-bg:rgba(107,114,128,0.12);--research-border:rgba(107,114,128,0.3);
+      --script-color:#8B5CF6;--script-bg:rgba(139,92,246,0.12);--script-border:rgba(139,92,246,0.3);
+      --editing-color:#F97316;--editing-bg:rgba(249,115,22,0.12);--editing-border:rgba(249,115,22,0.3);
+      --publish-color:#22C55E;--publish-bg:rgba(34,197,94,0.12);--publish-border:rgba(34,197,94,0.3);
+      --radius:8px;--radius-sm:5px;
+      --shadow-sm:0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md:0 4px 12px rgba(0,0,0,0.08),0 2px 4px rgba(0,0,0,0.04);
+      --shadow-lg:0 8px 24px rgba(0,0,0,0.12),0 4px 8px rgba(0,0,0,0.06);
+      --transition:200ms ease;
+      --sidebar-w:280px;--topbar-h:52px;--timeline-h:44px;--row-h:60px;--day-w:44px;
+    }
+    html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text-primary);font-size:13px;line-height:1.5;-webkit-font-smoothing:antialiased}
+    #app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+    /* TOPBAR */
+    #topbar{height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:16px;flex-shrink:0;z-index:100}
+    .topbar-logo{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;color:var(--text-primary);letter-spacing:-0.3px}
+    .logo-icon{width:26px;height:26px;background:linear-gradient(135deg,#3B82F6,#8B5CF6);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px}
+    .topbar-sep{width:1px;height:20px;background:var(--border)}
+    .topbar-nav-btn{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:var(--radius-sm);font-size:12.5px;font-weight:500;color:var(--text-secondary);cursor:pointer;transition:var(--transition);border:none;background:transparent}
+    .topbar-nav-btn:hover{background:var(--bg);color:var(--text-primary)}
+    .topbar-nav-btn.active{background:var(--accent-light);color:var(--accent)}
+    .topbar-date-nav{margin-left:auto;display:flex;align-items:center;gap:8px}
+    .date-nav-btn{width:28px;height:28px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:var(--transition)}
+    .date-nav-btn:hover{border-color:var(--accent);color:var(--accent)}
+    .date-range-label{font-size:12.5px;font-weight:500;color:var(--text-secondary);min-width:180px;text-align:center}
+    .today-btn{padding:5px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);font-size:12px;font-weight:500;color:var(--text-secondary);cursor:pointer;transition:var(--transition)}
+    .today-btn:hover{border-color:var(--accent);color:var(--accent)}
+    .topbar-stats{display:flex;gap:10px;margin-left:12px}
+    .stat-chip{display:flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:11.5px;font-weight:500}
+    .stat-dot{width:6px;height:6px;border-radius:50%}
+
+    /* MAIN */
+    #main{display:flex;flex:1;overflow:hidden}
+
+    /* SIDEBAR */
+    #sidebar{width:var(--sidebar-w);flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+    .sidebar-header{padding:14px 16px 10px;border-bottom:1px solid var(--border-light)}
+    .sidebar-title{font-size:11px;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px}
+    .sidebar-add-form{display:flex;gap:6px}
+    .sidebar-input{flex:1;height:30px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12.5px;font-family:inherit;background:var(--bg);color:var(--text-primary);outline:none;transition:var(--transition)}
+    .sidebar-input:focus{border-color:var(--accent);background:var(--surface)}
+    .sidebar-input::placeholder{color:var(--text-tertiary)}
+    .btn-add{height:30px;padding:0 12px;background:var(--accent);color:white;border:none;border-radius:var(--radius-sm);font-size:12px;font-weight:600;cursor:pointer;transition:var(--transition);white-space:nowrap}
+    .btn-add:hover{background:var(--accent-hover)}
+    .btn-add:active{transform:scale(0.97)}
+    .sidebar-list{flex:1;overflow-y:auto;padding:8px}
+    .sidebar-list::-webkit-scrollbar{width:4px}
+    .sidebar-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+    /* TOPIC CARD */
+    .topic-card{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);margin-bottom:6px;cursor:grab;transition:all var(--transition);position:relative;user-select:none}
+    .topic-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px);border-color:var(--accent)}
+    .topic-card:active{cursor:grabbing}
+    .topic-card.dragging{opacity:0.45;transform:scale(0.97)}
+    .topic-drag-handle{color:var(--text-tertiary);font-size:14px;cursor:grab;line-height:1;padding:2px}
+    .topic-card-body{flex:1;min-width:0}
+    .topic-card-title{font-size:12.5px;font-weight:500;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
+    .topic-card-meta{font-size:11px;color:var(--text-tertiary);display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+    .status-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+    .status-dot.not-started{background:var(--text-tertiary)}
+    .status-dot.in-progress{background:var(--accent)}
+    .status-dot.completed{background:var(--publish-color)}
+    .status-dot.overdue{background:#EF4444}
+    .topic-delete-btn{opacity:0;width:20px;height:20px;border:none;background:transparent;color:var(--text-tertiary);cursor:pointer;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:14px;transition:var(--transition);flex-shrink:0}
+    .topic-card:hover .topic-delete-btn{opacity:1}
+    .topic-delete-btn:hover{background:#FEE2E2;color:#EF4444}
+    .sidebar-empty{text-align:center;padding:40px 20px;color:var(--text-tertiary);font-size:12.5px}
+    .sidebar-empty .empty-icon{font-size:28px;margin-bottom:8px}
+
+    /* GANTT AREA */
+    #gantt-area{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+    #gantt-scroll{flex:1;overflow:auto;position:relative}
+    #gantt-scroll::-webkit-scrollbar{height:6px;width:6px}
+    #gantt-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+    #gantt-inner{min-width:max-content;position:relative}
+
+    /* MONTH ROW */
+    .month-row{display:flex;position:sticky;top:0;z-index:31;background:var(--bg)}
+    .month-label-spacer{width:200px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);border-bottom:1px solid var(--border-light)}
+    .month-group{display:flex;align-items:center;height:22px;padding:0 8px;font-size:10.5px;font-weight:600;color:var(--text-tertiary);letter-spacing:0.5px;text-transform:uppercase;border-right:1px solid var(--border-light);border-bottom:1px solid var(--border-light);flex-shrink:0}
+
+    /* TIMELINE HEADER */
+    #timeline-header{display:flex;position:sticky;top:22px;z-index:30;background:var(--surface);border-bottom:1px solid var(--border)}
+    .timeline-header-label{width:200px;flex-shrink:0;height:var(--timeline-h);display:flex;align-items:center;padding:0 14px;font-size:11px;font-weight:600;color:var(--text-tertiary);letter-spacing:0.6px;text-transform:uppercase;border-right:1px solid var(--border);background:var(--surface)}
+    .timeline-days{display:flex}
+    .timeline-day{width:var(--day-w);height:var(--timeline-h);display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid var(--border-light);font-size:11px;color:var(--text-tertiary);transition:var(--transition);position:relative;flex-shrink:0}
+    .timeline-day.today{background:var(--accent-light)}
+    .timeline-day.today .day-num{background:var(--accent);color:white;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600}
+    .timeline-day.weekend{background:#FAFAFA}
+    .timeline-day.drop-target{background:rgba(59,130,246,0.15);border-color:var(--accent)}
+    .day-weekday{font-size:10px;font-weight:500}
+    .day-num{font-size:12px;font-weight:600;color:var(--text-primary)}
+
+    /* GANTT ROWS */
+    .gantt-rows{position:relative}
+    .gantt-row{display:flex;height:var(--row-h);border-bottom:1px solid var(--border-light);transition:background var(--transition)}
+    .gantt-row:hover{background:rgba(59,130,246,0.015)}
+    .gantt-row-label{width:200px;flex-shrink:0;display:flex;align-items:center;padding:0 14px;border-right:1px solid var(--border);background:var(--surface);position:sticky;left:0;z-index:10;gap:8px;cursor:pointer;transition:var(--transition)}
+    .gantt-row-label:hover{background:#FAFAF9}
+    .row-label-info{flex:1;min-width:0}
+    .row-label-title{font-size:12.5px;font-weight:500;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .row-label-sub{font-size:10.5px;color:var(--text-tertiary);margin-top:1px}
+    .row-progress-ring{width:28px;height:28px;flex-shrink:0;position:relative}
+    .row-progress-ring svg{transform:rotate(-90deg)}
+    .progress-ring-bg{fill:none;stroke:var(--border);stroke-width:2.5}
+    .progress-ring-fill{fill:none;stroke-width:2.5;stroke-linecap:round;transition:stroke-dashoffset 0.5s ease}
+    .progress-ring-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700}
+    .gantt-row-canvas{display:flex;position:relative;flex:1}
+    .gantt-cell{width:var(--day-w);height:100%;border-right:1px solid var(--border-light);flex-shrink:0;position:relative;transition:background var(--transition)}
+    .gantt-cell.weekend{background:#FAFAFA}
+    .gantt-cell.today-col{background:rgba(59,130,246,0.03)}
+    .gantt-cell.drop-hover{background:rgba(59,130,246,0.14)}
+
+    /* TASK BLOCKS */
+    .task-block-container{position:absolute;top:50%;transform:translateY(-50%);height:34px;display:flex;align-items:center;z-index:5}
+    .task-block{height:100%;width:100%;border-radius:var(--radius-sm);border:1px solid transparent;display:flex;align-items:center;padding:0 8px;gap:5px;cursor:pointer;transition:all var(--transition);position:relative;overflow:hidden;white-space:nowrap}
+    .task-block::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px}
+    .task-block:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+    .task-block.completed{opacity:0.5}
+    .task-block.completed .task-name{text-decoration:line-through}
+    .task-block.stage-research{background:var(--research-bg);border-color:var(--research-border);color:var(--research-color)}
+    .task-block.stage-research::before{background:var(--research-color)}
+    .task-block.stage-script{background:var(--script-bg);border-color:var(--script-border);color:var(--script-color)}
+    .task-block.stage-script::before{background:var(--script-color)}
+    .task-block.stage-editing{background:var(--editing-bg);border-color:var(--editing-border);color:var(--editing-color)}
+    .task-block.stage-editing::before{background:var(--editing-color)}
+    .task-block.stage-publish{background:var(--publish-bg);border-color:var(--publish-border);color:var(--publish-color)}
+    .task-block.stage-publish::before{background:var(--publish-color)}
+    .task-icon{font-size:12px;flex-shrink:0}
+    .task-name{font-size:11.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis}
+    .task-days{font-size:10px;opacity:0.7;flex-shrink:0}
+    .task-check{margin-left:auto;font-size:11px;flex-shrink:0}
+
+    /* TOOLTIP */
+    #tooltip{position:fixed;z-index:9999;background:#1A1917;color:white;padding:10px 12px;border-radius:var(--radius);font-size:12px;pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity 0.15s ease,transform 0.15s ease;max-width:220px;box-shadow:var(--shadow-lg)}
+    #tooltip.visible{opacity:1;transform:translateY(0)}
+    .tooltip-title{font-weight:600;margin-bottom:5px}
+    .tooltip-row{display:flex;justify-content:space-between;gap:12px;opacity:0.8;margin-top:2px}
+    .tooltip-tasks{margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.15)}
+    .tooltip-task{display:flex;align-items:center;gap:5px;margin-top:3px;opacity:0.85}
+    .tooltip-task-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+
+    /* PROGRESS PANEL */
+    #progress-panel{position:fixed;right:16px;bottom:16px;width:240px;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-lg);z-index:200;overflow:hidden;transition:all var(--transition)}
+    .panel-header{padding:12px 14px 10px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between}
+    .panel-title{font-size:12px;font-weight:600;color:var(--text-primary)}
+    .panel-close{width:18px;height:18px;border:none;background:transparent;color:var(--text-tertiary);cursor:pointer;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:14px;transition:var(--transition)}
+    .panel-close:hover{background:var(--bg);color:var(--text-primary)}
+    .panel-body{padding:12px 14px}
+    .panel-topic-title{font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .panel-publish-date{font-size:11px;color:var(--text-tertiary);margin-bottom:10px}
+    .panel-progress-bar-wrap{background:var(--bg);border-radius:6px;height:6px;margin-bottom:4px;overflow:hidden}
+    .panel-progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--script-color));border-radius:6px;transition:width 0.5s ease}
+    .panel-progress-label{font-size:11px;color:var(--text-tertiary);margin-bottom:12px;display:flex;justify-content:space-between}
+    .panel-stages{display:flex;flex-direction:column;gap:6px}
+    .panel-stage{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--radius-sm);border:1px solid var(--border-light);transition:var(--transition)}
+    .panel-stage:hover{border-color:var(--border)}
+    .stage-indicator{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .panel-stage-info{flex:1;min-width:0}
+    .panel-stage-name{font-size:11.5px;font-weight:500;color:var(--text-primary)}
+    .panel-stage-dates{font-size:10px;color:var(--text-tertiary)}
+    .panel-stage-check{font-size:13px;flex-shrink:0}
+    .panel-empty{text-align:center;padding:24px;color:var(--text-tertiary);font-size:12px}
+    .status-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:20px;font-size:10.5px;font-weight:500;margin-bottom:10px}
+    .badge-not-started{background:#F1F0ED;color:var(--text-tertiary)}
+    .badge-in-progress{background:rgba(59,130,246,0.1);color:var(--accent)}
+    .badge-completed{background:rgba(34,197,94,0.1);color:var(--publish-color)}
+    .badge-overdue{background:#FEE2E2;color:#EF4444}
+
+    /* TOAST */
+    #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1A1917;color:white;padding:10px 18px;border-radius:24px;font-size:13px;font-weight:500;z-index:10000;pointer-events:none;opacity:0;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);box-shadow:var(--shadow-lg)}
+    #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+    /* ANIMATIONS */
+    @keyframes spawnBlock{from{opacity:0;transform:translateY(-50%) scaleX(0.2)}to{opacity:1;transform:translateY(-50%) scaleX(1)}}
+    .task-block-container.spawning{animation:spawnBlock 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;transform-origin:left center}
+
+    /* EMPTY STATE */
+    .gantt-empty-hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:var(--text-tertiary);pointer-events:none}
+    .gantt-empty-hint .hint-icon{font-size:36px;margin-bottom:10px}
+    .gantt-empty-hint .hint-text{font-size:13px;font-weight:500}
+    .gantt-empty-hint .hint-sub{font-size:11.5px;margin-top:4px}
+
+    /* LEGEND */
+    .legend{display:flex;gap:12px;padding:8px 16px;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0}
+    .legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-secondary)}
+    .legend-dot{width:10px;height:10px;border-radius:3px}
+  </style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <div class="topbar-logo">
+      <div class="logo-icon">📋</div>
+      Content OS
+    </div>
+    <div class="topbar-sep"></div>
+    <button class="topbar-nav-btn active">📅 甘特视图</button>
+    <div class="topbar-stats" id="topbar-stats"></div>
+    <div class="topbar-date-nav">
+      <button class="date-nav-btn" id="btn-prev">‹</button>
+      <span class="date-range-label" id="date-range-label"></span>
+      <button class="date-nav-btn" id="btn-next">›</button>
+      <button class="today-btn" id="btn-today">今天</button>
+    </div>
+  </div>
+
+  <div id="main">
+    <div id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-title">📂 选题库</div>
+        <div class="sidebar-add-form">
+          <input class="sidebar-input" id="new-topic-input" placeholder="输入选题标题…" maxlength="40" />
+          <button class="btn-add" id="btn-add-topic">+ 添加</button>
+        </div>
+      </div>
+      <div class="sidebar-list" id="sidebar-list"></div>
+    </div>
+
+    <div id="gantt-area">
+      <div id="gantt-scroll">
+        <div id="gantt-inner">
+          <div id="month-row" class="month-row"></div>
+          <div id="timeline-header">
+            <div class="timeline-header-label">选题 / 阶段</div>
+            <div class="timeline-days" id="timeline-days"></div>
+          </div>
+          <div class="gantt-rows" id="gantt-rows"></div>
+        </div>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--research-bg);border:1px solid var(--research-border)"></div>研究阶段</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--script-bg);border:1px solid var(--script-border)"></div>脚本阶段</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--editing-bg);border:1px solid var(--editing-border)"></div>剪辑阶段</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--publish-bg);border:1px solid var(--publish-border)"></div>发布阶段</div>
+        <div class="legend-item" style="margin-left:auto;color:var(--text-tertiary)">点击任务块 = 切换完成 · 拖拽选题到日期 = 自动排期</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="tooltip"></div>
+<div id="toast"></div>
+
+<div id="progress-panel">
+  <div class="panel-header">
+    <span class="panel-title">📊 选题进度</span>
+    <button class="panel-close" id="panel-close-btn">×</button>
+  </div>
+  <div class="panel-body" id="panel-body">
+    <div class="panel-empty">点击任意行<br/>查看选题进度详情</div>
+  </div>
+</div>
+
+<script>
+const TODAY = new Date();
+TODAY.setHours(0,0,0,0);
+
+const STAGES = [
+  {id:'research',name:'研究',icon:'🔍',color:'#6B7280',days:1,offsetFromPublish:-6,tasks:['资料收集','学习研究']},
+  {id:'script',name:'脚本',icon:'✏️',color:'#8B5CF6',days:1,offsetFromPublish:-5,tasks:['提炼大纲','完成脚本']},
+  {id:'editing',name:'剪辑',icon:'🎬',color:'#F97316',days:4,offsetFromPublish:-4,tasks:['解说生成','视频素材拍摄','后期剪辑']},
+  {id:'publish',name:'发布',icon:'🚀',color:'#22C55E',days:1,offsetFromPublish:0,tasks:['文案','包装','发布']}
+];
+
+function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r}
+function dateStr(d){return d.toISOString().slice(0,10)}
+function parseDate(s){return new Date(s+'T00:00:00')}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function genId(){return 'topic-'+Math.random().toString(36).slice(2,9)}
+
+function generateTasks(pubDateStr){
+  const pub=parseDate(pubDateStr);
+  return STAGES.map(stage=>{
+    const start=addDays(pub,stage.offsetFromPublish);
+    const end=addDays(start,stage.days-1);
+    return {stage:stage.id,name:stage.name,startDate:dateStr(start),endDate:dateStr(end),completed:false,subtasks:stage.tasks.map(t=>({name:t,completed:false}))};
+  });
+}
+
+const state={
+  topics:[
+    {id:'t1',title:'AI 工具全景图 2026',publishDate:dateStr(addDays(TODAY,4)),tasks:generateTasks(dateStr(addDays(TODAY,4)))},
+    {id:'t2',title:'短视频算法深度拆解',publishDate:dateStr(addDays(TODAY,11)),tasks:generateTasks(dateStr(addDays(TODAY,11)))},
+    {id:'t3',title:'内容创作者商业模式',publishDate:dateStr(addDays(TODAY,18)),tasks:generateTasks(dateStr(addDays(TODAY,18)))}
+  ],
+  viewStartOffset:-7,
+  viewDays:45,
+  selectedTopicId:null,
+  dragTopicId:null
+};
+
+function getViewDates(){
+  const d=[];
+  for(let i=0;i<state.viewDays;i++) d.push(addDays(TODAY,state.viewStartOffset+i));
+  return d;
+}
+
+function getTopicStatus(topic){
+  if(!topic.tasks||topic.tasks.length===0) return 'not-started';
+  const pub=parseDate(topic.publishDate);
+  if(topic.tasks.every(t=>t.completed)) return 'completed';
+  const firstStart=parseDate(topic.tasks[0].startDate);
+  if(TODAY<firstStart) return 'not-started';
+  if(TODAY>pub) return 'overdue';
+  return 'in-progress';
+}
+
+function getTopicProgress(topic){
+  if(!topic.tasks||topic.tasks.length===0) return {done:0,total:0,pct:0};
+  const done=topic.tasks.filter(t=>t.completed).length;
+  const total=topic.tasks.length;
+  return {done,total,pct:Math.round((done/total)*100)};
+}
+
+const statusLabels={'not-started':'未开始','in-progress':'进行中','completed':'已完成','overdue':'已延期'};
+const badgeClasses={'not-started':'badge-not-started','in-progress':'badge-in-progress','completed':'badge-completed','overdue':'badge-overdue'};
+
+function render(){
+  renderStats();
+  renderDateRangeLabel();
+  renderSidebar();
+  renderTimeline();
+  renderGanttRows();
+  renderProgressPanel();
+  saveToStorage();
+}
+
+function renderStats(){
+  const el=document.getElementById('topbar-stats');
+  const c={'not-started':0,'in-progress':0,'completed':0,'overdue':0};
+  state.topics.forEach(t=>c[getTopicStatus(t)]++);
+  const cfg=[{k:'in-progress',l:'进行中',cl:'#3B82F6'},{k:'completed',l:'已完成',cl:'#22C55E'},{k:'overdue',l:'延期',cl:'#EF4444'}];
+  el.innerHTML=cfg.map(s=>`<div class="stat-chip" style="background:${s.cl}14;color:${s.cl}"><div class="stat-dot" style="background:${s.cl}"></div>${c[s.k]} ${s.l}</div>`).join('');
+}
+
+function renderDateRangeLabel(){
+  const dates=getViewDates();
+  const fmt=d=>`${d.getMonth()+1}月${d.getDate()}日`;
+  document.getElementById('date-range-label').textContent=`${dates[0].getFullYear()}年 ${fmt(dates[0])} — ${fmt(dates[dates.length-1])}`;
+}
+
+function renderSidebar(){
+  const list=document.getElementById('sidebar-list');
+  if(state.topics.length===0){
+    list.innerHTML=`<div class="sidebar-empty"><div class="empty-icon">📭</div><div>选题库为空<br/>添加第一个选题吧</div></div>`;
+    return;
+  }
+  list.innerHTML=state.topics.map(t=>{
+    const status=getTopicStatus(t);
+    const prog=getTopicProgress(t);
+    return `<div class="topic-card${state.dragTopicId===t.id?' dragging':''}" draggable="true" data-topic-id="${t.id}">
+      <div class="topic-drag-handle">⠿</div>
+      <div class="topic-card-body">
+        <div class="topic-card-title">${escHtml(t.title)}</div>
+        <div class="topic-card-meta">
+          <div class="status-dot ${status}"></div>
+          <span>${statusLabels[status]}</span>
+          ${t.publishDate?`<span style="color:#D1D5DB">·</span><span>发布 ${t.publishDate}</span>`:''}
+          ${prog.total>0?`<span style="color:#D1D5DB">·</span><span>${prog.done}/${prog.total}</span>`:''}
+        </div>
+      </div>
+      <button class="topic-delete-btn" data-delete-id="${t.id}">✕</button>
+    </div>`;
+  }).join('');
+
+  list.querySelectorAll('.topic-card').forEach(card=>{
+    card.addEventListener('dragstart',onSidebarDragStart);
+    card.addEventListener('dragend',onSidebarDragEnd);
+    card.addEventListener('click',()=>{state.selectedTopicId=card.dataset.topicId;render();});
+  });
+  list.querySelectorAll('[data-delete-id]').forEach(btn=>{
+    btn.addEventListener('click',e=>{
+      e.stopPropagation();
+      const id=btn.dataset.deleteId;
+      if(state.selectedTopicId===id) state.selectedTopicId=null;
+      state.topics=state.topics.filter(t=>t.id!==id);
+      render();
+      showToast('🗑️ 已删除选题');
+    });
+  });
+}
+
+function renderTimeline(){
+  const dates=getViewDates();
+  const DAYS_CN=['日','一','二','三','四','五','六'];
+
+  // Month groups
+  const monthRow=document.getElementById('month-row');
+  const groups=[];
+  let curMonth=null,curCount=0,curStart=0;
+  dates.forEach((d,i)=>{
+    const m=`${d.getFullYear()}/${d.getMonth()}`;
+    if(m!==curMonth){
+      if(curMonth!==null) groups.push({label:`${dates[curStart].getFullYear()}年${dates[curStart].getMonth()+1}月`,count:curCount});
+      curMonth=m;curCount=1;curStart=i;
+    }else curCount++;
+  });
+  if(curMonth!==null) groups.push({label:`${dates[curStart].getFullYear()}年${dates[curStart].getMonth()+1}月`,count:curCount});
+  monthRow.innerHTML=`<div class="month-label-spacer"></div>`+groups.map(g=>`<div class="month-group" style="width:${g.count*44}px">${g.label}</div>`).join('');
+
+  const tlDays=document.getElementById('timeline-days');
+  const todayStr=dateStr(TODAY);
+  tlDays.innerHTML=dates.map(d=>{
+    const isToday=dateStr(d)===todayStr;
+    const isWeekend=d.getDay()===0||d.getDay()===6;
+    return `<div class="timeline-day${isToday?' today':''}${isWeekend?' weekend':''}" data-date="${dateStr(d)}">
+      <span class="day-weekday">周${DAYS_CN[d.getDay()]}</span>
+      <span class="day-num">${d.getDate()}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderProgressRing(pct,status){
+  const r=10,circ=2*Math.PI*r,offset=circ-(pct/100)*circ;
+  const colorMap={'not-started':'#D1D5DB','in-progress':'#3B82F6','completed':'#22C55E','overdue':'#EF4444'};
+  const color=colorMap[status]||'#D1D5DB';
+  return `<svg width="28" height="28" viewBox="0 0 28 28"><circle class="progress-ring-bg" cx="14" cy="14" r="${r}"/><circle class="progress-ring-fill" cx="14" cy="14" r="${r}" stroke="${color}" stroke-dasharray="${circ.toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}"/></svg><div class="progress-ring-text" style="color:${color}">${pct}%</div>`;
+}
+
+function renderTaskBlocks(topic,dates){
+  if(!topic.tasks||topic.tasks.length===0) return '';
+  const viewStartStr=dateStr(dates[0]);
+  const viewEndStr=dateStr(dates[dates.length-1]);
+  return topic.tasks.map(task=>{
+    const stage=STAGES.find(s=>s.id===task.stage);
+    if(!stage) return '';
+    if(task.endDate<viewStartStr||task.startDate>viewEndStr) return '';
+    const clampStart=task.startDate<viewStartStr?viewStartStr:task.startDate;
+    const clampEnd=task.endDate>viewEndStr?viewEndStr:task.endDate;
+    const startIdx=dates.findIndex(d=>dateStr(d)===clampStart);
+    const endIdx=dates.findIndex(d=>dateStr(d)===clampEnd);
+    if(startIdx===-1||endIdx===-1) return '';
+    const spanDays=endIdx-startIdx+1;
+    const left=startIdx*44;
+    const width=spanDays*44-4;
+    return `<div class="task-block-container" style="left:${left+2}px;width:${width}px">
+      <div class="task-block stage-${task.stage}${task.completed?' completed':''}" data-topic-id="${topic.id}" data-stage="${task.stage}">
+        <span class="task-icon">${stage.icon}</span>
+        <span class="task-name">${stage.name}</span>
+        <span class="task-days">${stage.days}d</span>
+        <span class="task-check">${task.completed?'✓':''}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderGanttRows(){
+  const container=document.getElementById('gantt-rows');
+  const dates=getViewDates();
+  const todayStr=dateStr(TODAY);
+
+  if(state.topics.length===0){
+    container.innerHTML=`<div class="gantt-empty-hint" style="position:absolute;top:120px;left:50%;transform:translateX(-50%);text-align:center;color:var(--text-tertiary)"><div style="font-size:36px;margin-bottom:10px">📅</div><div style="font-size:13px;font-weight:500">拖拽左侧选题到日历格</div><div style="font-size:11.5px;margin-top:4px">即可自动生成 6 天倒排期</div></div>`;
+    container.style.minHeight='300px';
+    container.style.position='relative';
+    setupGanttDrop(container,dates);
+    return;
+  }
+  container.style.minHeight='';
+  container.style.position='';
+
+  container.innerHTML=state.topics.map(topic=>{
+    const isSelected=topic.id===state.selectedTopicId;
+    const prog=getTopicProgress(topic);
+    const status=getTopicStatus(topic);
+    const cells=dates.map(d=>{
+      const ds=dateStr(d);
+      const isToday=ds===todayStr;
+      const isWeekend=d.getDay()===0||d.getDay()===6;
+      return `<div class="gantt-cell${isToday?' today-col':''}${isWeekend?' weekend':''}" data-topic-id="${topic.id}" data-date="${ds}"></div>`;
+    }).join('');
+    return `<div class="gantt-row" data-topic-id="${topic.id}">
+      <div class="gantt-row-label" data-topic-id="${topic.id}" style="${isSelected?'background:rgba(59,130,246,0.04)':''}">
+        <div class="row-progress-ring">${renderProgressRing(prog.pct,status)}</div>
+        <div class="row-label-info">
+          <div class="row-label-title">${escHtml(topic.title)}</div>
+          <div class="row-label-sub">${topic.publishDate?`📅 发布 ${topic.publishDate}`:'未排期 — 拖拽到日期'}</div>
+        </div>
+      </div>
+      <div class="gantt-row-canvas" id="canvas-${topic.id}" data-topic-id="${topic.id}">
+        ${cells}
+        ${renderTaskBlocks(topic,dates)}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Bind events
+  container.querySelectorAll('.gantt-row-label').forEach(el=>{
+    el.addEventListener('click',()=>{state.selectedTopicId=el.dataset.topicId;render();});
+  });
+
+  container.querySelectorAll('.task-block').forEach(el=>{
+    el.addEventListener('click',e=>{
+      e.stopPropagation();
+      const tid=el.dataset.topicId;
+      const stageId=el.dataset.stage;
+      const topic=state.topics.find(t=>t.id===tid);
+      if(!topic) return;
+      const task=topic.tasks.find(t=>t.stage===stageId);
+      if(!task) return;
+      task.completed=!task.completed;
+      render();
+      showToast(task.completed?`✅ ${task.name} 阶段已完成`:`↩ 取消完成`);
+    });
+    el.addEventListener('mouseenter',e=>showTooltip(e,el));
+    el.addEventListener('mouseleave',hideTooltip);
+    el.addEventListener('mousemove',moveTooltip);
+  });
+
+  container.querySelectorAll('.gantt-row-canvas').forEach(canvas=>{
+    setupCanvasDrop(canvas,dates);
+  });
+  setupGanttDrop(container,dates);
+}
+
+function renderProgressPanel(){
+  const body=document.getElementById('panel-body');
+  if(!state.selectedTopicId){
+    body.innerHTML=`<div class="panel-empty">点击任意行<br/>查看选题进度详情</div>`;
+    return;
+  }
+  const topic=state.topics.find(t=>t.id===state.selectedTopicId);
+  if(!topic){body.innerHTML=`<div class="panel-empty">未找到选题</div>`;return;}
+  const status=getTopicStatus(topic);
+  const prog=getTopicProgress(topic);
+  const stagesHtml=(topic.tasks||[]).map(task=>{
+    const stage=STAGES.find(s=>s.id===task.stage);
+    if(!stage) return '';
+    return `<div class="panel-stage">
+      <div class="stage-indicator" style="background:${stage.color}"></div>
+      <div class="panel-stage-info">
+        <div class="panel-stage-name">${stage.icon} ${stage.name}</div>
+        <div class="panel-stage-dates">${task.startDate} → ${task.endDate}</div>
+      </div>
+      <div class="panel-stage-check" style="color:${task.completed?'#22C55E':'#D1D5DB'}">${task.completed?'✓':'○'}</div>
+    </div>`;
+  }).join('');
+  body.innerHTML=`
+    <div class="panel-topic-title">${escHtml(topic.title)}</div>
+    <div class="panel-publish-date">📅 发布：${topic.publishDate||'未设置'}</div>
+    <div class="status-badge ${badgeClasses[status]}">${statusLabels[status]}</div>
+    <div class="panel-progress-bar-wrap"><div class="panel-progress-bar" style="width:${prog.pct}%"></div></div>
+    <div class="panel-progress-label"><span>完成进度</span><span>${prog.done}/${prog.total} · ${prog.pct}%</span></div>
+    <div class="panel-stages">${stagesHtml}</div>
+  `;
+}
+
+// DRAG & DROP
+let dragTopicId=null;
+
+function onSidebarDragStart(e){
+  dragTopicId=e.currentTarget.dataset.topicId;
+  state.dragTopicId=dragTopicId;
+  e.dataTransfer.effectAllowed='copy';
+  e.dataTransfer.setData('topicId',dragTopicId);
+  const topic=state.topics.find(t=>t.id===dragTopicId);
+  const ghost=document.createElement('div');
+  ghost.style.cssText='position:fixed;top:-9999px;left:-9999px;background:white;border:1.5px solid #3B82F6;border-radius:8px;padding:8px 14px;font-size:12.5px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,0.15);font-family:Inter,sans-serif;white-space:nowrap';
+  ghost.textContent='📋 '+((topic&&topic.title)||'');
+  document.body.appendChild(ghost);
+  e.dataTransfer.setDragImage(ghost,10,10);
+  setTimeout(()=>ghost.remove(),0);
+  setTimeout(()=>renderSidebar(),0);
+}
+
+function onSidebarDragEnd(){
+  dragTopicId=null;
+  state.dragTopicId=null;
+  clearDropHighlights();
+  renderSidebar();
+}
+
+let currentDropDate=null;
+
+function setupCanvasDrop(canvas,dates){
+  canvas.addEventListener('dragover',e=>{
+    e.preventDefault();
+    e.dataTransfer.dropEffect='copy';
+    const cell=e.target.closest('.gantt-cell');
+    if(cell&&cell.dataset.date!==currentDropDate){
+      clearDropHighlights();
+      currentDropDate=cell.dataset.date;
+      cell.classList.add('drop-hover');
+      document.querySelectorAll(`.timeline-day[data-date="${currentDropDate}"]`).forEach(el=>el.classList.add('drop-target'));
+    }
+  });
+  canvas.addEventListener('dragleave',e=>{
+    if(!canvas.contains(e.relatedTarget)){clearDropHighlights();currentDropDate=null;}
+  });
+  canvas.addEventListener('drop',e=>{
+    e.preventDefault();
+    const tid=e.dataTransfer.getData('topicId');
+    const targetDate=currentDropDate;
+    clearDropHighlights();currentDropDate=null;
+    if(!tid||!targetDate) return;
+    const topic=state.topics.find(t=>t.id===tid);
+    if(!topic) return;
+    topic.publishDate=targetDate;
+    topic.tasks=generateTasks(targetDate);
+    state.selectedTopicId=topic.id;
+    render();
+    setTimeout(()=>{
+      const canvasEl=document.getElementById(`canvas-${topic.id}`);
+      if(canvasEl) canvasEl.querySelectorAll('.task-block-container').forEach((el,i)=>{el.classList.add('spawning');el.style.animationDelay=`${i*70}ms`;setTimeout(()=>el.classList.remove('spawning'),500+i*70);});
+    },50);
+    showToast(`📅 已为「${topic.title}」生成 6 天倒排期！`);
+  });
+}
+
+function setupGanttDrop(container,dates){
+  container.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='copy';});
+}
+
+function clearDropHighlights(){
+  document.querySelectorAll('.drop-hover').forEach(el=>el.classList.remove('drop-hover'));
+  document.querySelectorAll('.drop-target').forEach(el=>el.classList.remove('drop-target'));
+}
+
+// TOOLTIP
+let tooltipTimeout;
+function showTooltip(e,el){
+  const tid=el.dataset.topicId;
+  const stageId=el.dataset.stage;
+  const topic=state.topics.find(t=>t.id===tid);
+  if(!topic) return;
+  const task=topic.tasks.find(t=>t.stage===stageId);
+  const stage=STAGES.find(s=>s.id===stageId);
+  if(!task||!stage) return;
+  const tooltip=document.getElementById('tooltip');
+  const subtasksHtml=stage.tasks.map((name,i)=>`<div class="tooltip-task"><div class="tooltip-task-dot" style="background:${stage.color}"></div>${name}</div>`).join('');
+  tooltip.innerHTML=`<div class="tooltip-title">${stage.icon} ${stage.name}阶段</div><div class="tooltip-row"><span>开始</span><span>${task.startDate}</span></div><div class="tooltip-row"><span>结束</span><span>${task.endDate}</span></div><div class="tooltip-row"><span>时长</span><span>${stage.days}天</span></div><div class="tooltip-row"><span>状态</span><span>${task.completed?'✅ 已完成':'⏳ 进行中'}</span></div><div class="tooltip-tasks">${subtasksHtml}</div>`;
+  moveTooltip(e);
+  clearTimeout(tooltipTimeout);
+  tooltipTimeout=setTimeout(()=>tooltip.classList.add('visible'),60);
+}
+function moveTooltip(e){
+  const t=document.getElementById('tooltip');
+  let x=e.clientX+14,y=e.clientY-t.offsetHeight/2;
+  if(x+240>window.innerWidth) x=e.clientX-244;
+  if(y<8) y=8;
+  if(y+t.offsetHeight>window.innerHeight-8) y=window.innerHeight-t.offsetHeight-8;
+  t.style.left=x+'px';t.style.top=y+'px';
+}
+function hideTooltip(){clearTimeout(tooltipTimeout);document.getElementById('tooltip').classList.remove('visible');}
+
+// TOAST
+let toastTimeout;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout=setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// STORAGE
+function saveToStorage(){try{localStorage.setItem('content-os-v2',JSON.stringify({topics:state.topics,viewStartOffset:state.viewStartOffset,selectedTopicId:state.selectedTopicId}));}catch(e){}}
+function loadFromStorage(){try{const d=localStorage.getItem('content-os-v2');if(d){const p=JSON.parse(d);state.topics=p.topics||state.topics;state.viewStartOffset=p.viewStartOffset??-7;state.selectedTopicId=p.selectedTopicId??null;}}catch(e){}}
+
+// EVENTS
+function bindEvents(){
+  const input=document.getElementById('new-topic-input');
+  function addTopic(){
+    const title=input.value.trim();
+    if(!title){input.focus();return;}
+    state.topics.push({id:genId(),title,publishDate:null,tasks:[]});
+    input.value='';
+    render();
+    showToast(`📝 已添加「${title}」`);
+  }
+  document.getElementById('btn-add-topic').addEventListener('click',addTopic);
+  input.addEventListener('keydown',e=>{if(e.key==='Enter') addTopic();});
+  document.getElementById('btn-prev').addEventListener('click',()=>{state.viewStartOffset-=14;render();});
+  document.getElementById('btn-next').addEventListener('click',()=>{state.viewStartOffset+=14;render();});
+  document.getElementById('btn-today').addEventListener('click',()=>{
+    state.viewStartOffset=-7;render();
+    requestAnimationFrame(()=>{const s=document.getElementById('gantt-scroll');s.scrollLeft=Math.max(0,7*44-80);});
+  });
+  document.getElementById('panel-close-btn').addEventListener('click',()=>{state.selectedTopicId=null;render();});
+}
+
+function init(){
+  loadFromStorage();
+  bindEvents();
+  render();
+  requestAnimationFrame(()=>{
+    const s=document.getElementById('gantt-scroll');
+    s.scrollLeft=Math.max(0,(-state.viewStartOffset)*44-100);
+  });
+}
+
+document.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>

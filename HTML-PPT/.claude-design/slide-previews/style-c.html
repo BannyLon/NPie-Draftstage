@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code - Bold Signal 风格</title>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black:wght@900&family=Space+Grotesk:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            overflow: hidden;
+            background: #1a1a1a;
+        }
+
+        .slide {
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            display: flex;
+            position: relative;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+        }
+
+        /* 左侧导航区 */
+        .nav-left {
+            position: absolute;
+            top: clamp(1.5rem, 3vh, 2rem);
+            left: clamp(1.5rem, 4vw, 2.5rem);
+            z-index: 10;
+            font-size: clamp(0.7rem, 1.5vh, 0.9rem);
+            color: #ffffff;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* 页码 */
+        .page-number {
+            position: absolute;
+            top: clamp(1.5rem, 3vh, 2rem);
+            right: clamp(1.5rem, 4vw, 2.5rem);
+            font-size: clamp(1.5rem, 4vh, 2.5rem);
+            color: #FF5722;
+            font-weight: 900;
+            font-family: 'Archivo Black', sans-serif;
+            z-index: 10;
+        }
+
+        /* 主色卡 */
+        .card {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: clamp(200px, 60vw, 500px);
+            height: clamp(200px, 50vh, 450px);
+            background: #FF5722;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 20px 60px rgba(255, 87, 34, 0.4);
+            animation: slideInCard 0.8s ease-out;
+            z-index: 5;
+        }
+
+        /* 内容 */
+        .content {
+            text-align: center;
+            z-index: 6;
+            position: relative;
+        }
+
+        .overline {
+            font-size: clamp(0.65rem, 1.5vh, 0.85rem);
+            color: #1a1a1a;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: 500;
+            margin-bottom: clamp(0.5rem, 1.5vh, 1rem);
+            opacity: 0.9;
+            animation: fadeIn 0.8s ease-out 0.2s both;
+        }
+
+        .main-title {
+            font-family: 'Archivo Black', sans-serif;
+            font-size: clamp(2.5rem, 6.5vw, 3.8rem);
+            color: #1a1a1a;
+            font-weight: 900;
+            line-height: 1.1;
+            letter-spacing: -2px;
+            margin-bottom: clamp(0.8rem, 2vh, 1.5rem);
+            animation: fadeIn 0.8s ease-out 0.3s both;
+        }
+
+        .subtitle {
+            font-size: clamp(0.9rem, 2vh, 1.2rem);
+            color: #1a1a1a;
+            font-weight: 500;
+            letter-spacing: 1px;
+            animation: fadeIn 0.8s ease-out 0.4s both;
+            opacity: 0.95;
+        }
+
+        /* 背景装饰线 */
+        .bg-line {
+            position: absolute;
+            background: rgba(255, 87, 34, 0.1);
+        }
+
+        .line-1 {
+            width: 2px;
+            height: 40%;
+            top: 0;
+            left: clamp(15%, 20vw, 25%);
+        }
+
+        .line-2 {
+            width: 2px;
+            height: 35%;
+            bottom: 0;
+            right: clamp(15%, 20vw, 25%);
+        }
+
+        /* 动画 */
+        @keyframes slideInCard {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -45%);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* 底部描述 */
+        .footer {
+            position: absolute;
+            bottom: clamp(1.5rem, 4vh, 2.5rem);
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: clamp(0.8rem, 1.5vh, 0.95rem);
+            z-index: 5;
+            animation: fadeIn 0.8s ease-out 0.5s both;
+        }
+
+        @media (max-height: 700px) {
+            .card {
+                height: clamp(150px, 40vh, 350px);
+            }
+            .main-title { margin-bottom: 0.5rem; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * { animation: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="slide">
+        <div class="bg-line line-1"></div>
+        <div class="bg-line line-2"></div>
+
+        <div class="nav-left">Bold Signal</div>
+        <div class="page-number">03</div>
+
+        <div class="card">
+            <div class="content">
+                <div class="overline">第 03 部分</div>
+                <h1 class="main-title">从补全<br>到治理</h1>
+                <p class="subtitle">CLAUDE CODE</p>
+            </div>
+        </div>
+
+        <div class="footer">
+            橙色高对比 × 几何精准度 × 专业有力感
+        </div>
+    </div>
+</body>
+</html>

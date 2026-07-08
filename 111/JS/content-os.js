@@ -1,5 +1,5 @@
     /**
-     * @file CONTENT OS — 内容项目管理看板
+     * @file ContentOS · 创作流水线
      * @description 单文件原生 JS 实现，含倒排日历与选题卡联动
      */
 
@@ -353,7 +353,7 @@
             <img class="brand-logo" src="IMG/NPIEAI_logo.jpg" alt="" />
             <div class="brand-text">
               <div class="brand-title">CONTENT OS</div>
-              <div class="brand-subtitle">内容项目看板</div>
+              <div class="brand-subtitle">创作流水线</div>
             </div>
           </div>
         </div>
@@ -1559,30 +1559,36 @@
     function updateTicker() {
       const el = document.getElementById('header-ticker');
       if (!el) return;
-      const active = state.topics.filter(t => !t.archived);
-      if (!active.length) {
-        el.innerHTML = '<span class="header-ticker-empty">暂无进行中的选题</span>';
+      const today = new Date(); today.setHours(0,0,0,0);
+      // 只显示未完成且紧急的选题：自制 ≤3 天，商单 ≤5 天
+      const urgent = state.topics.filter(t => {
+        if (t.archived) return false;
+        if (calcProgress(t) >= 100) return false;
+        const days = Math.round((parse(t.publishDate) - today) / MS_DAY);
+        const limit = t.type === 'commercial' ? 5 : 3;
+        return days <= limit;
+      });
+      if (!urgent.length) {
+        el.innerHTML = '<span class="header-ticker-empty">暂无紧急选题 · 一切尽在掌控</span>';
         return;
       }
-      const today = new Date(); today.setHours(0,0,0,0);
-      const items = active.map(t => {
-        const pct = calcProgress(t);
+      const items = urgent.map(t => {
         const days = Math.round((parse(t.publishDate) - today) / MS_DAY);
-        if (pct >= 100) {
-          return { text: `✓ ${t.title} 已完成`, cls: 'done' };
-        } else if (days <= 3) {
-          return { text: `⚠ ${t.title} — 距发布仅 ${days} 天`, cls: 'urgent' };
-        } else if (days <= 7) {
-          return { text: `⚡ ${t.title} — 距发布还有 ${days} 天`, cls: '' };
+        const tag = t.type === 'commercial' ? '商单' : '自制';
+        if (days <= 1) {
+          return { text: `🔥 ${tag} · ${t.title} — 明天发布！`, cls: 'urgent' };
+        } else if (days <= 2) {
+          return { text: `⚠ ${tag} · ${t.title} — 距发布仅 ${days} 天`, cls: 'urgent' };
         } else {
-          return { text: `📌 ${t.title} — ${pct}% · ${days} 天后发布`, cls: '' };
+          return { text: `⚡ ${tag} · ${t.title} — 距发布还有 ${days} 天`, cls: '' };
         }
       });
-      // 复制一份实现无缝循环
-      const doubled = [...items, ...items];
+      // 不足 3 条时复制一份保证滚动流畅
+      const source = items.length >= 3 ? items : [...items, ...items];
+      const doubled = [...source, ...source];
       el.innerHTML = `<div class="header-ticker-track">${doubled.map(i =>
         `<span class="header-ticker-item ${i.cls}">${esc(i.text)}</span>`
-      ).join(' · ')}</div>`;
+      ).join(' &nbsp;·&nbsp; ')}</div>`;
     }
 
     /** 全局渲染 */

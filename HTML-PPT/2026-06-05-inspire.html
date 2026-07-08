@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INSPIRE 2026 · 工作日志 · 2026-06-05</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Boldonse&family=Instrument+Serif:ital@0;1&family=Manrope:wght@200;300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&family=Noto+Sans+SC:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0A0A0B;
+    --bg-2: #111114;
+    --bg-3: #18181C;
+    --line: #26262C;
+    --line-2: #34343C;
+    --ink: #F0EDE5;
+    --ink-2: #A8A39A;
+    --ink-3: #6B6660;
+    --red: #E60012;
+    --red-glow: rgba(230, 0, 18, 0.18);
+    --blue: #00B4FF;
+    --blue-glow: rgba(0, 180, 255, 0.15);
+    --amber: #FFB800;
+    --green: #4ADE80;
+    --pink: #FF6B9D;
+    --display: 'Boldonse', 'Noto Sans SC', sans-serif;
+    --serif: 'Instrument Serif', 'Noto Sans SC', serif;
+    --sans: 'Manrope', 'Noto Sans SC', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-weight: 400;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 20% 0%, rgba(230, 0, 18, 0.08), transparent 50%),
+      radial-gradient(ellipse 60% 40% at 90% 30%, rgba(0, 180, 255, 0.06), transparent 50%),
+      radial-gradient(ellipse 50% 50% at 50% 100%, rgba(255, 184, 0, 0.04), transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-size: 80px 80px;
+    pointer-events: none;
+    z-index: 0;
+    mask-image: radial-gradient(ellipse 100% 80% at 50% 50%, black 30%, transparent 90%);
+  }
+
+  .wrap {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 40px 60px 120px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ============ TOP META BAR ============ */
+  .meta-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--line);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .meta-bar .left, .meta-bar .right { display: flex; gap: 28px; align-items: center; }
+  .meta-bar .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--red); box-shadow: 0 0 12px var(--red); animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* ============ HERO ============ */
+  .hero {
+    padding: 80px 0 60px;
+    position: relative;
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 60px;
+    align-items: end;
+  }
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    margin-bottom: 28px;
+  }
+  .hero-eyebrow .bar { width: 40px; height: 1px; background: var(--red); }
+  .hero-eyebrow .date { color: var(--red); }
+
+  h1.hero-title {
+    font-family: var(--display);
+    font-size: clamp(64px, 9vw, 148px);
+    line-height: 0.88;
+    letter-spacing: -0.04em;
+    color: var(--ink);
+    font-weight: 400;
+  }
+  h1.hero-title .ampersand {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 400;
+    color: var(--red);
+    font-size: 1.1em;
+    line-height: 0;
+  }
+  h1.hero-title .arrow {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--ink-2);
+    font-size: 0.7em;
+    display: inline-block;
+    transform: translateY(-0.4em);
+    margin: 0 0.05em;
+  }
+  h1.hero-title .date-inline {
+    font-family: var(--mono);
+    font-size: 0.22em;
+    color: var(--ink-3);
+    letter-spacing: 0.05em;
+    display: inline-block;
+    margin-left: 0.4em;
+    transform: translateY(-0.8em);
+    vertical-align: top;
+  }
+
+  .hero-cn {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-weight: 700;
+    font-size: 28px;
+    letter-spacing: 0.02em;
+    margin-top: 32px;
+    color: var(--ink);
+  }
+  .hero-cn .accent { color: var(--red); }
+
+  .hero-right {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    align-items: flex-end;
+  }
+  .loc-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    border: 1px solid var(--line-2);
+    border-radius: 100px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--ink);
+    background: rgba(255,255,255,0.02);
+  }
+  .loc-pill .pin { color: var(--red); }
+  .day-counter {
+    font-family: var(--display);
+    font-size: 120px;
+    line-height: 1;
+    color: var(--ink);
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .day-counter .slash { color: var(--ink-3); font-size: 0.5em; }
+  .day-counter .of { font-family: var(--mono); font-size: 13px; color: var(--ink-3); letter-spacing: 0.1em; }
+  .theme-tag {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 22px;
+    color: var(--ink-2);
+  }
+  .theme-tag::before { content: "— "; color: var(--ink-3); }
+
+  .status-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-top: 4px;
+  }
+  .status-chip {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 5px 10px;
+    border: 1px solid;
+    border-radius: 2px;
+  }
+  .status-chip.draft { color: var(--amber); border-color: var(--amber); }
+  .status-chip.type { color: var(--ink-2); border-color: var(--line-2); }
+  .status-chip.live { color: var(--green); border-color: var(--green); }
+
+  /* ============ SECTION HEADERS ============ */
+  .section {
+    margin-top: 100px;
+    position: relative;
+  }
+  .section-head {
+    display: grid;
+    grid-template-columns: 80px 1fr auto;
+    gap: 32px;
+    align-items: end;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 48px;
+  }
+  .section-num {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ink-3);
+    letter-spacing: 0.1em;
+  }
+  .section-title {
+    font-family: var(--display);
+    font-size: 56px;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+    font-weight: 400;
+  }
+  .section-title .cn {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-weight: 700;
+    font-size: 0.55em;
+    color: var(--ink-2);
+    display: block;
+    margin-top: 6px;
+    letter-spacing: 0;
+  }
+  .section-title em {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 400;
+    color: var(--red);
+  }
+  .section-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    text-align: right;
+  }
+  .section-meta .count { color: var(--ink); font-size: 24px; font-family: var(--display); display: block; line-height: 1; margin-bottom: 4px; letter-spacing: 0; }
+
+  /* ============ STRATEGY BLOCK ============ */
+  .strategy {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    padding: 60px 0;
+    align-items: center;
+  }
+  .strategy-quote {
+    font-family: var(--display);
+    font-size: 64px;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+  }
+  .strategy-quote .not {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--red);
+    font-size: 1.2em;
+  }
+  .strategy-quote .from {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--ink-2);
+    font-size: 0.7em;
+    font-weight: 400;
+  }
+  .strategy-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .strategy-eyebrow::before { content: ""; width: 30px; height: 1px; background: var(--red); }
+
+  .strategy-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .strategy-card {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    padding: 24px 22px;
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+  }
+  .strategy-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+    background: var(--accent, var(--red));
+  }
+  .strategy-card:hover { border-color: var(--line-2); transform: translateY(-2px); }
+  .strategy-card .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 12px;
+  }
+  .strategy-card .arrow { color: var(--ink-3); margin: 0 6px; }
+  .strategy-card .name {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .strategy-card .mine {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 16px;
+    color: var(--accent, var(--red));
+  }
+
+  .goal-row {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 0;
+    margin-top: 16px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .goal-cell {
+    flex: 1;
+    padding: 24px;
+    border-right: 1px solid var(--line);
+    background: var(--bg-2);
+    position: relative;
+  }
+  .goal-cell:last-child { border-right: none; }
+  .goal-cell .num {
+    font-family: var(--display);
+    font-size: 48px;
+    color: var(--accent);
+    line-height: 1;
+    display: block;
+    margin-bottom: 8px;
+  }
+  .goal-cell .lbl {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+
+  /* ============ CODE BLOCK ============ */
+  .code-block {
+    background: #050507;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 32px;
+    position: relative;
+    margin-top: 24px;
+  }
+  .code-block::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--red) 50%, transparent);
+  }
+  .code-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .code-title {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    color: var(--ink-2);
+    text-transform: uppercase;
+  }
+  .code-title .red { color: var(--red); }
+  .code-dots { display: flex; gap: 6px; }
+  .code-dots span { width: 10px; height: 10px; border-radius: 50%; background: var(--line-2); }
+  .code-dots span:nth-child(1) { background: var(--red); }
+  .code-dots span:nth-child(2) { background: var(--amber); }
+  .code-dots span:nth-child(3) { background: var(--green); }
+  pre.code {
+    font-family: var(--mono);
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--ink);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  pre.code .c-key { color: var(--red); }
+  pre.code .c-num { color: var(--blue); }
+  pre.code .c-str { color: var(--amber); }
+  pre.code .c-com { color: var(--ink-3); }
+  pre.code .c-fn { color: var(--pink); }
+
+  /* ============ SCENARIO GRID ============ */
+  .scenarios {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 40px;
+  }
+  .scenario-card {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    padding: 32px 28px;
+    border-radius: 4px;
+    position: relative;
+    transition: all 0.3s;
+  }
+  .scenario-card:hover { border-color: var(--line-2); background: var(--bg-3); }
+  .scenario-icon {
+    font-size: 36px;
+    margin-bottom: 20px;
+    display: block;
+    line-height: 1;
+  }
+  .scenario-num {
+    position: absolute;
+    top: 24px; right: 28px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--ink-3);
+  }
+  .scenario-title {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-weight: 700;
+    font-size: 22px;
+    color: var(--ink);
+    margin-bottom: 16px;
+    letter-spacing: -0.01em;
+  }
+  .scenario-quote {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 18px;
+    line-height: 1.5;
+    color: var(--ink-2);
+    padding-left: 16px;
+    border-left: 2px solid var(--accent, var(--red));
+  }
+
+  /* ============ TIMELINE / SCHEDULE ============ */
+  .days-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+  .day-card {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .day-head {
+    padding: 32px 32px 24px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .day-head .label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 8px;
+  }
+  .day-head .name {
+    font-family: var(--display);
+    font-size: 56px;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+  }
+  .day-head .name em {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--red);
+  }
+  .day-head .date {
+    text-align: right;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-2);
+    letter-spacing: 0.1em;
+  }
+  .day-head .date .big {
+    display: block;
+    font-family: var(--display);
+    font-size: 32px;
+    color: var(--ink);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .agenda {
+    padding: 8px 0;
+  }
+  .slot {
+    display: grid;
+    grid-template-columns: 140px 24px 1fr;
+    gap: 16px;
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--line);
+    align-items: start;
+    transition: background 0.2s;
+    position: relative;
+  }
+  .slot:last-child { border-bottom: none; }
+  .slot:hover { background: rgba(255,255,255,0.015); }
+  .slot-time {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ink-2);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    padding-top: 2px;
+  }
+  .slot-time .end {
+    color: var(--ink-3);
+    font-size: 11px;
+    display: block;
+    margin-top: 2px;
+  }
+  .slot-prio {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    margin-top: 0;
+    margin-left: 2px;
+  }
+  .slot-prio.r { background: var(--red); color: white; box-shadow: 0 0 16px var(--red-glow); }
+  .slot-prio.y { background: var(--amber); color: #1a1a1a; }
+  .slot-prio.g { background: var(--green); color: #1a1a1a; }
+  .slot-body .title {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-weight: 600;
+    font-size: 15.5px;
+    color: var(--ink);
+    margin-bottom: 4px;
+    line-height: 1.4;
+  }
+  .slot-body .title b { color: var(--red); font-weight: 700; }
+  .slot-body .desc {
+    font-size: 13px;
+    color: var(--ink-2);
+    line-height: 1.55;
+  }
+  .slot-body .desc .warn {
+    color: var(--amber);
+    font-weight: 600;
+  }
+  .slot-body .desc .hl {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .slot-body .badge {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 3px 8px;
+    background: rgba(230, 0, 18, 0.1);
+    border: 1px solid var(--red);
+    color: var(--red);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    border-radius: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ============ BOOTHS ============ */
+  .booths {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--bg-2);
+  }
+  .booth {
+    padding: 32px 24px;
+    border-right: 1px solid var(--line);
+    position: relative;
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+  .booth:last-child { border-right: none; }
+  .booth:hover { background: var(--bg-3); }
+  .booth-stars {
+    font-family: var(--mono);
+    font-size: 20px;
+    letter-spacing: 4px;
+    margin-bottom: 28px;
+    color: var(--amber);
+    line-height: 1;
+  }
+  .booth-stars .dim { color: var(--line-2); }
+  .booth-rank {
+    position: absolute;
+    top: 24px; right: 24px;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--ink-3);
+  }
+  .booth-name {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--ink);
+    line-height: 1.3;
+    margin-bottom: 12px;
+  }
+  .booth-focus {
+    font-size: 12.5px;
+    color: var(--ink-2);
+    line-height: 1.5;
+  }
+
+  /* ============ CHECKLIST ============ */
+  .checklist {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+  }
+  .check-group h3 {
+    font-family: var(--display);
+    font-size: 32px;
+    color: var(--ink);
+    margin-bottom: 8px;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+  .check-group .sub {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--ink-3);
+    font-size: 16px;
+    margin-bottom: 28px;
+  }
+  .check-item {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line);
+    align-items: start;
+  }
+  .check-box {
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid var(--line-2);
+    border-radius: 3px;
+    margin-top: 4px;
+    position: relative;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .check-item:hover .check-box { border-color: var(--ink-2); }
+  .check-item.danger .check-box { border-color: var(--red); }
+  .check-text {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 15px;
+    color: var(--ink);
+    line-height: 1.55;
+  }
+  .check-text .em { color: var(--red); font-weight: 600; }
+  .check-text .lnk { color: var(--blue); }
+
+  /* ============ POST-EVENT FORM ============ */
+  .post-form {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+  .form-card {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    padding: 32px;
+    border-radius: 4px;
+    min-height: 220px;
+    position: relative;
+  }
+  .form-card::after {
+    content: "[ EMPTY · 待填写 ]";
+    position: absolute;
+    bottom: 16px; right: 20px;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--ink-3);
+  }
+  .form-card h4 {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent, var(--blue));
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .form-card h4::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    background: var(--accent, var(--blue));
+    border-radius: 50%;
+  }
+  .form-card .cn-title {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-weight: 700;
+    font-size: 28px;
+    color: var(--ink);
+    margin-bottom: 24px;
+  }
+  .form-card .lines {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .form-card .line {
+    border-bottom: 1px dashed var(--line-2);
+    height: 28px;
+  }
+
+  /* ============ ACTION LOG ============ */
+  .action-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .action-table th {
+    text-align: left;
+    padding: 18px 24px;
+    background: var(--bg-3);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-weight: 500;
+    border-bottom: 1px solid var(--line);
+  }
+  .action-table td {
+    padding: 24px;
+    border-bottom: 1px solid var(--line);
+    font-size: 14px;
+    color: var(--ink);
+    vertical-align: top;
+  }
+  .action-table tr:last-child td { border-bottom: none; }
+  .action-table .proj {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-weight: 600;
+  }
+  .action-table .day {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-2);
+  }
+  .action-table .arrow { color: var(--red); margin-right: 8px; }
+  .action-table .next {
+    color: var(--blue);
+    font-family: 'Noto Sans SC', sans-serif;
+  }
+
+  /* ============ FOOTER ============ */
+  .footer {
+    margin-top: 120px;
+    padding-top: 40px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--ink-3);
+    text-transform: uppercase;
+  }
+  .footer .brand {
+    font-family: var(--display);
+    font-size: 32px;
+    color: var(--ink);
+    text-transform: none;
+    letter-spacing: -0.02em;
+  }
+  .footer .brand em { color: var(--red); font-family: var(--serif); font-style: italic; }
+
+  /* ============ UTILS ============ */
+  .accent-red { color: var(--red); }
+  .accent-blue { color: var(--blue); }
+  .accent-amber { color: var(--amber); }
+  .accent-green { color: var(--green); }
+  .accent-pink { color: var(--pink); }
+
+  @media (max-width: 1100px) {
+    .wrap { padding: 32px 28px 80px; }
+    .hero { grid-template-columns: 1fr; }
+    .days-grid { grid-template-columns: 1fr; }
+    .checklist { grid-template-columns: 1fr; }
+    .post-form { grid-template-columns: 1fr; }
+    .booths { grid-template-columns: repeat(2, 1fr); }
+    .booth:nth-child(2n) { border-right: none; }
+    .booth:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- META BAR -->
+  <div class="meta-bar">
+    <div class="left">
+      <span class="dot"></span>
+      <span>LIVE WORKSPACE</span>
+      <span>//</span>
+      <span>FILE: 2026-06-05.md</span>
+    </div>
+    <div class="right">
+      <span>SHANGHAI · XIBAN</span>
+      <span>//</span>
+      <span>COORD · 31.18°N 121.46°E</span>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="hero-left">
+      <div class="hero-eyebrow">
+        <span class="bar"></span>
+        <span class="date">2026 · 06 · 05 — 06</span>
+        <span>// DAILY / 工作日志</span>
+      </div>
+      <h1 class="hero-title">
+        INSPIRE<br>
+        <span class="arrow">→</span> 2026<br>
+        <span class="date-inline">06.05—06.06</span>
+      </h1>
+      <div class="hero-cn">华为云创想者大会 <span class="accent">·</span> <span class="accent">Agentic AI 落地</span></div>
+      <div class="status-row" style="margin-top: 28px;">
+        <span class="status-chip draft">◐ DRAFT · 草稿</span>
+        <span class="status-chip type">TYPE · 工作日志</span>
+        <span class="status-chip type" style="border-color: var(--line-2);">TAGS · DAILY · AI</span>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="loc-pill">
+        <span class="pin">◆</span>
+        <span>上海西岸国际会展中心</span>
+      </div>
+      <div class="day-counter">
+        <span>1</span>
+        <span class="slash">/</span>
+        <span>2</span>
+        <span class="of">DAYS</span>
+      </div>
+      <div class="theme-tag">主题 · Agentic AI 落地</div>
+    </div>
+  </header>
+
+  <!-- 1 · 战略定位 -->
+  <section class="section">
+    <div class="section-head">
+      <div class="section-num">§ 01</div>
+      <div>
+        <h2 class="section-title">战略定位<br><span class="cn">Strategic Posture — 不是来学习的</span></h2>
+      </div>
+      <div class="section-meta">
+        <span class="count">04</span>
+        CORE OVERLAPS
+      </div>
+    </div>
+
+    <div class="strategy">
+      <div>
+        <div class="strategy-eyebrow">MISSION STATEMENT</div>
+        <div class="strategy-quote">
+          我<span class="not">不是</span><br>来学习的，<br>
+          <span class="from">是来</span>验证<br>和提取的<span class="not">.</span>
+        </div>
+      </div>
+      <div class="strategy-grid">
+        <div class="strategy-card" style="--accent: var(--red);">
+          <div class="label">CONFERENCE</div>
+          <div class="name">AgentArts 企业级<br>智能体平台</div>
+          <div class="mine">我在做 DifyAIA</div>
+        </div>
+        <div class="strategy-card" style="--accent: var(--blue);">
+          <div class="label">DAILY WORK</div>
+          <div class="name">AI Coding /<br>Vibe Coding</div>
+          <div class="mine" style="color: var(--blue);">我每天的工作方式</div>
+        </div>
+        <div class="strategy-card" style="--accent: var(--amber);">
+          <div class="label">TREND</div>
+          <div class="name">一人公司<br>OPC 趋势</div>
+          <div class="mine" style="color: var(--amber);">我就是一人公司</div>
+        </div>
+        <div class="strategy-card" style="--accent: var(--pink);">
+          <div class="label">CONTENT</div>
+          <div class="name">Token 经济</div>
+          <div class="mine" style="color: var(--pink);">频道内容方向之一</div>
+        </div>
+        <div class="goal-row">
+          <div class="goal-cell" style="--accent: var(--red);">
+            <span class="num">3</span>
+            <span class="lbl">期视频素材</span>
+          </div>
+          <div class="goal-cell" style="--accent: var(--blue);">
+            <span class="num">1</span>
+            <span class="lbl">架构验证</span>
+          </div>
+          <div class="goal-cell" style="--accent: var(--amber);">
+            <span class="num">5</span>
+            <span class="lbl">关键人脉</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 · 启动语 -->
+  <section class="section">
+    <div class="section-head">
+      <div class="section-num">§ 02</div>
+      <div>
+        <h2 class="section-title">会议模式<br><span class="cn">Boot Prompt — 复制粘贴到 Claude Code 新会话</span></h2>
+      </div>
+      <div class="section-meta">
+        <span class="count">3</span>
+        FILE LOAD
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-head">
+        <div class="code-title"><span class="red">●</span> CLAUDE_CODE_BOOT.txt — 打开大会现场或酒店时</div>
+        <div class="code-dots"><span></span><span></span><span></span></div>
+      </div>
+<pre class="code"><span class="c-com"># === 大会现场启动语 ===</span>
+我正在参加 INSPIRE 2026 华为云创想者大会
+（<span class="c-num">上海西岸国际会展中心，6月5-6日</span>）。
+
+请先读完以下文件再回应我：
+<span class="c-num">1.</span> Daily/<span class="c-str">2026-06-05.md</span>（本文件，含完整日程和战略目标）
+<span class="c-num">2.</span> Context/<span class="c-str">USER.md</span>（我的身份背景）
+<span class="c-num">3.</span> Context/<span class="c-str">principles.md</span>（底层原则）
+
+读完后回复<span class="c-fn">"已就位，开始聊"</span>。
+
+这次我主要想跟你聊的是：<span class="c-com">[在此简述你要聊的内容]</span></pre>
+    </div>
+
+    <div class="scenarios">
+      <div class="scenario-card" style="--accent: var(--red);">
+        <span class="scenario-num">01 / 03</span>
+        <span class="scenario-icon">🗣️</span>
+        <div class="scenario-title">碎碎念吐槽</div>
+        <div class="scenario-quote">「我刚听完一场论坛/逛完展区，有一些零散的感受和吐槽，帮我理一理」</div>
+      </div>
+      <div class="scenario-card" style="--accent: var(--blue);">
+        <span class="scenario-num">02 / 03</span>
+        <span class="scenario-icon">🔍</span>
+        <div class="scenario-title">深度分析</div>
+        <div class="scenario-quote">「我听到了 X 发布/Y 演讲，帮我拆解它对我意味着什么」</div>
+      </div>
+      <div class="scenario-card" style="--accent: var(--amber);">
+        <span class="scenario-num">03 / 03</span>
+        <span class="scenario-icon">🧠</span>
+        <div class="scenario-title">素材筛选</div>
+        <div class="scenario-quote">「我今天记了 N 条东西，帮我判断哪些值得做成视频，优先级怎么排」</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · DAY 1 & DAY 2 -->
+  <section class="section">
+    <div class="section-head">
+      <div class="section-num">§ 03</div>
+      <div>
+        <h2 class="section-title">两日作战图<br><span class="cn">Day 1 & Day 2 — 双线作战</span></h2>
+      </div>
+      <div class="section-meta">
+        <span class="count">12</span>
+        TIME BLOCKS
+      </div>
+    </div>
+
+    <div class="days-grid">
+      <!-- DAY 1 -->
+      <div class="day-card">
+        <div class="day-head">
+          <div>
+            <div class="label">DAY · 01</div>
+            <div class="name">FRIDAY <em>·</em> 主论坛</div>
+          </div>
+          <div class="date">
+            <span class="big">05</span>
+            JUNE · 周五
+          </div>
+        </div>
+        <div class="agenda">
+          <div class="slot">
+            <div class="slot-time">09:00<span class="end">09:30</span></div>
+            <div class="slot-prio y">●</div>
+            <div class="slot-body">
+              <div class="title">提前入场</div>
+              <div class="desc">拿议程手册，定位展区地图</div>
+            </div>
+          </div>
+          <div class="slot">
+            <div class="slot-time">09:30<span class="end">11:30</span></div>
+            <div class="slot-prio r">●</div>
+            <div class="slot-body">
+              <div class="title"><b>主论坛上午场</b></div>
+              <div class="desc">行业AI黑土地 — 新品发布、行业AI梦工厂、百模千态计划<br><span class="hl">▸ 听战略叙事，不记细节</span></div>
+            </div>
+          </div>
+          <div class="slot">
+            <div class="slot-time">11:30<span class="end">13:00</span></div>
+            <div class="slot-prio y">●</div>
+            <div class="slot-body">
+              <div class="title">展区速览</div>
+              <div class="desc">智能体使能平台 → AI万象应用<br>午休人少，锁定下午深逛的 3 个展位</div>
+            </div>
+          </div>
+          <div class="slot">
+            <div class="slot-time">13:30<span class="end">16:00</span></div>
+            <div class="slot-prio r">●</div>
+            <div class="slot-body">
+              <div class="title"><b>主论坛下午场</b></div>
+              <div class="desc">AgentArts 发布、ModelArts Next、AI 机密计算、长安汽车实践</div>
+              <span class="badge">⚠ 全天最重要时段</span>
+            </div>
+          </div>
+          <div class="slot">
+            <div class="slot-time">16:00<span class="end">17:30</span></div>
+            <div class="slot-prio y">●</div>
+            <div class="slot-body">
+              <div class="title">展区深潜</div>
+              <div class="desc">行业AI梦工厂（智能制造 / 智慧医疗）<br>找落地场景，深度聊 2 个展位</div>
+            </div>
+          </div>
+          <div class="slot">
+            <div class="slot-time">当晚</div>
+            <div class="slot-prio g">●</div>
+            <div class="slot-body">
+              <div class="title">整理笔记 + 录 3 分钟口述复盘</div>
+              <div class="desc"><span class="warn">不整理 = 白去</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DAY 2 -->
+      <div class="day-card">
+        <div class="day-head">
+          <div>
+            <div class="label">DAY · 02</div>
+            <div class="name">SATURDAY <em>·</em> 生态 + 实战</div>
+          </div>
+          <div class="date">
+            <span class="big">06</span>
+            JUNE · 周六
+          </div>
+        </div>
+        <div class="agenda">
+          <div class="slot">
+            <div class="slot-time">09:30<span class="end">11:45</span></div>
+            <div class="slot-prio r">●</div>
+            <div class="slot-body">
+              <div class="title"><b>生态论坛</b> · 4F-2号厅C</div>
+              <div class="desc"><span class="hl">蒋涛</span>「开发者红利」→ <span class="hl">李小雨</span>「一人交付之路」→ <span class="hl">樊渊</span>「AI深耕工业」<br><span class="warn">★ 李小雨是全场最值得认识的人之一</span></div>
+            </div>
+          </div>
+          <div class="slot">
+            <div class="slot-time">11:45<span class="end">13:00</span></div>
+            <div class="slot-prio y">●</div>
+            <div class="slot-body">
+              <div class="title">午饭 + 展区补漏</div>
+            </div>
+          </div>
+          <div class="slot">
+            <div class="slot-time">13:00<span class="end">15:00</span></div>
+            <div class="slot-prio r">●</div>
+            <div class="slot-body">
+              <div class="title"><b>技术论坛深挖</b></div>
+              <div class="desc">首选企业级 Agent 开发场，备选 AI Coding 场<br><span class="hl">▸ 只选 1 场，不赶场</span></div>
+            </div>
+          </div>
+          <div class="slot">
+            <div class="slot-time">15:00<span class="end">16:30</span></div>
+            <div class="slot-prio y">●</div>
+            <div class="slot-body">
+              <div class="title"><b>开发者实战工坊</b></div>
+              <div class="desc">AgentArts 零代码搭建体验<br><span class="hl">▸ 亲手跑一遍，做视频素材</span></div>
+            </div>
+          </div>
+          <div class="slot">
+            <div class="slot-time">16:30<span class="end">17:00</span></div>
+            <div class="slot-prio g">●</div>
+            <div class="slot-body">
+              <div class="title">扫展区打卡点，拿资料</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · 必逛展台 -->
+  <section class="section">
+    <div class="section-head">
+      <div class="section-num">§ 04</div>
+      <div>
+        <h2 class="section-title">必逛展台<br><span class="cn">Booth Map — 5 个核心目标</span></h2>
+      </div>
+      <div class="section-meta">
+        <span class="count">05</span>
+        BOOTHS
+      </div>
+    </div>
+
+    <div class="booths">
+      <div class="booth" style="--accent: var(--red);">
+        <span class="booth-rank">#01</span>
+        <div class="booth-stars">★★★</div>
+        <div class="booth-name">智能体使能平台展点</div>
+        <div class="booth-focus">代码智能体、数据智能体</div>
+      </div>
+      <div class="booth" style="--accent: var(--red);">
+        <span class="booth-rank">#02</span>
+        <div class="booth-stars">★★★</div>
+        <div class="booth-name">AI 万象应用展点</div>
+        <div class="booth-focus">找 3 个有视频价值的产品深聊</div>
+      </div>
+      <div class="booth" style="--accent: var(--blue);">
+        <span class="booth-rank">#03</span>
+        <div class="booth-stars">★★<span class="dim">★</span></div>
+        <div class="booth-name">行业AI梦工厂 · 智能制造</div>
+        <div class="booth-focus">全链路 AI，G2B 经验共鸣</div>
+      </div>
+      <div class="booth" style="--accent: var(--blue);">
+        <span class="booth-rank">#04</span>
+        <div class="booth-stars">★★<span class="dim">★</span></div>
+        <div class="booth-name">云AI基础设施展点</div>
+        <div class="booth-focus">Token 经济视频素材</div>
+      </div>
+      <div class="booth" style="--accent: var(--ink-3);">
+        <span class="booth-rank">#05</span>
+        <div class="booth-stars">★<span class="dim">★★</span></div>
+        <div class="booth-name">具身智能展区<br>CloudRobo</div>
+        <div class="booth-focus">快速扫，有意思但非核心</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · 出发前 / 不要做 -->
+  <section class="section">
+    <div class="section-head">
+      <div class="section-num">§ 05</div>
+      <div>
+        <h2 class="section-title">出发清单 & 红线<br><span class="cn">Pre-flight Checklist & Don'ts</span></h2>
+      </div>
+      <div class="section-meta">
+        <span class="count">09</span>
+        ITEMS
+      </div>
+    </div>
+
+    <div class="checklist">
+      <div class="check-group">
+        <h3>出发前 / <em style="font-family: var(--serif); color: var(--green); font-style: italic; font-weight: 400;">Do</em></h3>
+        <div class="sub">— Pre-flight checklist</div>
+        <div class="check-item">
+          <div class="check-box" style="border-color: var(--green);"></div>
+          <div class="check-text">确认报名状态，下载电子票</div>
+        </div>
+        <div class="check-item">
+          <div class="check-box" style="border-color: var(--green);"></div>
+          <div class="check-text">准备 15 秒自我介绍：<span class="em">「我是嗯哌，做 AGI 工作流的 YouTube 频道，也是 DifyAIA 的作者」</span></div>
+        </div>
+        <div class="check-item">
+          <div class="check-box" style="border-color: var(--green);"></div>
+          <div class="check-text">充电宝 + 备用手机（拍视频）+ 纸质名片 <span class="em">≥ 20 张</span></div>
+        </div>
+        <div class="check-item">
+          <div class="check-box" style="border-color: var(--green);"></div>
+          <div class="check-text">列 <span class="em">3 个</span>架构问题带去 AgentArts 和 Agent 论坛</div>
+        </div>
+        <div class="check-item">
+          <div class="check-box" style="border-color: var(--green);"></div>
+          <div class="check-text">提前关注<span class="lnk">李小雨</span>社交媒体，会后找他聊</div>
+        </div>
+        <div class="check-item">
+          <div class="check-box" style="border-color: var(--green);"></div>
+          <div class="check-text">会前录一条频道预告短视频</div>
+        </div>
+      </div>
+
+      <div class="check-group">
+        <h3>不要做 / <em style="font-family: var(--serif); color: var(--red); font-style: italic; font-weight: 400;">Don't</em></h3>
+        <div class="sub">— Anti-patterns to avoid</div>
+        <div class="check-item danger">
+          <div class="check-box"></div>
+          <div class="check-text">每个论坛都去听 — <span class="em">累死且什么都记不住</span></div>
+        </div>
+        <div class="check-item danger">
+          <div class="check-box"></div>
+          <div class="check-text">只逛展不记笔记 — <span class="em">两天后什么都不剩</span></div>
+        </div>
+        <div class="check-item danger">
+          <div class="check-box"></div>
+          <div class="check-text">疯狂加微信但不说自己是谁 — <span class="em">加 100 人不如深聊 3 个</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 · 会后记录 -->
+  <section class="section">
+    <div class="section-head">
+      <div class="section-num">§ 06</div>
+      <div>
+        <h2 class="section-title">会后记录<br><span class="cn">Post-event Log — 待填写</span></h2>
+      </div>
+      <div class="section-meta">
+        <span class="count">04</span>
+        SECTIONS
+      </div>
+    </div>
+
+    <div class="post-form">
+      <div class="form-card" style="--accent: var(--red);">
+        <h4>KEY · 关键收获</h4>
+        <div class="cn-title">关键收获</div>
+        <div class="lines">
+          <div class="line"></div>
+          <div class="line"></div>
+          <div class="line"></div>
+          <div class="line"></div>
+        </div>
+      </div>
+      <div class="form-card" style="--accent: var(--blue);">
+        <h4>FOOTAGE · 拍到的素材</h4>
+        <div class="cn-title">拍到的素材</div>
+        <div class="lines">
+          <div class="line"></div>
+          <div class="line"></div>
+          <div class="line"></div>
+          <div class="line"></div>
+        </div>
+      </div>
+      <div class="form-card" style="--accent: var(--amber);">
+        <h4>PEOPLE · 新认识的人</h4>
+        <div class="cn-title">新认识的人</div>
+        <div class="lines">
+          <div class="line"></div>
+          <div class="line"></div>
+          <div class="line"></div>
+          <div class="line"></div>
+        </div>
+      </div>
+      <div class="form-card" style="--accent: var(--green);">
+        <h4>NEXT · 后续行动</h4>
+        <div class="cn-title">后续行动</div>
+        <div class="lines">
+          <div class="line"></div>
+          <div class="line"></div>
+          <div class="line"></div>
+          <div class="line"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 · 行动日志 -->
+  <section class="section">
+    <div class="section-head">
+      <div class="section-num">§ 07</div>
+      <div>
+        <h2 class="section-title">行动日志<br><span class="cn">Action Log — 当前进度</span></h2>
+      </div>
+      <div class="section-meta">
+        <span class="count">01</span>
+        ENTRY
+      </div>
+    </div>
+
+    <table class="action-table">
+      <thead>
+        <tr>
+          <th style="width:22%;">项目 / PROJECT</th>
+          <th style="width:38%;">今天做了什么 / WHAT</th>
+          <th style="width:22%;">卡点 / NOTES</th>
+          <th style="width:18%;">下一步 / NEXT</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="proj">INSPIRE 大会</td>
+          <td><span class="arrow">▸</span> Day 1 参会</td>
+          <td class="day">—</td>
+          <td class="next">整理笔记</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div>
+      <span>© 2026 · HABHY · NPIE</span>
+      <span style="margin: 0 12px; color: var(--ink-3);">/</span>
+      <span>EDITED 2026-06-05</span>
+    </div>
+    <div class="brand">END<em>·</em>OF<em>·</em>FILE</div>
+    <div>
+      <span style="color: var(--red);">●</span>
+      <span style="margin-left: 8px;">READY TO DEPLOY</span>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>

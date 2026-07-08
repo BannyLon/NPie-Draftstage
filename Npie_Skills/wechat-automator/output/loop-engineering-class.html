@@ -1,0 +1,145 @@
+<section style="max-width:677px;margin:0 auto;padding:32px 20px 24px;background-color:#ffffff;">
+
+<p class="article-meta">
+<span class="meta-tag">AI 工作流</span><br>
+<span class="meta-desc">Loop Engineering 不是让你更会写 Prompt——是让你从「监工」变成「设计师」</span>
+</p>
+
+<p>用 AI 写文章，最崩溃的不是它写得烂。</p>
+
+<p>是它写到一半跑偏了，你没发现；它漏了关键要求，你没注意；它输出了一堆看似完整、实际不能用的东西——你得一条条检查、提醒、重来。</p>
+
+<p>这就是「AI 返工」。</p>
+
+<p>很多人以为是 Prompt 写得不够好。但你仔细想：你给一个真人员工布置任务，说完目标就消失三天，回来发现他做偏了——<strong>这是你的问题还是他的问题？</strong></p>
+
+<p>答案是你没给「检查标准」。Loop Engineering 解决的就是这件事。</p>
+
+<h2>一、先搞清楚：为什么 AI 总是跑偏？</h2>
+
+<p>假设你让 AI 「帮我找 30 个 AI 领域的 YouTube 博主」。</p>
+
+<p>它会怎么做？搜一圈，把带「AI」标签的账号全塞进来。公司官方号、纯新闻搬运号、讲区块链的、粉丝几百的搬运工、甚至已经停更两年的账号——它不觉得有问题，因为它不知道什么叫「合格」。</p>
+
+<p>你打开名单，血压上来了。然后你开始一条条标注：「这是个公司号」「这人半年没更新了」「这个全是区块链跟 AI 没关系」……标完 30 条，花了 40 分钟。比你自己找还累。</p>
+
+<p><strong>问题出在哪？</strong>不是你问得不好。是你没告诉它三件事：</p>
+
+<p class="card-item"><strong>1. 什么叫合格</strong>——个人创作者、近期内容以 AI 工具/教程为主、粉丝 &gt; 10K、近 30 天有更新</p>
+
+<p class="card-item"><strong>2. 什么叫不合格</strong>——公司号、纯新闻号、已停更、内容以 Crypto 为主、纯卖课广告号</p>
+
+<p class="card-item"><strong>3. 做错了怎么改</strong>——发现停更号混入 → 下一轮加上「近 30 天必须有更新」的硬门槛</p>
+
+<p>大多数人给 AI 的指令只有「目标」和「步骤」。AI 确实执行了，但中途跑偏也会继续往下跑。<strong>Loop Engineering 的关键不同：你提前把「检查」和「纠错」写进去了。</strong></p>
+
+<h2>二、Loop Engineering 到底是什么——用洗衣机来理解</h2>
+
+<p>你不会每 5 分钟手动告诉洗衣机：「现在进水。」「现在搅拌。」「现在排水。」</p>
+
+<p>你选一个模式，它自己完成一整套流程。因为它内置了：目标（洗干净）、步骤（进水→搅拌→排水→甩干）、检查（水位够不够、时间到了没）、停止条件（程序结束）。</p>
+
+<p><strong>Loop Engineering 就是给 AI 装一套这样的内置流程。</strong></p>
+
+<p>最小的 Loop 只有 5 个环节：</p>
+
+<blockquote class="golden-quote"><p>执行 → 检查 → 纠错 → 记录状态 → 继续<br>直到达标停止</p></blockquote>
+
+<p>翻译成人话：做一轮 → 自己检查哪里不对 → 把问题变成下一轮的修正规则 → 记住当前进度 → 达标就停，不达标继续改。</p>
+
+<p>它跟普通 Prompt 的本质区别：</p>
+
+<table style="width:100%;border-collapse:collapse;margin:20px 0;">
+<tr><th>对比维度</th><th>普通 Prompt</th><th>Loop Prompt</th></tr>
+<tr><td>给 AI 的</td><td>目标 + 步骤</td><td>目标 + 步骤 + 检查标准 + 纠错方式 + 停止条件</td></tr>
+<tr><td>AI 跑偏后</td><td>等你发现，等你提醒</td><td>自己发现，自己修正</td></tr>
+<tr><td>你的角色</td><td>监工，全程盯着</td><td>设计师，提前设定规则</td></tr>
+</table>
+
+<h2>三、一个你马上能套用的最小模板</h2>
+
+<p>别被「Engineering」这个词吓到。Loop 不需要你写代码、配工具、搭系统。最开始，它只是一个结构化的 Prompt。</p>
+
+<section class="prompt-card">
+<p class="prompt-card-header">最小 Loop 模板（替换括号内容直接用）</p>
+<section class="prompt-card-body">请你把这个任务当成一个 Loop 来完成。<br><br>目标：[最后要交付什么]<br><br>每一轮动作：<br>1. 执行：[这一轮做什么]<br>2. 检查：[用什么标准判断结果合不合格]<br>3. 纠错：[发现问题后怎么改]<br>4. 记录：[本轮新增什么规则]<br><br>合格标准：<br>- [标准 1]<br>- [标准 2]<br>- [标准 3]<br><br>停止条件：<br>达到所有标准后停止。如果连续 2 轮无法改善，请停止并说明卡在哪里。<br><br>最终交付：[格式要求]</section>
+</section>
+
+<p><strong>模板的重点只有一个：你把「检查」和「纠错」提前写进去了。</strong></p>
+
+<h2>四、四个小白可以直接照抄的 Loop</h2>
+
+<p>以下是四个高频场景的完整 Loop，替换括号里的内容就能直接用。</p>
+
+<h3>Loop 1：写公众号 / 小红书文章</h3>
+
+<section class="prompt-card">
+<p class="prompt-card-header">Article Loop</p>
+<section class="prompt-card-body">请用 Loop 方式帮我写一篇文章。<br><br>目标：面向【AI 小白 / 职场人 / 创业者】的【AI 工具教程 / 效率方法 / 行业观察】<br><br>流程：<br>1、先判断目标读者是谁，在什么场景下会读这篇文章<br>2、列出文章大纲（3-5 个小标题）<br>3、写正文第一版<br>4、按验收标准逐条自查<br>5、不合格就修改，每轮只改 3 个最重要的问题<br>6、达标后输出最终版<br><br>验收标准：<br>- 开头有具体案例或数字，30 字内让读者知道「这篇文章跟我有什么关系」<br>- 每个概念用生活化比喻解释（不是百科定义）<br>- 没有「在当今时代」「随着AI技术发展」「众所周知」这类空话<br>- 段落不超过 4 行（手机屏幕一屏能看完）<br>- 结尾给一个今天就能做的具体动作<br><br>停止条件：所有标准通过，或修改 2 轮后仍未达标就输出现状并说明原因。</section>
+</section>
+
+<h3>Loop 2：做短视频 / YouTube Shorts 脚本</h3>
+
+<section class="prompt-card">
+<p class="prompt-card-header">Video Script Loop</p>
+<section class="prompt-card-body">请用 Loop 方式帮我设计一条短视频脚本。<br><br>目标：【60 秒 / 3 分钟】的【AI 工具测评 / 效率技巧 / 行业观点】短视频<br>平台：【YouTube Shorts / 小红书 / TikTok / 抖音】<br><br>流程：<br>1、先分析平台上同类爆款视频的标题和开头模式<br>2、出 5 个选题方向，每个一句话<br>3、选出最有爆点的 1 个，写出完整脚本<br>4、按验收标准自查<br>5、不合格修改，最多 2 轮<br><br>验收标准：<br>- 开头 3 秒有信息落差（反直觉数据 / 场景痛点 / 对比冲击）<br>- 脚本有具体操作画面描述，不是纯口播<br>- 每 15 秒有一个信息点或转折，不让人划走<br>- 标题 20 字以内，不含「必看」「震惊」「颠覆」等夸张词<br><br>停止条件：所有标准通过，或 2 轮后输出最佳版本并标注仍有问题的部分。</section>
+</section>
+
+<h3>Loop 3：做竞品 / 行业调研</h3>
+
+<section class="prompt-card">
+<p class="prompt-card-header">Research Loop</p>
+<section class="prompt-card-body">请用 Loop 方式帮我做一次竞品调研。<br><br>目标：分析【某赛道 / 某产品类型】的前【10】个竞品<br><br>流程：<br>1、先锁定搜索范围和排除条件<br>2、第一轮广撒网，拉候选池<br>3、第二轮按标准筛选，剔除不合格的<br>4、第三轮深看每个竞品的核心差异点<br>5、按验收标准自查<br>6、输出调研报告<br><br>验收标准：<br>- 每个竞品至少覆盖：产品定位、核心功能、定价、目标用户、差异化优势<br>- 排除项明确标注（如「已停止更新」「非目标市场」）<br>- 有横向对比总结（不是逐个罗列）<br><br>停止条件：找到规定数量的合格竞品，或连续 2 轮无新增有效目标。</section>
+</section>
+
+<h3>Loop 4：整理每日 / 每周工作复盘</h3>
+
+<section class="prompt-card">
+<p class="prompt-card-header">Weekly Review Loop</p>
+<section class="prompt-card-body">请用 Loop 方式帮我做本周工作复盘。<br><br>目标：从本周的【会议纪要 / 聊天记录 / 任务清单 / Daily Notes】中提炼出可交付的周报<br><br>输入：【粘贴你的原始记录】<br><br>流程：<br>1、先提取所有任务和讨论议题<br>2、按项目归类<br>3、标注每项的完成状态、负责人、下一步动作<br>4、按验收标准自查<br>5、不合格修改<br><br>验收标准：<br>- 每个任务有：负责人 + 当前状态 + 下一步动作 + 预计完成时间<br>- 高亮标记「阻塞项」和「风险项」<br>- 没有模糊描述（如「推进中」但无具体动作）<br>- 输出可直接粘贴到工作群或周报系统的格式<br><br>停止条件：所有任务信息完整，缺失项已列成待补充问题清单。</section>
+</section>
+
+<h2>五、新手最容易踩的 3 个坑</h2>
+
+<h3>坑 1：只有目标，没有检查标准</h3>
+
+<p>「写得好一点」不是标准。「开头 3 秒有具体数字」才是标准。</p>
+
+<p class="warn-box"><strong>没有检查标准的 Loop，就像没有刹车的车</strong>——你不知道它什么时候该停，也不知道它跑对方向没有。</p>
+
+<h3>坑 2：检查标准太死或太松</h3>
+
+<p>太松，结果池里全是脏数据。太死，合格结果会被杀光。建议分三层：</p>
+
+<p class="card-item"><strong>硬门槛（Hard Gate）</strong>：不满足直接淘汰。如「粉丝 &lt; 10K」「近 30 天无更新」</p>
+
+<p class="card-item"><strong>软评分（Soft Rubric）</strong>：人工复核。如「内容不够垂直」「风格偏营销」</p>
+
+<p class="card-item"><strong>观察项（Observation）</strong>：先记录，连续出现再升级为规则</p>
+
+<h3>坑 3：让 AI 无限改下去</h3>
+
+<p>AI 有时候很「勤奋」，会不断优化。但优化不等于变好。标题第一版可能是「普通人用 AI 提效，先学会这 4 个循环」，改到第五版变成「关于人工智能应用能力提升的系统性方法研究」——看起来高级，没人想点。</p>
+
+<p class="warn-box"><strong>必须设停止条件：最多改 2 轮，或所有标准通过即停。</strong></p>
+
+<h2>六、今天就能开始的 5 分钟练习</h2>
+
+<p>别先学理论。立刻选一个你手上真实的小任务——改朋友圈文案、整理会议纪要、做一个 7 天学习计划。</p>
+
+<p>然后复制这段：</p>
+
+<section class="prompt-card">
+<p class="prompt-card-header">5 分钟入门模板</p>
+<section class="prompt-card-body">请你用 Loop 的方式完成这个任务。<br><br>目标：【填你的任务】<br><br>流程：<br>1、先理解目标<br>2、列出计划<br>3、执行第一版<br>4、按标准自查<br>5、不合格就修改一轮<br>6、合格后停止<br><br>验收标准：<br>【标准 1】<br>【标准 2】<br>【标准 3】<br><br>最后输出：最终结果 + 自查结果 + 下一步建议</section>
+</section>
+
+<p>你只要把括号里的内容填好，就已经入门了。</p>
+
+<blockquote class="golden-quote"><p>Loop Engineering 不是让你「更会写 Prompt」。<br>它是一次角色转换——<br>把你从「盯着 AI 改错的监工」，<br>变成「提前设计规则的设计师」。</p></blockquote>
+
+<section class="cta-footer">
+<p class="cta-title">从今天开始，不要只告诉 AI 你要什么。告诉它什么叫做好了。</p>
+</section>
+
+</section>

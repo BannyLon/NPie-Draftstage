@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>排版风格预览 — 文章预览</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+    background: #1a1d23; color: #e0e0e0; padding: 32px 24px 64px;
+  }
+  .page-header { max-width: 1400px; margin: 0 auto 40px; text-align: center; }
+  .page-header h1 { font-size: 28px; font-weight: 800; color: #fff; margin-bottom: 8px; }
+  .page-header .subtitle { font-size: 14px; color: #8a8f9a; }
+
+  .legend { max-width: 900px; margin: 0 auto 40px; padding: 20px 28px; background: #252830; border-radius: 12px; }
+  .legend-title { font-size: 13px; font-weight: 700; color: #8a8f9a; margin-bottom: 14px; }
+  .legend-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 13px; }
+  .legend-swatch { width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; }
+  .legend-name { width: 90px; flex-shrink: 0; color: #ccc; font-weight: 600; }
+  .legend-detail { width: 170px; flex-shrink: 0; color: #6a6f7a; font-size: 12px; }
+  .legend-bar { flex-shrink: 0; }
+  .legend-score { color: #8a8f9a; font-weight: 600; }
+
+  .theme-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 24px; max-width: 1400px; margin: 0 auto; }
+  .theme-card { background: #252830; border-radius: 14px; overflow: hidden; border: 2px solid #333840; transition: border-color .2s; }
+  .theme-card.recommended { border-color: #f0b90b; box-shadow: 0 0 24px rgba(240,185,11,.12); }
+  .card-header { padding: 18px 20px 14px; border-bottom: 1px solid #333840; }
+  .dual-swatch { display: inline-block; vertical-align: middle; margin-right: 10px; }
+  .swatch-p { display: inline-block; width: 24px; height: 24px; border-radius: 6px 0 0 6px; }
+  .swatch-c { display: inline-block; width: 24px; height: 24px; border-radius: 0 6px 6px 0; }
+  .card-meta { display: inline-block; vertical-align: middle; }
+  .theme-name { font-size: 16px; font-weight: 700; color: #fff; }
+  .badge { display: inline-block; margin-left: 8px; padding: 2px 8px; background: #f0b90b; color: #1a1d23; font-size: 11px; font-weight: 700; border-radius: 4px; vertical-align: middle; }
+  .theme-spec { margin-top: 8px; display: flex; gap: 14px; }
+  .spec-layout, .spec-palette { font-size: 12px; color: #8a8f9a; }
+  .theme-desc { margin-top: 4px; font-size: 13px; color: #6a6f7a; }
+  .theme-colors { margin-top: 8px; }
+  .color-chip { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 4px; }
+  .card-preview { padding: 0; max-height: 480px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .card-preview section { margin: 0 !important; }
+
+  .action-bar { max-width: 1400px; margin: 40px auto 0; text-align: center; padding: 24px; background: #252830; border-radius: 12px; }
+  .action-bar p { font-size: 14px; color: #8a8f9a; line-height: 1.8; }
+  .action-bar code { background: #333840; color: #f0b90b; padding: 2px 8px; border-radius: 4px; font-size: 13px; }
+  .action-bar .mix-note { font-size: 12px; color: #555a63; margin-top: 10px; }
+
+  @media (max-width: 420px) {
+    body { padding: 16px 8px 32px; }
+    .theme-grid { grid-template-columns: 1fr; gap: 16px; }
+    .legend-detail { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>🎨 排版风格预览</h1>
+  <p class="subtitle">文章预览</p>
+</div>
+
+<div class="legend">
+  <div class="legend-title">📊 内容匹配度（布局 × 配色）</div>
+  
+        <div class="legend-item">
+            <span class="legend-swatch" style="background-color:#4a5568;"></span>
+            <span class="legend-name">岩灰书信</span>
+            <span class="legend-detail">(书信流 × 岩灰玫瑰)</span>
+            <span class="legend-bar"><span style="display:inline-block;width:120px;height:8px;background-color:#4a5568;border-radius:4px;"></span></span>
+            <span class="legend-score">43 分</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-swatch" style="background-color:#0d7377;"></span>
+            <span class="legend-name">青蓝经典</span>
+            <span class="legend-detail">(经典左线 × 青蓝金)</span>
+            <span class="legend-bar"><span style="display:inline-block;width:24px;height:8px;background-color:#0d7377;border-radius:4px;"></span></span>
+            <span class="legend-score">3 分</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-swatch" style="background-color:#2c3e6b;"></span>
+            <span class="legend-name">深蓝杂志</span>
+            <span class="legend-detail">(杂志流 × 深蓝珊瑚)</span>
+            <span class="legend-bar"><span style="display:inline-block;width:0px;height:8px;background-color:#2c3e6b;border-radius:4px;"></span></span>
+            <span class="legend-score">0 分</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-swatch" style="background-color:#2d6a4f;"></span>
+            <span class="legend-name">森语手册</span>
+            <span class="legend-detail">(手册流 × 森语琥珀)</span>
+            <span class="legend-bar"><span style="display:inline-block;width:0px;height:8px;background-color:#2d6a4f;border-radius:4px;"></span></span>
+            <span class="legend-score">0 分</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-swatch" style="background-color:#7c3a8c;"></span>
+            <span class="legend-name">梅紫卡片</span>
+            <span class="legend-detail">(卡片流 × 梅紫灰绿)</span>
+            <span class="legend-bar"><span style="display:inline-block;width:0px;height:8px;background-color:#7c3a8c;border-radius:4px;"></span></span>
+            <span class="legend-score">0 分</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-swatch" style="background-color:#2d6a4f;"></span>
+            <span class="legend-name">暖金工坊</span>
+            <span class="legend-detail">(极客流 × 森语琥珀)</span>
+            <span class="legend-bar"><span style="display:inline-block;width:0px;height:8px;background-color:#2d6a4f;border-radius:4px;"></span></span>
+            <span class="legend-score">0 分</span>
+        </div>
+</div>
+
+<div class="theme-grid">
+        <div class="theme-card recommended">
+            <div class="card-header">
+                
+            <div class="dual-swatch">
+                <span class="swatch-p" style="background-color:#0d7377;"></span>
+                <span class="swatch-c" style="background-color:#c8940a;"></span>
+            </div>
+                <div class="card-meta">
+                    <span class="theme-name">青蓝经典</span>
+                    <span class="badge">⭐ 推荐</span>
+                </div>
+                <div class="theme-spec">
+                    <span class="spec-layout">📐 经典左线</span>
+                    <span class="spec-palette">🎨 青蓝金</span>
+                </div>
+                <div class="theme-desc">左粗线+浅底分区，结构清晰，通用百搭 · 冷青蓝×暖琥珀金</div>
+                <div class="theme-colors">
+                    <span class="color-chip" style="background-color:#0d7377;" title="主色 #0d7377"></span>
+                    <span class="color-chip" style="background-color:#c8940a;" title="对比色 #c8940a"></span>
+                </div>
+            </div>
+            <div class="card-preview"><section  style="margin:0;padding:0 16px 0;background-color:#ffffff;"><p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">翻开《加缪情书集》之前，我对加缪的印象就是那个写《局外人》《西西弗神话》的冷面哲学家。荒诞、孤独、异化。我心想，这种人的情书，多半是哲学论述披了层情话的皮。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">翻了几页就知道错了。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">不是某一句情话有多甜。是两个人的存在方式本身就让人挪不开眼。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">玛丽亚是烈火型的。她写</p>
+<blockquote  style="margin:20px 0;padding:18px 20px 18px 22px;background-color:#fafbfc;border-left:3px solid #0d7377;border-radius:0 8px 8px 0;color:#8a9aaa;font-size:14px;line-height:1.8;"><p  style="margin:0 0 8px;font-size:14px;line-height:1.8;color:#8a9aaa;text-align:justify;">您的奴隶已经就位，身体和灵魂都拴上了锁链</p></blockquote>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">这种话放到今天，评论区大概率是「恋爱脑」「没有自我」。但读完她的信你就明白，她不是没有自我，她是选择把自我全部交出去。这是两回事。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">她能直白到写</p>
+<blockquote  style="margin:20px 0;padding:18px 20px 18px 22px;background-color:#fafbfc;border-left:3px solid #0d7377;border-radius:0 8px 8px 0;color:#8a9aaa;font-size:14px;line-height:1.8;"><p  style="margin:0 0 8px;font-size:14px;line-height:1.8;color:#8a9aaa;text-align:justify;">看着我，就像我看着你一样，永远不要转开眼</p></blockquote>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">她怕的不是距离——隔得再远她也认了——她怕的是距离滋生出来的沉默。「互不知晓、相对无言」，这才是她反复提到的噩梦。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">加缪呢。完全是另一个极端。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">他写</p>
+<blockquote  style="margin:20px 0;padding:18px 20px 18px 22px;background-color:#fafbfc;border-left:3px solid #0d7377;border-radius:0 8px 8px 0;color:#8a9aaa;font-size:14px;line-height:1.8;"><p  style="margin:0 0 8px;font-size:14px;line-height:1.8;color:#8a9aaa;text-align:justify;">我简直做不到真正地给你写信、用我全部的心和爱向你说话</p></blockquote>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">他有个没法挣脱的现实：家庭、责任、世俗身份。提笔的时候，一半是滚烫爱意，一半是清醒的负罪感。太多话不敢直说，不能说。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">他写「我会一直等下去」，但翻过几页你又会看到——</p>
+<blockquote  style="margin:20px 0;padding:18px 20px 18px 22px;background-color:#fafbfc;border-left:3px solid #0d7377;border-radius:0 8px 8px 0;color:#8a9aaa;font-size:14px;line-height:1.8;"><p  style="margin:0 0 8px;font-size:14px;line-height:1.8;color:#8a9aaa;text-align:justify;">等待和孤独对我来说，意味着无尽的绝望。</p></blockquote>
+<blockquote  style="margin:30px 0;padding:26px 28px;background-color:#e8f4f8;border-radius:12px;text-align:center;font-size:17px;font-weight:700;line-height:1.9;color:#0d7377;"><p  style="margin:0 0 8px;font-size:17px;font-weight:700;line-height:1.9;color:#0d7377;text-align:center;">一个怕沉默，一个怕沉溺。一收一放。</p></blockquote>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">读到这里我停了一阵。不是因为文字——是因为突然意识到，这才是真实的亲密关系。不是两个人想法完全一样，是你滚烫的时候我克制，你怕沉默的时</section></div>
+        </div>
+        <div class="theme-card">
+            <div class="card-header">
+                
+            <div class="dual-swatch">
+                <span class="swatch-p" style="background-color:#2c3e6b;"></span>
+                <span class="swatch-c" style="background-color:#d4685c;"></span>
+            </div>
+                <div class="card-meta">
+                    <span class="theme-name">深蓝杂志</span>
+                    
+                </div>
+                <div class="theme-spec">
+                    <span class="spec-layout">📐 杂志流</span>
+                    <span class="spec-palette">🎨 深蓝珊瑚</span>
+                </div>
+                <div class="theme-desc">大标题+装饰线+引题段落，编辑感 · 深海蓝×暖珊瑚红</div>
+                <div class="theme-colors">
+                    <span class="color-chip" style="background-color:#2c3e6b;" title="主色 #2c3e6b"></span>
+                    <span class="color-chip" style="background-color:#d4685c;" title="对比色 #d4685c"></span>
+                </div>
+            </div>
+            <div class="card-preview"><section  style="margin:0;padding:0 16px 0;background-color:#ffffff;"><p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">翻开《加缪情书集》之前，我对加缪的印象就是那个写《局外人》《西西弗神话》的冷面哲学家。荒诞、孤独、异化。我心想，这种人的情书，多半是哲学论述披了层情话的皮。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">翻了几页就知道错了。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">不是某一句情话有多甜。是两个人的存在方式本身就让人挪不开眼。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">玛丽亚是烈火型的。她写</p>
+<blockquote  style="margin:36px 0;padding:18px 20px;text-align:center;font-size:20px;font-weight:600;line-height:1.9;color:#2c3e6b;background-color:transparent;border:none;"><p  style="margin:0;font-size:20px;font-weight:600;line-height:1.9;color:#2c3e6b;text-align:center;">您的奴隶已经就位，身体和灵魂都拴上了锁链</p></blockquote>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">这种话放到今天，评论区大概率是「恋爱脑」「没有自我」。但读完她的信你就明白，她不是没有自我，她是选择把自我全部交出去。这是两回事。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">她能直白到写</p>
+<blockquote  style="margin:36px 0;padding:18px 20px;text-align:center;font-size:20px;font-weight:600;line-height:1.9;color:#2c3e6b;background-color:transparent;border:none;"><p  style="margin:0;font-size:20px;font-weight:600;line-height:1.9;color:#2c3e6b;text-align:center;">看着我，就像我看着你一样，永远不要转开眼</p></blockquote>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">她怕的不是距离——隔得再远她也认了——她怕的是距离滋生出来的沉默。「互不知晓、相对无言」，这才是她反复提到的噩梦。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">加缪呢。完全是另一个极端。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">他写</p>
+<blockquote  style="margin:36px 0;padding:18px 20px;text-align:center;font-size:20px;font-weight:600;line-height:1.9;color:#2c3e6b;background-color:transparent;border:none;"><p  style="margin:0;font-size:20px;font-weight:600;line-height:1.9;color:#2c3e6b;text-align:center;">我简直做不到真正地给你写信、用我全部的心和爱向你说话</p></blockquote>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">他有个没法挣脱的现实：家庭、责任、世俗身份。提笔的时候，一半是滚烫爱意，一半是清醒的负罪感。太多话不敢直说，不能说。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">他写「我会一直等下去」，但翻过几页你又会看到——</p>
+<blockquote  style="margin:36px 0;padding:18px 20px;text-align:center;font-size:20px;font-weight:600;line-height:1.9;color:#2c3e6b;background-color:transparent;border:none;"><p  style="margin:0;font-size:20px;font-weight:600;line-height:1.9;color:#2c3e6b;text-align:center;">等待和孤独对我来说，意味着无尽的绝望。</p></blockquote>
+<blockquote  style="margin:40px 0;padding:32px 28px;background-color:#edf0f7;text-align:center;font-size:18px;font-weight:700;line-height:2.0;color:#2c3e6b;border-top:2px solid #d4685c;border-bottom:2px solid #d4685c;"><p  style="margin:0 0 8px;font-size:17px;font-weight:700;line-height:1.9;color:#2c3e6b;text-align:center;">一个怕沉默，一个怕沉溺。一收一放。</p></blockquote>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">读到这里我停了一阵。不是因为文字——是因为突然意识到，这才是真实的亲密关系。不是两个人想法完全一样，是你滚烫的时候我克制，你怕沉默的时</section></div>
+        </div>
+        <div class="theme-card">
+            <div class="card-header">
+                
+            <div class="dual-swatch">
+                <span class="swatch-p" style="background-color:#2d6a4f;"></span>
+                <span class="swatch-c" style="background-color:#d4923a;"></span>
+            </div>
+                <div class="card-meta">
+                    <span class="theme-name">森语手册</span>
+                    
+                </div>
+                <div class="theme-spec">
+                    <span class="spec-layout">📐 手册流</span>
+                    <span class="spec-palette">🎨 森语琥珀</span>
+                </div>
+                <div class="theme-desc">步骤编号+提示框+对比，操作教学 · 深林绿×暖琥珀</div>
+                <div class="theme-colors">
+                    <span class="color-chip" style="background-color:#2d6a4f;" title="主色 #2d6a4f"></span>
+                    <span class="color-chip" style="background-color:#d4923a;" title="对比色 #d4923a"></span>
+                </div>
+            </div>
+            <div class="card-preview"><section  style="margin:0;padding:0 16px 0;background-color:#ffffff;"><p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">翻开《加缪情书集》之前，我对加缪的印象就是那个写《局外人》《西西弗神话》的冷面哲学家。荒诞、孤独、异化。我心想，这种人的情书，多半是哲学论述披了层情话的皮。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">翻了几页就知道错了。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">不是某一句情话有多甜。是两个人的存在方式本身就让人挪不开眼。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">玛丽亚是烈火型的。她写</p>
+<blockquote  style="margin:16px 0;padding:12px 16px;background-color:#fef9f2;border:none;border-radius:6px;color:#3f3f3f;font-size:14px;line-height:1.7;"><p  style="margin:0 0 8px;font-size:14px;line-height:1.8;color:#8a9a90;text-align:justify;">您的奴隶已经就位，身体和灵魂都拴上了锁链</p></blockquote>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">这种话放到今天，评论区大概率是「恋爱脑」「没有自我」。但读完她的信你就明白，她不是没有自我，她是选择把自我全部交出去。这是两回事。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">她能直白到写</p>
+<blockquote  style="margin:16px 0;padding:12px 16px;background-color:#fef9f2;border:none;border-radius:6px;color:#3f3f3f;font-size:14px;line-height:1.7;"><p  style="margin:0 0 8px;font-size:14px;line-height:1.8;color:#8a9a90;text-align:justify;">看着我，就像我看着你一样，永远不要转开眼</p></blockquote>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">她怕的不是距离——隔得再远她也认了——她怕的是距离滋生出来的沉默。「互不知晓、相对无言」，这才是她反复提到的噩梦。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">加缪呢。完全是另一个极端。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">他写</p>
+<blockquote  style="margin:16px 0;padding:12px 16px;background-color:#fef9f2;border:none;border-radius:6px;color:#3f3f3f;font-size:14px;line-height:1.7;"><p  style="margin:0 0 8px;font-size:14px;line-height:1.8;color:#8a9a90;text-align:justify;">我简直做不到真正地给你写信、用我全部的心和爱向你说话</p></blockquote>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">他有个没法挣脱的现实：家庭、责任、世俗身份。提笔的时候，一半是滚烫爱意，一半是清醒的负罪感。太多话不敢直说，不能说。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">他写「我会一直等下去」，但翻过几页你又会看到——</p>
+<blockquote  style="margin:16px 0;padding:12px 16px;background-color:#fef9f2;border:none;border-radius:6px;color:#3f3f3f;font-size:14px;line-height:1.7;"><p  style="margin:0 0 8px;font-size:14px;line-height:1.8;color:#8a9a90;text-align:justify;">等待和孤独对我来说，意味着无尽的绝望。</p></blockquote>
+<blockquote  style="margin:28px 0;padding:22px 24px;background-color:#1a4230;border-radius:8px;text-align:center;font-size:16px;font-weight:700;line-height:1.8;color:#e8f5ee;"><p  style="margin:0 0 8px;font-size:17px;font-weight:700;line-height:1.9;color:#2d6a4f;text-align:center;">一个怕沉默，一个怕沉溺。一收一放。</p></blockquote>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">读到这里我停了一阵。不是因为文字——是因为突然意识到，这才是真实的亲密关系。不是两个人想法完全一样，是你滚烫的时候我克制，你怕沉默的时</section></div>
+        </div>
+        <div class="theme-card">
+            <div class="card-header">
+                
+            <div class="dual-swatch">
+                <span class="swatch-p" style="background-color:#7c3a8c;"></span>
+                <span class="swatch-c" style="background-color:#6b8b7a;"></span>
+            </div>
+                <div class="card-meta">
+                    <span class="theme-name">梅紫卡片</span>
+                    
+                </div>
+                <div class="theme-spec">
+                    <span class="spec-layout">📐 卡片流</span>
+                    <span class="spec-palette">🎨 梅紫灰绿</span>
+                </div>
+                <div class="theme-desc">每段内容独立成卡，模块化可扫描 · 梅子紫×灰鼠尾草绿</div>
+                <div class="theme-colors">
+                    <span class="color-chip" style="background-color:#7c3a8c;" title="主色 #7c3a8c"></span>
+                    <span class="color-chip" style="background-color:#6b8b7a;" title="对比色 #6b8b7a"></span>
+                </div>
+            </div>
+            <div class="card-preview"><section  style="margin:0;padding:0 16px 0;background-color:#ffffff;"><p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">翻开《加缪情书集》之前，我对加缪的印象就是那个写《局外人》《西西弗神话》的冷面哲学家。荒诞、孤独、异化。我心想，这种人的情书，多半是哲学论述披了层情话的皮。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">翻了几页就知道错了。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">不是某一句情话有多甜。是两个人的存在方式本身就让人挪不开眼。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">玛丽亚是烈火型的。她写</p>
+<blockquote  style="margin:16px 0;padding:14px 18px;background-color:#f2f7f4;border:none;border-radius:8px;color:#3f3f3f;font-size:14px;line-height:1.8;"><p  style="margin:0 0 8px;font-size:14px;line-height:1.8;color:#9a8f9e;text-align:justify;">您的奴隶已经就位，身体和灵魂都拴上了锁链</p></blockquote>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">这种话放到今天，评论区大概率是「恋爱脑」「没有自我」。但读完她的信你就明白，她不是没有自我，她是选择把自我全部交出去。这是两回事。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">她能直白到写</p>
+<blockquote  style="margin:16px 0;padding:14px 18px;background-color:#f2f7f4;border:none;border-radius:8px;color:#3f3f3f;font-size:14px;line-height:1.8;"><p  style="margin:0 0 8px;font-size:14px;line-height:1.8;color:#9a8f9e;text-align:justify;">看着我，就像我看着你一样，永远不要转开眼</p></blockquote>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">她怕的不是距离——隔得再远她也认了——她怕的是距离滋生出来的沉默。「互不知晓、相对无言」，这才是她反复提到的噩梦。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">加缪呢。完全是另一个极端。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">他写</p>
+<blockquote  style="margin:16px 0;padding:14px 18px;background-color:#f2f7f4;border:none;border-radius:8px;color:#3f3f3f;font-size:14px;line-height:1.8;"><p  style="margin:0 0 8px;font-size:14px;line-height:1.8;color:#9a8f9e;text-align:justify;">我简直做不到真正地给你写信、用我全部的心和爱向你说话</p></blockquote>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">他有个没法挣脱的现实：家庭、责任、世俗身份。提笔的时候，一半是滚烫爱意，一半是清醒的负罪感。太多话不敢直说，不能说。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">他写「我会一直等下去」，但翻过几页你又会看到——</p>
+<blockquote  style="margin:16px 0;padding:14px 18px;background-color:#f2f7f4;border:none;border-radius:8px;color:#3f3f3f;font-size:14px;line-height:1.8;"><p  style="margin:0 0 8px;font-size:14px;line-height:1.8;color:#9a8f9e;text-align:justify;">等待和孤独对我来说，意味着无尽的绝望。</p></blockquote>
+<blockquote  style="margin:0 0 20px;padding:20px 24px;background-color:#f5edf8;border-radius:0 0 10px 10px;text-align:center;font-size:16px;font-weight:700;line-height:1.8;color:#7c3a8c;"><p  style="margin:0 0 8px;font-size:17px;font-weight:700;line-height:1.9;color:#7c3a8c;text-align:center;">一个怕沉默，一个怕沉溺。一收一放。</p></blockquote>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">读到这里我停了一阵。不是因为文字——是因为突然意识到，这才是真实的亲密关系。不是两个人想法完全一样，是你滚烫的时候我克制，你怕沉默的时</section></div>
+        </div>
+        <div class="theme-card recommended">
+            <div class="card-header">
+                
+            <div class="dual-swatch">
+                <span class="swatch-p" style="background-color:#4a5568;"></span>
+                <span class="swatch-c" style="background-color:#c57080;"></span>
+            </div>
+                <div class="card-meta">
+                    <span class="theme-name">岩灰书信</span>
+                    <span class="badge">⭐ 推荐</span>
+                </div>
+                <div class="theme-spec">
+                    <span class="spec-layout">📐 书信流</span>
+                    <span class="spec-palette">🎨 岩灰玫瑰</span>
+                </div>
+                <div class="theme-desc">日期+问候+署名，极简亲密对话感 · 都市岩灰×干枯玫瑰</div>
+                <div class="theme-colors">
+                    <span class="color-chip" style="background-color:#4a5568;" title="主色 #4a5568"></span>
+                    <span class="color-chip" style="background-color:#c57080;" title="对比色 #c57080"></span>
+                </div>
+            </div>
+            <div class="card-preview"><section  style="margin:0;padding:0 16px 0;background-color:#ffffff;"><p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">翻开《加缪情书集》之前，我对加缪的印象就是那个写《局外人》《西西弗神话》的冷面哲学家。荒诞、孤独、异化。我心想，这种人的情书，多半是哲学论述披了层情话的皮。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">翻了几页就知道错了。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">不是某一句情话有多甜。是两个人的存在方式本身就让人挪不开眼。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">玛丽亚是烈火型的。她写</p>
+<blockquote  style="margin:18px 0;padding:0 0 0 16px;font-size:14px;line-height:1.8;color:#8a8f98;background-color:transparent;border:none;border-left:2px solid #d5d9df;font-style:italic;"><p  style="margin:0 0 8px;font-size:14px;line-height:1.8;color:#8a8f98;text-align:justify;">您的奴隶已经就位，身体和灵魂都拴上了锁链</p></blockquote>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">这种话放到今天，评论区大概率是「恋爱脑」「没有自我」。但读完她的信你就明白，她不是没有自我，她是选择把自我全部交出去。这是两回事。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">她能直白到写</p>
+<blockquote  style="margin:18px 0;padding:0 0 0 16px;font-size:14px;line-height:1.8;color:#8a8f98;background-color:transparent;border:none;border-left:2px solid #d5d9df;font-style:italic;"><p  style="margin:0 0 8px;font-size:14px;line-height:1.8;color:#8a8f98;text-align:justify;">看着我，就像我看着你一样，永远不要转开眼</p></blockquote>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">她怕的不是距离——隔得再远她也认了——她怕的是距离滋生出来的沉默。「互不知晓、相对无言」，这才是她反复提到的噩梦。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">加缪呢。完全是另一个极端。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">他写</p>
+<blockquote  style="margin:18px 0;padding:0 0 0 16px;font-size:14px;line-height:1.8;color:#8a8f98;background-color:transparent;border:none;border-left:2px solid #d5d9df;font-style:italic;"><p  style="margin:0 0 8px;font-size:14px;line-height:1.8;color:#8a8f98;text-align:justify;">我简直做不到真正地给你写信、用我全部的心和爱向你说话</p></blockquote>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">他有个没法挣脱的现实：家庭、责任、世俗身份。提笔的时候，一半是滚烫爱意，一半是清醒的负罪感。太多话不敢直说，不能说。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">他写「我会一直等下去」，但翻过几页你又会看到——</p>
+<blockquote  style="margin:18px 0;padding:0 0 0 16px;font-size:14px;line-height:1.8;color:#8a8f98;background-color:transparent;border:none;border-left:2px solid #d5d9df;font-style:italic;"><p  style="margin:0 0 8px;font-size:14px;line-height:1.8;color:#8a8f98;text-align:justify;">等待和孤独对我来说，意味着无尽的绝望。</p></blockquote>
+<blockquote  style="margin:28px 0;padding:0;text-align:center;font-size:18px;font-weight:600;line-height:2.0;color:#4a5568;background-color:transparent;border:none;"><p  style="margin:0;font-size:18px;font-weight:600;line-height:2.0;color:#4a5568;text-align:center;">一个怕沉默，一个怕沉溺。一收一放。</p></blockquote>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">读到这里我停了一阵。不是因为文字——是因为突然意识到，这才是真实的亲密关系。不是两个人想法完全一样，是你滚烫的时候我克制，你怕沉默的时</section></div>
+        </div>
+        <div class="theme-card">
+            <div class="card-header">
+                
+            <div class="dual-swatch">
+                <span class="swatch-p" style="background-color:#2d6a4f;"></span>
+                <span class="swatch-c" style="background-color:#d4923a;"></span>
+            </div>
+                <div class="card-meta">
+                    <span class="theme-name">暖金工坊</span>
+                    
+                </div>
+                <div class="theme-spec">
+                    <span class="spec-layout">📐 极客流</span>
+                    <span class="spec-palette">🎨 森语琥珀</span>
+                </div>
+                <div class="theme-desc">深色实验台+Prompt卡+工具徽章，技术感 · 深林绿×暖琥珀</div>
+                <div class="theme-colors">
+                    <span class="color-chip" style="background-color:#2d6a4f;" title="主色 #2d6a4f"></span>
+                    <span class="color-chip" style="background-color:#d4923a;" title="对比色 #d4923a"></span>
+                </div>
+            </div>
+            <div class="card-preview"><section  style="margin:0;padding:0 16px 0;background-color:#ffffff;"><p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">翻开《加缪情书集》之前，我对加缪的印象就是那个写《局外人》《西西弗神话》的冷面哲学家。荒诞、孤独、异化。我心想，这种人的情书，多半是哲学论述披了层情话的皮。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">翻了几页就知道错了。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">不是某一句情话有多甜。是两个人的存在方式本身就让人挪不开眼。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">玛丽亚是烈火型的。她写</p>
+<blockquote  style="margin:18px 0;padding:16px 20px;background-color:#1a4230;color:#e8f5ee;font-size:14px;line-height:1.8;border:none;border-radius:6px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;"><p  style="margin:0 0 8px;font-size:14px;line-height:1.8;color:#e8f5ee;text-align:justify;">您的奴隶已经就位，身体和灵魂都拴上了锁链</p></blockquote>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">这种话放到今天，评论区大概率是「恋爱脑」「没有自我」。但读完她的信你就明白，她不是没有自我，她是选择把自我全部交出去。这是两回事。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">她能直白到写</p>
+<blockquote  style="margin:18px 0;padding:16px 20px;background-color:#1a4230;color:#e8f5ee;font-size:14px;line-height:1.8;border:none;border-radius:6px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;"><p  style="margin:0 0 8px;font-size:14px;line-height:1.8;color:#e8f5ee;text-align:justify;">看着我，就像我看着你一样，永远不要转开眼</p></blockquote>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">她怕的不是距离——隔得再远她也认了——她怕的是距离滋生出来的沉默。「互不知晓、相对无言」，这才是她反复提到的噩梦。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">加缪呢。完全是另一个极端。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">他写</p>
+<blockquote  style="margin:18px 0;padding:16px 20px;background-color:#1a4230;color:#e8f5ee;font-size:14px;line-height:1.8;border:none;border-radius:6px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;"><p  style="margin:0 0 8px;font-size:14px;line-height:1.8;color:#e8f5ee;text-align:justify;">我简直做不到真正地给你写信、用我全部的心和爱向你说话</p></blockquote>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">他有个没法挣脱的现实：家庭、责任、世俗身份。提笔的时候，一半是滚烫爱意，一半是清醒的负罪感。太多话不敢直说，不能说。</p>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">他写「我会一直等下去」，但翻过几页你又会看到——</p>
+<blockquote  style="margin:18px 0;padding:16px 20px;background-color:#1a4230;color:#e8f5ee;font-size:14px;line-height:1.8;border:none;border-radius:6px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;"><p  style="margin:0 0 8px;font-size:14px;line-height:1.8;color:#e8f5ee;text-align:justify;">等待和孤独对我来说，意味着无尽的绝望。</p></blockquote>
+<blockquote  style="margin:30px 0;padding:22px 24px;background-color:#1a4230;border-radius:6px;text-align:center;font-size:16px;font-weight:700;line-height:1.8;color:#d4923a;"><p  style="margin:0;font-size:16px;font-weight:700;line-height:1.8;color:#d4923a;text-align:center;">一个怕沉默，一个怕沉溺。一收一放。</p></blockquote>
+<p  style="margin:0 0 16px;font-size:15px;line-height:1.9;color:#3f3f3f;text-align:justify;">读到这里我停了一阵。不是因为文字——是因为突然意识到，这才是真实的亲密关系。不是两个人想法完全一样，是你滚烫的时候我克制，你怕沉默的时</section></div>
+        </div></div>
+
+<div class="action-bar">
+  <p>👆 每张卡片 = 一套 <strong>布局</strong>（📐 决定结构） × <strong>配色</strong>（🎨 决定颜色）</p>
+  <p>选定后回复预设名：<code>teal</code> <code>navy</code> <code>forest</code> <code>plum</code> <code>slate</code></p>
+  <p>或自由组合：<code>classic:teal-gold</code> <code>bold:navy-coral</code> <code>minimal:slate-rose</code></p>
+  <p>或自定义颜色：<code>#e63946</code>（默认 classic 布局）</p>
+  <p class="mix-note">可用布局: classic / magazine / minimal / bold / elegant &nbsp;|&nbsp; 可用配色: teal-gold / navy-coral / forest-amber / plum-sage / slate-rose</p>
+</div>
+
+</body>
+</html>
