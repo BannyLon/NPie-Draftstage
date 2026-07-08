@@ -6,12 +6,12 @@
   <title>CONTENT OS — 内容项目管理看板</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root {
       color-scheme: light;
-      font-family: 'Poppins', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+      font-family: 'Inter', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
       --bg: #F4EFE6;
       --surface: #FFFFFF;
       --surface-muted: #FCF7EE;
@@ -103,8 +103,8 @@
     }
     .topic-item:hover { background: rgba(216,203,180,0.2); }
     .topic-item.selected {
-      background: rgba(176,138,83,0.09);
-      border-color: rgba(176,138,83,0.3);
+      outline: 2px solid rgba(176,138,83,0.5);
+      outline-offset: -2px;
     }
     /* hide unused sub-elements */
     .topic-item-meta, .topic-item-badge { display: none; }
@@ -996,7 +996,7 @@
             const colorObj = getTopicColor(index);
             return `
               <div class="topic-item ${sel ? 'selected' : ''}" data-sidebar-topic="${topic.id}"
-                   style="border-left-color: ${colorObj.main};">
+                   style="border-left-color: ${colorObj.main}; background-color: ${colorObj.bg};">
                 ${esc(topic.title)}
               </div>
             `;
