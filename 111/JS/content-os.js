@@ -775,7 +775,7 @@
           const topic = state.topics.find(t => t.id === icon.dataset.obsidianLabel);
           if (!topic) return;
           if (topic.obsidianUrl) {
-            window.open(topic.obsidianUrl, '_blank');
+            window.location.href = topic.obsidianUrl;
           } else {
             openObsidianModal(topic.id);
           }
@@ -1297,6 +1297,8 @@
       _obsidianTopicId = topicId;
       const topic = state.topics.find(t => t.id === topicId);
       document.getElementById('obsidian-modal-input').value = topic?.obsidianUrl || '';
+      // 已有链接才显示清除按钮
+      document.getElementById('obsidian-modal-clear').style.display = topic?.obsidianUrl ? '' : 'none';
       document.getElementById('obsidian-modal-overlay').classList.add('open');
       setTimeout(() => document.getElementById('obsidian-modal-input').focus(), 50);
     }
@@ -1501,7 +1503,7 @@
           const topic = state.topics.find(t => t.id === icon.dataset.obsidianTopic);
           if (!topic) return;
           if (topic.obsidianUrl) {
-            window.open(topic.obsidianUrl, '_blank');
+            window.location.href = topic.obsidianUrl;
           } else {
             openObsidianModal(topic.id);
           }

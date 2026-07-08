@@ -95,11 +95,11 @@
 
   <!-- Obsidian 链接弹窗 -->
   <div class="modal-overlay" id="obsidian-modal-overlay">
-    <div class="modal-box">
+    <div class="modal-box" style="width:580px;max-width:96vw;">
       <div class="modal-title">设置 Obsidian 笔记链接</div>
       <div class="modal-field">
-        <label>Obsidian URL（obsidian://open?vault=...&file=...）</label>
-        <input type="text" id="obsidian-modal-input" placeholder="obsidian://open?vault=我的Vault&file=笔记名" />
+        <label>obsidian://open?vault=你的Vault名&file=笔记路径或标题</label>
+        <input type="text" id="obsidian-modal-input" placeholder="obsidian://open?vault=我的Vault&file=选题/笔记名" style="font-size:0.78rem;" />
       </div>
       <div class="modal-actions">
         <button class="modal-btn modal-btn-cancel" id="obsidian-modal-cancel">取消</button>
