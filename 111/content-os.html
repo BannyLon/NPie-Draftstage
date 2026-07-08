@@ -41,8 +41,29 @@
       position: sticky;
       top: 0;
       height: 100vh;
+      transition: width 0.25s ease;
     }
-    .sidebar-top { padding: 20px 16px 12px; }
+    .sidebar.collapsed { width: 56px; }
+    .sidebar.collapsed .brand-title,
+    .sidebar.collapsed .brand-subtitle,
+    .sidebar.collapsed .nav-pill,
+    .sidebar.collapsed .sidebar-section-label,
+    .sidebar.collapsed .topic-list,
+    .sidebar.collapsed .sidebar-divider,
+    .sidebar.collapsed .sidebar-bottom-text { display: none; }
+    .sidebar.collapsed .sidebar-top { padding: 14px 10px; }
+    .sidebar.collapsed .sidebar-bottom { border-top: none; padding: 8px; }
+    .sidebar.collapsed .sidebar-bottom-btns { grid-template-columns: 1fr; }
+    .sidebar-top { padding: 20px 16px 12px; position: relative; }
+    .sidebar-toggle {
+      position: absolute; right: 8px; top: 18px;
+      width: 24px; height: 24px; border-radius: 4px;
+      border: 1px solid var(--border); background: var(--surface-muted);
+      color: var(--text-muted); font-size: 0.65rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s; z-index: 20;
+    }
+    .sidebar-toggle:hover { background: rgba(176,138,83,0.15); }
     .brand-title {
       letter-spacing: 0.14em; text-transform: uppercase;
       font-size: 0.72rem; font-weight: 700; color: var(--accent);
@@ -87,13 +108,13 @@
     .topic-list::-webkit-scrollbar { width: 4px; }
     .topic-list::-webkit-scrollbar-thumb { background: rgba(44,42,41,0.12); border-radius: 99px; }
     .topic-item {
-      padding: 9px 12px;
+      padding: 8px 12px;
       border-radius: 9px;
       border: 1px solid var(--border);
       background: var(--surface);
       color: var(--text);
-      font-size: 0.82rem;
-      font-weight: 600;
+      font-size: 0.74rem;
+      font-weight: 400;
       cursor: pointer;
       transition: all 0.12s ease;
       display: flex;
@@ -131,6 +152,28 @@
       transition: background 0.15s; text-align: center;
     }
     .tool-btn:hover { background: rgba(216,203,180,0.22); }
+    /* ── Main header / logo bar ── */
+    .main-header {
+      display: flex; align-items: center; justify-content: flex-end;
+      padding: 10px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .main-header-brand {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .main-header-logo {
+      height: 36px; width: auto; border-radius: 6px;
+    }
+    .main-header-title {
+      font-size: 0.82rem; font-weight: 700; line-height: 1.2;
+      color: var(--text); letter-spacing: 0.04em;
+    }
+    .main-header-title small {
+      display: block; font-size: 0.62rem; font-weight: 500;
+      color: var(--text-muted); letter-spacing: 0.08em;
+    }
     .main-panel {
       flex: 1; display: flex; flex-direction: column;
       overflow-y: auto; overflow-x: hidden; gap: 0;
@@ -394,6 +437,8 @@
       box-shadow: var(--shadow);
       transition: outline 0.15s;
     }
+    .topic-card.type-self { background: linear-gradient(135deg, #FCFAF5 0%, #F7F0E4 100%); }
+    .topic-card.type-commercial { background: linear-gradient(135deg, #F7F8FA 0%, #ECF0F3 100%); }
     .topic-card.selected { outline: 2px solid rgba(176,138,83,0.35); }
     .topic-card.drag-over { outline: 2px dashed rgba(176,138,83,0.5); }
 
@@ -535,6 +580,12 @@
   <div class="app-shell">
     <aside class="sidebar" id="sidebar"></aside>
     <main class="main-panel">
+      <div class="main-header">
+        <div class="main-header-brand">
+          <img class="main-header-logo" src="IMG/NPIEAI_logo.jpg" alt="NPIE" />
+          <span class="main-header-title">CONTENT OS<br><small>内容项目看板</small></span>
+        </div>
+      </div>
       <div class="panel-section" id="timeline-section" style="padding:0;">
         <div class="timeline-hero">
           <div class="timeline-hero-eyebrow">DRAG TO SCHEDULE</div>
@@ -710,7 +761,8 @@
       viewStart: DEFAULT_START,
       viewEnd: DEFAULT_END,
       activeNav: 'topics',
-      drag: null
+      drag: null,
+      sidebarCollapsed: false
     };
 
     /**
@@ -975,6 +1027,7 @@
       const isArchivedView = state.activeNav === 'archived';
       document.getElementById('sidebar').innerHTML = `
         <div class="sidebar-top">
+          <button class="sidebar-toggle" id="sidebar-toggle" title="${state.sidebarCollapsed ? '展开侧栏' : '收起侧栏'}">${state.sidebarCollapsed ? '▶' : '◀'}</button>
           <div class="brand-title">CONTENT OS</div>
           <div class="brand-subtitle">内容项目看板</div>
         </div>
@@ -1014,6 +1067,19 @@
           </div>
         </div>
       `;
+
+      // 侧边栏折叠切换
+      const sidebarEl = document.getElementById('sidebar');
+      if (state.sidebarCollapsed) sidebarEl.classList.add('collapsed');
+      const toggleBtn = document.getElementById('sidebar-toggle');
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+          state.sidebarCollapsed = !state.sidebarCollapsed;
+          sidebarEl.classList.toggle('collapsed', state.sidebarCollapsed);
+          toggleBtn.textContent = state.sidebarCollapsed ? '▶' : '◀';
+          toggleBtn.title = state.sidebarCollapsed ? '展开侧栏' : '收起侧栏';
+        });
+      }
 
       // 绑定导航事件
       document.querySelectorAll('[data-nav]').forEach(btn => {
@@ -1962,7 +2028,7 @@
         const pct = calcProgress(topic);
         const sel = state.selectedTopicId === topic.id;
         return `
-        <div class="topic-card ${sel ? 'selected' : ''}" draggable="true" data-card-id="${topic.id}">
+        <div class="topic-card type-${topic.type} ${sel ? 'selected' : ''}" draggable="true" data-card-id="${topic.id}">
 
           <!-- 第一部分：标题 + 进度 -->
           <div class="card-head">
