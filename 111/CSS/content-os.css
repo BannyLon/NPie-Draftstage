@@ -142,6 +142,16 @@
     [data-theme="dark"] .task-block.stage-review { background: #383040; border-color: rgba(155,138,165,0.35); color: #E0D8E8; }
     [data-theme="dark"] .task-block.stage-custom { background: #383040; border-color: rgba(155,138,165,0.3); color: #E0D8E8; }
     [data-theme="dark"] .task-block.completed { opacity: 0.5; }
+    /* 暗色模式：侧栏选题 + 日历选题标签背景加深 */
+    [data-theme="dark"] .topic-item { background: #2A2824 !important; border-color: #3D3934 !important; color: #E5E0D8 !important; }
+    [data-theme="dark"] .topic-item:hover { background: #33302C !important; }
+    [data-theme="dark"] .topic-item.selected { outline-color: rgba(200,155,92,0.5) !important; }
+    [data-theme="dark"] .topic-label-card { background: #2A2824 !important; border-color: #3D3934 !important; color: #E5E0D8 !important; }
+    [data-theme="dark"] .topic-label-name { color: #E5E0D8 !important; }
+    [data-theme="dark"] .topic-label-meta { color: #A0988E !important; }
+    [data-theme="dark"] .topic-label:hover .topic-label-card { box-shadow: 0 3px 10px rgba(0,0,0,0.3) !important; }
+    [data-theme="dark"] .topic-label.selected .topic-label-card { outline-color: rgba(200,155,92,0.5) !important; }
+    [data-theme="dark"] .topic-label.tl-urgent .topic-label-card { border-left-color: #E08840 !important; }
     * { box-sizing: border-box; }
     html, body { min-height: 100%; background: var(--bg); color: var(--text); }
     body { margin: 0; -webkit-font-smoothing: antialiased; }
@@ -220,10 +230,10 @@
       color: var(--text-muted); letter-spacing: 0.06em;
     }
     .topic-list {
-      flex: 1 1 0;
+      flex: 0 0 auto;
       overflow-y: auto;
       overflow-x: hidden;
-      min-height: 0;
+      max-height: calc(100vh - 540px);
       padding: 0 12px 8px;
       display: flex;
       flex-direction: column;
