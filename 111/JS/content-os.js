@@ -1805,6 +1805,13 @@
       const mode = localStorage.getItem('npiedraft-mode') || 'light';
       document.getElementById('mode-light').classList.toggle('active', mode === 'light');
       document.getElementById('mode-dark').classList.toggle('active', mode === 'dark');
+      // 暗色模式下主题选项灰度不可选
+      const themePanel = document.getElementById('spanel-theme');
+      if (themePanel) themePanel.style.opacity = mode === 'dark' ? '0.4' : '';
+      document.querySelectorAll('.theme-btn').forEach(b => {
+        b.disabled = mode === 'dark';
+        b.style.pointerEvents = mode === 'dark' ? 'none' : '';
+      });
     }
 
     function updateThemeUI() {
