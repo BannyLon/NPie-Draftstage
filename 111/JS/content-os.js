@@ -89,7 +89,7 @@
     /**
      * @typedef {{text: string, completed: boolean}} PrepItem
      * @typedef {{id: string, name: string, days: number, color: string, startDate: string, endDate: string, completed: boolean}} Task
-     * @typedef {{id: string, title: string, publishDate: string, type: 'self'|'commercial', prep: PrepItem[], tasks: Task[], archived: boolean}} Topic
+     * @typedef {{id: string, title: string, publishDate: string, type: 'self'|'commercial', prep: PrepItem[], tasks: Task[], archived: boolean, obsidianUrl: string}} Topic
      */
 
     /** @returns {string} */
@@ -183,6 +183,14 @@
       return Math.round((done / total) * 100);
     }
 
+    /** 判断选题是否紧急（跑马灯相同规则） */
+    function isTopicUrgent(topic) {
+      if (topic.archived || calcProgress(topic) >= 100) return false;
+      const today = new Date(); today.setHours(0,0,0,0);
+      const days = Math.round((parse(topic.publishDate) - today) / MS_DAY);
+      return days <= (topic.type === 'commercial' ? 5 : 3);
+    }
+
     /** 规范化前置准备数据结构 */
     function normalizePrep(prep) {
       if (!Array.isArray(prep)) return [];
@@ -241,6 +249,7 @@
       ];
       state.topics.forEach(t => {
         t.archived = false;
+        t.obsidianUrl = t.obsidianUrl || '';
         t.prep = normalizePrep(t.prep);
         t.tasks = buildWorkflow(t);
       });
@@ -294,6 +303,7 @@
         state.topics = topics.map(t => {
           const newTopic = { ...t, prep: normalizePrep(t.prep) };
           if (newTopic.archived == null) newTopic.archived = false; // 向后兼容旧数据
+          if (newTopic.obsidianUrl == null) newTopic.obsidianUrl = '';
 
           // 迁移旧版 edit1/edit2 → edit（v2.0 合并）
           const hasOldEdit = t.tasks?.some(s => s.id === 'edit1' || s.id === 'edit2');
@@ -352,8 +362,8 @@
           <div class="brand-row">
             <img class="brand-logo" src="IMG/NPIEAI_logo.jpg" alt="" />
             <div class="brand-text">
-              <div class="brand-title">哌稿场</div>
-              <div class="brand-subtitle">档期</div>
+              <div class="brand-title">NPie Draftstage</div>
+              <div class="brand-subtitle">哌稿场 · 档期</div>
             </div>
           </div>
         </div>
@@ -388,8 +398,9 @@
             <button class="tool-btn" id="btn-import" title="导入恢复"><img src="IMG/Import.svg" alt="" class="tool-btn-icon" /><span class="tool-btn-text">导入恢复</span></button>
           </div>
           <div class="sidebar-bottom-text">
-            <p style="margin:0 0 6px 0;">建议把备份文件保存到 iCloud 或其他云盘</p>
-            <p style="margin:0; padding-top:6px; border-top:1px solid var(--border);">拖拽选题标签或任务块即可调整排期，所有移动操作均通过拖拽完成。</p>
+            <p style="margin:0 0 6px 0;font-size:0.66rem;">📤 导出备份 — 将全部选题数据保存为 JSON 文件</p>
+            <p style="margin:0 0 6px 0;font-size:0.66rem;">📥 导入恢复 — 从备份文件恢复选题数据</p>
+            <p style="margin:0; padding:14px 0 0; margin-top:10px; border-top:1px solid var(--border); font-size:0.7rem; line-height:1.7;">NPie Draftstage<br>Content Schedule Board for Creators<br>哌稿场——创作者内容排期看板</p>
           </div>
         </div>
       `;
@@ -1259,6 +1270,32 @@
       toast(`已重命名为「${name}」`);
     }
 
+    /** ── Obsidian 链接弹窗 ──────────────────────────────── */
+
+    let _obsidianTopicId = null;
+
+    function openObsidianModal(topicId) {
+      _obsidianTopicId = topicId;
+      const topic = state.topics.find(t => t.id === topicId);
+      document.getElementById('obsidian-modal-input').value = topic?.obsidianUrl || '';
+      document.getElementById('obsidian-modal-overlay').classList.add('open');
+      setTimeout(() => document.getElementById('obsidian-modal-input').focus(), 50);
+    }
+
+    function closeObsidianModal() {
+      document.getElementById('obsidian-modal-overlay').classList.remove('open');
+    }
+
+    function confirmObsidianUrl() {
+      const url = document.getElementById('obsidian-modal-input').value.trim();
+      const topic = state.topics.find(t => t.id === _obsidianTopicId);
+      if (!topic) return;
+      topic.obsidianUrl = url;
+      save(); render();
+      closeObsidianModal();
+      toast(url ? 'Obsidian 链接已设置' : 'Obsidian 链接已清除');
+    }
+
     /** ── 删除/放弃选题 ─────────────────────────────────────── */
 
     /**
@@ -1352,14 +1389,19 @@
       const grid = document.getElementById('cards-grid');
       grid.innerHTML = visibleTopics().map(topic => {
         const pct = calcProgress(topic);
+        const urgent = isTopicUrgent(topic);
         const sel = state.selectedTopicId === topic.id;
         return `
-        <div class="topic-card type-${topic.type} ${sel ? 'selected' : ''}" draggable="true" data-card-id="${topic.id}">
+        <div class="topic-card type-${topic.type} ${sel ? 'selected' : ''} ${urgent ? 'is-urgent' : ''}" draggable="true" data-card-id="${topic.id}" style="position:relative;">
+
+          <!-- 左上角类型角标 -->
+          <span class="card-type-badge badge-${topic.type}" title="${topic.type === 'self' ? '自制内容' : '商单'}">${topic.type === 'self' ? '自' : '商'}</span>
 
           <!-- 第一部分：标题 + 进度 -->
           <div class="card-head">
             <div class="card-head-left">
               <div class="card-title">${esc(topic.title)}</div>
+              <img class="card-obsidian-link ${topic.obsidianUrl ? 'has-url' : ''}" src="IMG/Obsidian.webp" alt="Obsidian" title="${topic.obsidianUrl ? '打开 Obsidian 笔记' : '设置 Obsidian 链接'}" data-obsidian-topic="${topic.id}" />
               <select class="card-type-select" data-type-select="${topic.id}">
                 <option value="self" ${topic.type === 'self' ? 'selected' : ''}>自制内容</option>
                 <option value="commercial" ${topic.type === 'commercial' ? 'selected' : ''}>商单</option>
@@ -1430,6 +1472,20 @@
         card.addEventListener('contextmenu', e => {
           e.preventDefault();
           showTopicMenuAt(e.clientX, e.clientY, card.dataset.cardId);
+        });
+      });
+
+      /** Obsidian 链接图标点击 */
+      grid.querySelectorAll('[data-obsidian-topic]').forEach(icon => {
+        icon.addEventListener('click', e => {
+          e.stopPropagation();
+          const topic = state.topics.find(t => t.id === icon.dataset.obsidianTopic);
+          if (!topic) return;
+          if (topic.obsidianUrl) {
+            window.open(topic.obsidianUrl, '_blank');
+          } else {
+            openObsidianModal(topic.id);
+          }
         });
       });
 
@@ -1546,7 +1602,7 @@
       const type = document.getElementById('modal-type').value;
       const publishDate = document.getElementById('modal-date').value;
       if (!title || !publishDate) { toast('请填写名称与发布日期'); return; }
-      const topic = { id: uid(), title, type, publishDate, prep: [], tasks: [], archived: false };
+      const topic = { id: uid(), title, type, publishDate, prep: [], tasks: [], archived: false, obsidianUrl: '' };
       topic.tasks = buildWorkflow(topic);
       state.topics.push(topic);
       save();
@@ -1647,6 +1703,20 @@
         if (e.key === 'Enter') confirmSchedule();
       });
 
+      // Obsidian 链接弹窗
+      document.getElementById('obsidian-modal-cancel').onclick  = closeObsidianModal;
+      document.getElementById('obsidian-modal-confirm').onclick = confirmObsidianUrl;
+      document.getElementById('obsidian-modal-clear').onclick   = () => {
+        document.getElementById('obsidian-modal-input').value = '';
+        confirmObsidianUrl();
+      };
+      document.getElementById('obsidian-modal-overlay').addEventListener('click', e => {
+        if (e.target.id === 'obsidian-modal-overlay') closeObsidianModal();
+      });
+      document.getElementById('obsidian-modal-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter') confirmObsidianUrl();
+      });
+
       // 重命名弹窗
       document.getElementById('rename-modal-cancel').onclick  = closeRenameModal;
       document.getElementById('rename-modal-confirm').onclick = confirmRename;
@@ -1668,6 +1738,7 @@
             state.topics = data.topics.map(t => ({
               ...t, prep: normalizePrep(t.prep),
               archived: t.archived ?? false,
+              obsidianUrl: t.obsidianUrl ?? '',
               tasks: t.tasks?.length ? t.tasks : buildWorkflow(t)
             }));
             save(); render();
