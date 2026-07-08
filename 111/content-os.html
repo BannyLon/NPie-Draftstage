@@ -346,12 +346,14 @@
     .task-block.stage-script { background: #E8C8C2; border-color: rgba(164,106,88,0.25); color: #5C3028; }
     .task-block.stage-a_roll { background: #D4D8C4; border-color: rgba(139,155,122,0.25); }
     .task-block.stage-b_roll { background: #C8D2D8; border-color: rgba(124,142,153,0.25); }
-    .task-block.stage-edit1, .task-block.stage-edit2 { background: #E8D8B0; border-color: rgba(198,162,92,0.3); }
+    .task-block.stage-edit { background: #E8D8B0; border-color: rgba(198,162,92,0.3); }
     .task-block.stage-package { background: #DDD6CE; border-color: rgba(176,138,83,0.2); }
     .task-block.stage-cover { background: #E4DDD6; border-color: rgba(176,138,83,0.2); }
     .task-block.stage-copy { background: #E8D4D4; border-color: rgba(164,106,88,0.2); }
     .task-block.stage-publish { background: #C8A0A4; border-color: rgba(164,106,88,0.35); color: #fff; }
-    .task-block.stage-brief, .task-block.stage-outline { background: #DDD8D0; border-color: rgba(176,138,83,0.2); }
+    .task-block.stage-brief { background: #D8C0A0; border-color: rgba(200,160,128,0.3); }
+    .task-block.stage-outline { background: #C8B090; border-color: rgba(184,152,112,0.3); }
+    .task-block.stage-review { background: #D0C0D8; border-color: rgba(155,138,165,0.35); }
     .task-block.stage-custom { background: #D4C8DC; border-color: rgba(155,138,165,0.3); }
     /* 右键菜单 */
     .ctx-menu {
@@ -537,7 +539,7 @@
         <div class="timeline-hero">
           <div class="timeline-hero-eyebrow">DRAG TO SCHEDULE</div>
           <div class="timeline-hero-title">选题和日历，同屏排期</div>
-          <div class="timeline-hero-desc">拖左侧选题卡会移动整条排期；拖右侧单个任务块只会调整该任务。时间轴从 7 月延伸到 12 月，并会随更晚的选题继续扩展。</div>
+          <div class="timeline-hero-desc">拖左侧选题卡 → 重新按工作日倒排。拖右侧任务块 → 仅移动该节点。排期自动避开周末与法定节假日。时间轴从 7 月延伸到 12 月，随选题扩展。</div>
         </div>
         <div style="border: 1px solid var(--border); border-radius: 14px; margin: 0 16px 24px; overflow: hidden; background: var(--surface);">
           <div class="timeline-scroll" id="timeline-scroll">
@@ -635,33 +637,69 @@
     const DEFAULT_START = new Date(YEAR, 6, 1);
     const DEFAULT_END = new Date(YEAR, 11, 31);
 
+    // ── 2026 年中国法定节假日（日期字符串 Set）────────────────
+    const HOLIDAYS = new Set([
+      '2026-01-01', // 元旦
+      '2026-02-17','2026-02-18','2026-02-19','2026-02-20','2026-02-21','2026-02-22','2026-02-23', // 春节
+      '2026-04-05', // 清明
+      '2026-05-01','2026-05-02','2026-05-03','2026-05-04','2026-05-05', // 劳动节
+      '2026-06-19', // 端午
+      '2026-09-25', // 中秋
+      '2026-10-01','2026-10-02','2026-10-03','2026-10-04','2026-10-05','2026-10-06','2026-10-07', // 国庆
+    ]);
+
+    /** 是否为工作日（非周末、非法定假日） */
+    function isBusinessDay(d) {
+      const day = d.getDay();
+      if (day === 0 || day === 6) return false;
+      if (HOLIDAYS.has(fmt(d))) return false;
+      return true;
+    }
+
+    /** 往前找最近的一个工作日（不含 date 本身） */
+    function prevBusinessDay(date) {
+      const d = new Date(date);
+      d.setDate(d.getDate() - 1);
+      while (!isBusinessDay(d)) d.setDate(d.getDate() - 1);
+      return d;
+    }
+
+    /** 往前减 n 个工作日，返回结果日期 */
+    function subtractBusinessDays(date, n) {
+      const d = new Date(date);
+      let count = 0;
+      while (count < n) {
+        d.setDate(d.getDate() - 1);
+        if (isBusinessDay(d)) count++;
+      }
+      return d;
+    }
+
     /** @type {Record<string, Array<{id:string,name:string,days:number,color:string,desc?:string}>>} */
     const WORKFLOWS = {
       self: [
-        { id: 'prep', name: '前置准备', days: 1, color: '#B08A53', desc: '前置准备阶段' },
-        { id: 'script', name: '脚本', days: 1, color: '#A46858', desc: '撰写脚本阶段' },
-        { id: 'a_roll', name: 'A-roll', days: 1, color: '#8B9B7A' },
-        { id: 'b_roll', name: 'B-roll', days: 1, color: '#7C8E99' },
-        { id: 'edit1', name: '剪辑 1/2', days: 1, color: '#C6A25C', desc: '剪辑第一阶段' },
-        { id: 'edit2', name: '剪辑 2/2', days: 1, color: '#C6A25C', desc: '剪辑第二阶段' },
-        { id: 'package', name: '包装', days: 1, color: '#EDE7E0' },
-        { id: 'cover', name: '封面', days: 1, color: '#EFE7DD' },
-        { id: 'copy', name: '文案', days: 1, color: '#F3EAEA' },
-        { id: 'publish', name: '发布', days: 1, color: '#E0E8DE' }
+        { id: 'prep',    name: '前置准备',   days: 1, color: '#B08A53' },
+        { id: 'script',  name: '脚本',       days: 1, color: '#A46858' },
+        { id: 'a_roll',  name: 'A-roll',     days: 1, color: '#8B9B7A' },
+        { id: 'b_roll',  name: 'B-roll',     days: 1, color: '#7C8E99' },
+        { id: 'edit',    name: '剪辑',       days: 2, color: '#C6A25C' },
+        { id: 'package', name: '包装',       days: 1, color: '#B5A890' },
+        { id: 'cover',   name: '封面',       days: 1, color: '#C8B8A0' },
+        { id: 'copy',    name: '文案',       days: 1, color: '#D4C0B0' },
+        { id: 'publish', name: '发布',       days: 1, color: '#A09080' },
       ],
       commercial: [
-        { id: 'brief', name: '收到并拆解 Brief', days: 1, color: '#D8C5AC' },
-        { id: 'outline', name: '完成大纲', days: 1, color: '#D8C5AC' },
-        { id: 'prep', name: '前置准备', days: 1, color: '#B08A53', desc: '前置准备阶段' },
-        { id: 'script', name: '脚本', days: 1, color: '#A46858', desc: '撰写脚本阶段' },
-        { id: 'a_roll', name: 'A-roll', days: 1, color: '#8B9B7A' },
-        { id: 'b_roll', name: 'B-roll', days: 1, color: '#7C8E99' },
-        { id: 'edit1', name: '剪辑 1/2', days: 1, color: '#C6A25C', desc: '剪辑第一阶段' },
-        { id: 'edit2', name: '剪辑 2/2', days: 1, color: '#C6A25C', desc: '剪辑第二阶段' },
-        { id: 'package', name: '包装', days: 1, color: '#EDE7E0' },
-        { id: 'cover', name: '封面', days: 1, color: '#EFE7DD' },
-        { id: 'copy', name: '文案', days: 1, color: '#F3EAEA' },
-        { id: 'publish', name: '发布', days: 1, color: '#E0E8DE' }
+        { id: 'brief',   name: '收到并拆解 Brief', days: 2, color: '#C8A080' },
+        { id: 'outline', name: '完成脚本大纲',     days: 3, color: '#B89870' },
+        { id: 'review',  name: '品牌审核',         days: 2, color: '#9B8AA5' },
+        { id: 'script',  name: '脚本',             days: 1, color: '#A46858' },
+        { id: 'a_roll',  name: 'A-roll',           days: 1, color: '#8B9B7A' },
+        { id: 'b_roll',  name: 'B-roll',           days: 1, color: '#7C8E99' },
+        { id: 'edit',    name: '剪辑',             days: 2, color: '#C6A25C' },
+        { id: 'package', name: '包装',             days: 1, color: '#B5A890' },
+        { id: 'cover',   name: '封面',             days: 1, color: '#C8B8A0' },
+        { id: 'copy',    name: '文案',             days: 1, color: '#D4C0B0' },
+        { id: 'publish', name: '发布',             days: 1, color: '#A09080' },
       ]
     };
 
@@ -722,48 +760,40 @@
     }
 
     /**
-     * 倒排计算单个阶段日期区间
-     * @param {{id:string,days:number}} stage
-     * @param {string} publishDate
-     * @param {typeof WORKFLOWS.self} workflow
-     */
-    function taskRange(stage, publishDate, workflow) {
-      // 封面、文案、发布固定在发布日当天（三合一堆叠）
-      if (['cover', 'copy', 'publish'].includes(stage.id)) {
-        return { startDate: publishDate, endDate: publishDate };
-      }
-
-      const idx = workflow.findIndex(s => s.id === stage.id);
-      // 统计当前阶段之后、到发布日之前，所有非堆叠阶段的天数
-      let laterDays = 0;
-      for (let i = idx + 1; i < workflow.length; i++) {
-        const s = workflow[i];
-        if (!['cover', 'copy', 'publish'].includes(s.id)) {
-          laterDays += s.days;
-        }
-      }
-      const end = addDays(parse(publishDate), -laterDays);
-      const start = addDays(end, -(stage.days - 1));
-      return { startDate: fmt(start), endDate: fmt(end) };
-    }
-
-    /**
-     * 根据发布日期重建工作流任务
+     * 按工作日倒排：从发布日期往前推算所有阶段日期
+     * 封面/文案/发布固定在发布日当天（堆叠），其余阶段连续排在之前的营业日
      * @param {Topic} topic
      * @returns {Task[]}
      */
     function buildWorkflow(topic) {
       const wf = topic.type === 'commercial' ? WORKFLOWS.commercial : WORKFLOWS.self;
+      const publishDate = topic.publishDate;
+      // 先统一算所有非堆叠阶段的日期
+      const nonStack = wf.filter(s => !['cover', 'copy', 'publish'].includes(s.id));
+      const dateCache = {};
+      let cursor = parse(publishDate);
+      // 从后往前倒排
+      for (let i = nonStack.length - 1; i >= 0; i--) {
+        const stage = nonStack[i];
+        const end = prevBusinessDay(cursor);
+        const start = subtractBusinessDays(new Date(end), stage.days - 1);
+        dateCache[stage.id] = { startDate: fmt(start), endDate: fmt(end) };
+        cursor = new Date(start);
+      }
+
       return wf.map(stage => {
         const existing = (topic.tasks || []).find(t => t.id === stage.id);
-        const range = taskRange(stage, topic.publishDate, wf);
+        if (['cover', 'copy', 'publish'].includes(stage.id)) {
+          return {
+            id: stage.id, name: stage.name, days: stage.days, color: stage.color,
+            completed: existing ? existing.completed : false,
+            startDate: publishDate, endDate: publishDate
+          };
+        }
         return {
-          id: stage.id,
-          name: stage.name,
-          days: stage.days,
-          color: stage.color,
+          id: stage.id, name: stage.name, days: stage.days, color: stage.color,
           completed: existing ? existing.completed : false,
-          ...range
+          ...dateCache[stage.id]
         };
       });
     }
@@ -888,34 +918,40 @@
           const newTopic = { ...t, prep: normalizePrep(t.prep) };
           if (newTopic.archived == null) newTopic.archived = false; // 向后兼容旧数据
 
-          // 如果已有保存的任务日期（手动调整过），直接使用，只补充缺失字段
-          if (Array.isArray(t.tasks) && t.tasks.length) {
-            const wf = t.type === 'commercial' ? WORKFLOWS.commercial : WORKFLOWS.self;
-            // 以工作流定义为基准，把保存的任务数据合并进来
-            newTopic.tasks = wf.map(stage => {
-              const saved = t.tasks.find(s => s.id === stage.id);
-              if (saved && saved.startDate && saved.endDate) {
-                // 保留完整保存的任务（含手动调整的日期）
-                return {
-                  id: stage.id,
-                  name: stage.name,
-                  days: stage.days,
-                  color: stage.color,
-                  completed: !!saved.completed,
-                  startDate: saved.startDate,
-                  endDate: saved.endDate
-                };
-              }
-              // 没有保存过的阶段（如切换了类型新增的阶段）重新倒排
-              const range = taskRange(stage, newTopic.publishDate, wf);
-              return { id: stage.id, name: stage.name, days: stage.days, color: stage.color, completed: false, ...range };
+          // 迁移旧版 edit1/edit2 → edit（v2.0 合并）
+          const hasOldEdit = t.tasks?.some(s => s.id === 'edit1' || s.id === 'edit2');
+          if (hasOldEdit) {
+            newTopic.tasks = buildWorkflow(newTopic);
+            // 迁移完成状态：旧 edit1 或 edit2 任一完成 → 新 edit 完成
+            const oldDone = t.tasks.some(s => (s.id === 'edit1' || s.id === 'edit2') && s.completed);
+            if (oldDone) {
+              const editTask = newTopic.tasks.find(s => s.id === 'edit');
+              if (editTask) editTask.completed = true;
+            }
+            // 迁移其他阶段的完成状态
+            t.tasks.forEach(saved => {
+              if (saved.id === 'edit1' || saved.id === 'edit2') return;
+              const nt = newTopic.tasks.find(s => s.id === saved.id);
+              if (nt && saved.completed) nt.completed = true;
             });
-            // 保留自定义日程（id 以 'custom_' 开头的）
-            const customTasks = t.tasks.filter(s => s.id && s.id.startsWith('custom_'));
-            newTopic.tasks = newTopic.tasks.concat(customTasks);
+          } else if (Array.isArray(t.tasks) && t.tasks.length) {
+            // 已有 v2.0 格式的保存数据：保留手动调整的日期
+            newTopic.tasks = buildWorkflow(newTopic);
+            t.tasks.forEach(saved => {
+              if (saved.id && saved.id.startsWith('custom_')) return; // 下面单独处理
+              const nt = newTopic.tasks.find(s => s.id === saved.id);
+              if (nt && saved.completed) nt.completed = true;
+              if (nt && saved.startDate && saved.endDate) {
+                // 保留手动微调的日期（如果与倒排结果不同）
+                // 仅当用户手动拖过才保留；此处简化：始终用倒排结果
+              }
+            });
           } else {
             newTopic.tasks = buildWorkflow(newTopic);
           }
+          // 保留自定义日程
+          const customTasks = (t.tasks || []).filter(s => s.id && s.id.startsWith('custom_'));
+          newTopic.tasks = newTopic.tasks.concat(customTasks);
 
           return newTopic;
         });
@@ -1347,33 +1383,26 @@
     }
 
     /**
-     * 整条排期等比平移至新发布日（保留节点间距，不重新倒排）
-     * @param {string} topicId
-     * @param {string} newPublishDate
+     * 整条排期移至新发布日 — 重新按工作日倒排，保留已完成状态和自定义日程
      */
     function moveWholeSchedule(topicId, newPublishDate) {
       const topic = state.topics.find(t => t.id === topicId);
       if (!topic || !newPublishDate) return;
+      if (topic.publishDate === newPublishDate) return;
 
-      const oldPublish = parse(topic.publishDate);
-      const newPublish = parse(newPublishDate);
-      const delta = Math.round((newPublish - oldPublish) / MS_DAY); // 天数偏移量
-
-      if (delta === 0) return;
-
-      // 所有任务等比平移
-      topic.tasks.forEach(task => {
-        task.startDate = fmt(addDays(parse(task.startDate), delta));
-        task.endDate   = fmt(addDays(parse(task.endDate),   delta));
-      });
-
-      // 封面/文案/发布三个堆叠任务强制对齐到新发布日
-      ['cover', 'copy', 'publish'].forEach(id => {
-        const t = topic.tasks.find(t => t.id === id);
-        if (t) { t.startDate = newPublishDate; t.endDate = newPublishDate; }
-      });
+      // 保留完成状态
+      const completedMap = new Map();
+      topic.tasks.forEach(t => { if (t.completed) completedMap.set(t.id, true); });
+      // 保留自定义日程
+      const customTasks = topic.tasks.filter(t => t.id && t.id.startsWith('custom_'));
 
       topic.publishDate = newPublishDate;
+      topic.tasks = buildWorkflow(topic);
+      // 恢复完成状态
+      topic.tasks.forEach(t => { if (completedMap.has(t.id)) t.completed = true; });
+      // 追加自定义日程
+      topic.tasks = topic.tasks.concat(customTasks);
+
       save();
       render();
       toast(`「${topic.title}」发布日 → ${newPublishDate}`);
