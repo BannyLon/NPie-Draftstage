@@ -1758,7 +1758,6 @@
       document.getElementById('modal-type').addEventListener('change', function() {
         document.getElementById('modal-budget-field').style.display = this.value === 'commercial' ? '' : 'none';
       });
-      });
 
       // 新增日程弹窗
       document.getElementById('schedule-modal-cancel').onclick  = closeScheduleModal;
