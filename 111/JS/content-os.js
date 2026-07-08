@@ -89,7 +89,7 @@
     /**
      * @typedef {{text: string, completed: boolean}} PrepItem
      * @typedef {{id: string, name: string, days: number, color: string, startDate: string, endDate: string, completed: boolean}} Task
-     * @typedef {{id: string, title: string, publishDate: string, type: 'self'|'commercial', prep: PrepItem[], tasks: Task[], archived: boolean, obsidianUrl: string}} Topic
+     * @typedef {{id: string, title: string, publishDate: string, type: 'self'|'commercial', prep: PrepItem[], tasks: Task[], archived: boolean, obsidianUrl: string, status: string, priority: number, budget: string}} Topic
      */
 
     /** @returns {string} */
@@ -183,12 +183,32 @@
       return Math.round((done / total) * 100);
     }
 
-    /** 判断选题是否紧急（跑马灯相同规则） */
+    /** 判断选题是否紧急（综合日期、状态、影响力、商单金额） */
     function isTopicUrgent(topic) {
       if (topic.archived || calcProgress(topic) >= 100) return false;
+      // 标记为紧急 → 始终紧急
+      if (topic.status === 'urgent') return true;
+      // 高影响力（4-5星）或重要 → 放宽天数
       const today = new Date(); today.setHours(0,0,0,0);
       const days = Math.round((parse(topic.publishDate) - today) / MS_DAY);
-      return days <= (topic.type === 'commercial' ? 5 : 3);
+      const highPriority = (topic.priority >= 4) || (topic.status === 'important');
+      const limit = topic.type === 'commercial'
+        ? (highPriority ? 7 : 5)
+        : (highPriority ? 5 : 3);
+      return days <= limit;
+    }
+
+    /** 跑马灯排序权重 */
+    function tickerWeight(topic) {
+      let w = 0;
+      if (topic.status === 'urgent') w += 100;
+      if (topic.status === 'important') w += 50;
+      w += (topic.priority || 0) * 10;
+      if (topic.budget && topic.type === 'commercial') w += 30;
+      const today = new Date(); today.setHours(0,0,0,0);
+      const days = Math.round((parse(topic.publishDate) - today) / MS_DAY);
+      w += Math.max(0, 30 - days * 2);
+      return w;
     }
 
     /** 规范化前置准备数据结构 */
@@ -250,6 +270,9 @@
       state.topics.forEach(t => {
         t.archived = false;
         t.obsidianUrl = t.obsidianUrl || '';
+        t.status = t.status || 'normal';
+        t.priority = t.priority || 0;
+        t.budget = t.budget || '';
         t.prep = normalizePrep(t.prep);
         t.tasks = buildWorkflow(t);
       });
@@ -304,6 +327,9 @@
           const newTopic = { ...t, prep: normalizePrep(t.prep) };
           if (newTopic.archived == null) newTopic.archived = false; // 向后兼容旧数据
           if (newTopic.obsidianUrl == null) newTopic.obsidianUrl = '';
+          if (newTopic.status == null) newTopic.status = 'normal';
+          if (newTopic.priority == null) newTopic.priority = 0;
+          if (newTopic.budget == null) newTopic.budget = '';
 
           // 迁移旧版 edit1/edit2 → edit（v2.0 合并）
           const hasOldEdit = t.tasks?.some(s => s.id === 'edit1' || s.id === 'edit2');
@@ -1611,6 +1637,12 @@
       document.getElementById('modal-title').value = '';
       document.getElementById('modal-type').value = 'self';
       document.getElementById('modal-date').value = defaultDate || fmt(addDays(TODAY, 14));
+      document.getElementById('modal-status').value = 'normal';
+      document.getElementById('modal-priority-val').value = '0';
+      document.getElementById('modal-budget').value = '';
+      document.getElementById('modal-budget-field').style.display = 'none';
+      // 重置星星
+      document.querySelectorAll('#modal-priority span').forEach(s => s.classList.remove('active'));
       overlay.classList.add('open');
     }
 
@@ -1623,7 +1655,10 @@
       const type = document.getElementById('modal-type').value;
       const publishDate = document.getElementById('modal-date').value;
       if (!title || !publishDate) { toast('请填写名称与发布日期'); return; }
-      const topic = { id: uid(), title, type, publishDate, prep: [], tasks: [], archived: false, obsidianUrl: '' };
+      const status = document.getElementById('modal-status').value;
+      const priority = parseInt(document.getElementById('modal-priority-val').value) || 0;
+      const budget = document.getElementById('modal-budget').value.trim();
+      const topic = { id: uid(), title, type, publishDate, prep: [], tasks: [], archived: false, obsidianUrl: '', status, priority, budget };
       topic.tasks = buildWorkflow(topic);
       state.topics.push(topic);
       save();
@@ -1637,14 +1672,9 @@
       const el = document.getElementById('header-ticker');
       if (!el) return;
       const today = new Date(); today.setHours(0,0,0,0);
-      // 只显示未完成且紧急的选题：自制 ≤3 天，商单 ≤5 天
-      const urgent = state.topics.filter(t => {
-        if (t.archived) return false;
-        if (calcProgress(t) >= 100) return false;
-        const days = Math.round((parse(t.publishDate) - today) / MS_DAY);
-        const limit = t.type === 'commercial' ? 5 : 3;
-        return days <= limit;
-      });
+      const urgent = state.topics.filter(t => isTopicUrgent(t));
+      // 按权重排序
+      urgent.sort((a, b) => tickerWeight(b) - tickerWeight(a));
       if (!urgent.length) {
         el.innerHTML = '<span class="header-ticker-empty">暂无紧急选题 · 一切尽在掌控</span>';
         return;
@@ -1652,15 +1682,15 @@
       const items = urgent.map(t => {
         const days = Math.round((parse(t.publishDate) - today) / MS_DAY);
         const tag = t.type === 'commercial' ? '商单' : '自制';
-        if (days <= 1) {
-          return { text: `🔥 ${tag} · ${t.title} — 明天发布！`, cls: 'urgent' };
-        } else if (days <= 2) {
-          return { text: `⚠ ${tag} · ${t.title} — 距发布仅 ${days} 天`, cls: 'urgent' };
-        } else {
-          return { text: `⚡ ${tag} · ${t.title} — 距发布还有 ${days} 天`, cls: '' };
-        }
+        const stars = t.priority > 0 ? '★'.repeat(t.priority) : '';
+        const budget = t.budget ? ` [${t.budget}]` : '';
+        const statusLabel = t.status === 'urgent' ? '🚨' : (t.status === 'important' ? '📌' : '');
+        let cls = '';
+        if (t.status === 'urgent' || days <= 1) cls = 'urgent';
+        else if (days <= 3) cls = 'urgent';
+        const prefix = cls === 'urgent' ? '🔥' : '⚡';
+        return { text: `${statusLabel}${prefix} ${tag} · ${t.title}${stars}${budget} — ${days}天后发布`, cls };
       });
-      // 不足 3 条时复制一份保证滚动流畅
       const source = items.length >= 3 ? items : [...items, ...items];
       const doubled = [...source, ...source];
       el.innerHTML = `<div class="header-ticker-track">${doubled.map(i =>
@@ -1713,6 +1743,22 @@
       document.getElementById('modal-overlay').addEventListener('click', e => {
         if (e.target.id === 'modal-overlay') closeModal();
       });
+      // 星评点击
+      document.querySelectorAll('#modal-priority span').forEach(star => {
+        star.addEventListener('click', () => {
+          const val = parseInt(star.dataset.star);
+          document.getElementById('modal-priority-val').value = val;
+          document.querySelectorAll('#modal-priority span').forEach((s, i) => {
+            s.classList.toggle('active', i < val);
+            s.textContent = i < val ? '★' : '☆';
+          });
+        });
+      });
+      // 商单显示金额字段
+      document.getElementById('modal-type').addEventListener('change', function() {
+        document.getElementById('modal-budget-field').style.display = this.value === 'commercial' ? '' : 'none';
+      });
+      });
 
       // 新增日程弹窗
       document.getElementById('schedule-modal-cancel').onclick  = closeScheduleModal;
@@ -1760,6 +1806,9 @@
               ...t, prep: normalizePrep(t.prep),
               archived: t.archived ?? false,
               obsidianUrl: t.obsidianUrl ?? '',
+              status: t.status ?? 'normal',
+              priority: t.priority ?? 0,
+              budget: t.budget ?? '',
               tasks: t.tasks?.length ? t.tasks : buildWorkflow(t)
             }));
             save(); render();
