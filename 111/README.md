@@ -40,22 +40,28 @@
 ## 🖥️ 使用方式
 
 ### 直接使用
-1. 下载 `content-os.html`
-2. 用浏览器打开即可（Chrome / Edge / Safari / Firefox）
+1. 下载整个 `111/` 文件夹
+2. 用浏览器打开 `content-os.html` 即可（Chrome / Edge / Safari / Firefox）
 
-> 需联网加载 Tailwind CSS CDN 和 Google Fonts，首次加载可能需要几秒。
+> 需联网加载 Tailwind CSS CDN 和 Google Fonts，首次加载可能需要几秒。本地上线后可将 CDN 资源下载到本地。
 
-### 完整下载（含资源文件）
+### 项目结构
 ```
 111/
-├── content-os.html      # 主文件
+├── content-os.html      # HTML 骨架（116 行）
+├── CSS/
+│   └── content-os.css   # 全部样式（608 行）
+├── JS/
+│   └── content-os.js    # 全部逻辑（1678 行）
 ├── IMG/
 │   ├── NPIEAI_logo.jpg  # 品牌 Logo
-│   ├── Obsidian.webp     # 侧边栏图标
-│   ├── Export.svg        # 导出按钮图标
-│   └── Import.svg        # 导入按钮图标
+│   ├── Obsidian.webp    # 侧边栏选题箭头图标
+│   ├── Export.svg       # 导出按钮图标
+│   └── Import.svg       # 导入按钮图标
 └── README.md
 ```
+
+> v2.7 起拆分为三层结构，修改样式只动 `CSS/`，修改逻辑只动 `JS/`，修改结构只动 `.html`，互不干扰。
 
 ### 操作指南
 
@@ -73,16 +79,17 @@
 
 ## 🛠️ 技术栈
 
-- **纯 HTML/CSS/JS**，零构建工具，零框架依赖
-- Tailwind CSS（CDN）提供基础样式系统
+- **纯 HTML/CSS/JS**，三层分离，零构建工具，零框架依赖
+- Tailwind CSS（CDN）提供原子类辅助
 - Inter + Noto Sans SC 字体（Google Fonts）
-- localStorage 持久化
+- localStorage 持久化 + JSON 导入/导出
 - CSS 自定义属性（`--bg`, `--accent` 等）统一主题色
 
 ## 📝 版本历史
 
 | 版本 | 主要更新 |
 |------|----------|
+| v2.7 | 拆分为 HTML/CSS/JS 三层结构 |
 | v2.6 | 顶部通知跑马灯 |
 | v2.5 | 侧栏品牌 Logo、按钮文字换行 |
 | v2.4 | 侧栏收缩态 SVG 图标 |
