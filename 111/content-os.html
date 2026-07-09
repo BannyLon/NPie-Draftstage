@@ -148,20 +148,16 @@
       <div class="modal-title">设置</div>
       <div class="settings-tabs">
         <button class="settings-tab active" data-stab="appearance">外观</button>
-        <button class="settings-tab" data-stab="theme">主题</button>
         <button class="settings-tab" data-stab="workflows">工作流</button>
       </div>
-      <!-- 外观面板 -->
+      <!-- 外观面板（模式 + 主题合一） -->
       <div class="settings-panel active" id="spanel-appearance">
         <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:8px;">模式</label>
         <div class="mode-toggle">
           <button class="mode-btn active" id="mode-light" data-mode="light">☀️<span class="mode-label">日间</span></button>
           <button class="mode-btn" id="mode-dark" data-mode="dark">🌙<span class="mode-label">夜间</span></button>
         </div>
-      </div>
-      <!-- 主题面板 -->
-      <div class="settings-panel" id="spanel-theme">
-        <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:8px;">配色方案</label>
+        <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin:14px 0 8px;">配色方案</label>
         <div class="theme-options" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
           <button class="theme-btn active" data-theme="warm">
             <div class="swatch"><span style="background:#B08A53"></span><span style="background:#F4EFE6"></span><span style="background:#8B9B7A"></span></div>暖棕
