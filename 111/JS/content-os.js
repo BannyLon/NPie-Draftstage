@@ -2151,11 +2151,36 @@
       // 初始化主题
       // 使用说明多步骤引导
       const guideSteps = [
-        { title: '欢迎使用哌稿场 · 档期', html: '<p>哌稿场是<b>自媒体创作排期管理工具</b>，帮你把选题策划、制作流程、进度追踪整合在一张看板上。</p><p>核心思路：<b>选定发布日期 → 系统自动倒排所有制作节点 → 你只管按节点执行。</b></p><p>周末和法定节假日自动跳过，商单和自制内容分开管理。</p><p style="color:var(--text-muted);font-size:0.72rem;">点击右下角「下一步」开始了解具体操作 👇</p>' },
-        { title: '① 创建你的第一条选题', html: '<p>点击日历左下角 <b>「+ 增加选题」</b>按钮。</p><p>填写：<b>选题名称</b>（如"DJI Mic Mini 2s"）→ <b>工作流类型</b>（自制/商单）→ <b>发布日期</b>。</p><p>可选：<b>状态标记</b>（普通/重要/紧急）、<b>影响力星级</b>（1-5星）、商单可填<b>金额</b>。</p><p>确认后系统自动按工作日倒排所有制作阶段。</p>' },
-        { title: '② 查看和调整排期', html: '<p>日历上每条选题一行，<b>彩色任务块</b>代表各个制作阶段。</p><p><b>拖拽左侧选题标签</b> → 整条排期移到新日期，所有节点重新倒排。</p><p><b>拖拽右侧任务块</b> → 仅移动这一个节点。</p><p><b>右键日历空格子</b> → 新增自定义日程（如"品牌素材整理"）。<br><b>右键有任务的格子</b> → 删除该节点。</p><p><b>双击任务块</b> → 原地重命名，Enter 确认，Esc 取消。</p>' },
-        { title: '③ 使用选题卡追踪进度', html: '<p>向下滚动到<b>选题卡</b>区域，每条选题一张卡片。</p><p><b>前置准备</b>：自由添加准备项（如"产品调研"），勾选完成。<br><b>制作流程</b>：每个节点一个复选框，勾选后进度条自动推进。</p><p><b>工作流类型</b>下拉可随时切换自制/商单，系统重新倒排。<br><b>Obsidian 链接</b>：标题右侧图标可绑定笔记，点击跳转。</p><p><b>右键选题卡</b> → 重命名 / 存档(100%时) / 放弃(0%时)。</p>' },
-        { title: '④ 角标、主题与数据安全', html: '<p><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#C5554A;color:#fff;font-size:0.45rem;text-align:center;line-height:14px;">自</span> <b>自制内容</b> &nbsp; <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#C89B3C;color:#fff;font-size:0.45rem;text-align:center;line-height:14px;">商</span> <b>商单</b> &nbsp; <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#E04030;color:#fff;font-size:0.45rem;text-align:center;line-height:14px;">急</span> <b>紧急</b></p><p>点击侧栏 <b>「设置」</b>：日间/夜间模式、7套配色、自定义工作流。</p><p>数据自动保存至浏览器数据库，<b>清缓存不丢失</b>。定期用侧栏<b>「导出备份」</b>存 JSON 到云盘。</p><p>顶部跑马灯滚动显示紧急选题，鼠标悬停可暂停查看。</p>' }
+        { title: '欢迎！这是哌稿场 · 档期', html: `<p>哌稿场是一张<b>内容创作排期看板</b>——把选题策划、制作流程、进度追踪全部放在一张画布上。</p>
+          <p><b>怎么用？</b>你只需要做三件事：</p>
+          <p>❶ <b>创建选题</b> → 设定发布日期<br>❷ 系统<b>自动倒排</b>所有制作阶段（跳过周末和节假日）<br>❸ 按日历上的节点<b>执行和勾选</b>，进度条自动推进</p>
+          <p>自制内容和商单分开管理，每个选题可以绑定 Obsidian 笔记。</p>
+          <p style="color:var(--text-muted);font-size:0.72rem;">按 → 键或点击「下一步」继续 👇</p>` },
+        { title: '第一步：创建选题', html: `<p>点击排期日历<b>底部的「+ 增加选题」</b>按钮，弹出创建窗口：</p>
+          <p><b>必填项</b>：选题名称（如"DJI Mic Mini 2s 评测"）、工作流类型（自制内容 / 商单）、发布日期。</p>
+          <p><b>选填项</b>：状态标记（普通 / 重要 / 紧急）、影响力星级（点击星星 1-5 颗）、商单可选填金额（如 50000，自动格式化 ¥50,000）。</p>
+          <p>点击「确认添加」后，系统立即按<b>工作日倒排</b>生成所有制作阶段——比如发布日期是周五，最后一个制作节点"包装"会自动排到周四，周末被跳过。</p>` },
+        { title: '第二步：看懂排期日历', html: `<p>日历是哌稿场的<b>核心操作区</b>。每一行是一条选题，每个<b>彩色方块</b>是一个制作阶段。</p>
+          <p><b>拖拽操作（最重要！）</b></p>
+          <p>◀ <b>拖拽左侧的选题名称卡片</b>到日历上的任意一天 → 这条选题的<b>发布日期改变</b>，系统重新按工作日倒排所有节点。</p>
+          <p>◀ <b>拖拽右侧的彩色任务块</b>到另一天 → <b>只移动这一个节点</b>，其他节点不受影响。</p>
+          <p><b>右键菜单</b>：在日历空格子上点右键 → 可添加自定义日程（如"品牌素材整理"）；在有任务块的格子上点右键 → 可删除该节点。</p>
+          <p><b>双击任务块</b>上的文字 → 原地编辑名称，按 Enter 确认，Esc 取消。</p>
+          <p><b>封面、文案、发布</b>三个节点固定在发布日当天，自动上下排列。</p>` },
+        { title: '第三步：用选题卡追踪进度', html: `<p>向下滚动到<b>「选题卡」</b>区域。每条选题一张卡片，和日历数据实时同步。</p>
+          <p><b>卡片结构（从上到下）：</b></p>
+          <p>① <b>标题行</b>：选题名称 + Obsidian 链接图标 + 进度百分比。左上角有红圈「自」或金圈「商」角标区分类型。紧急选题左边框变橙色。</p>
+          <p>② <b>前置准备</b>：像待办清单一样自由添加和勾选。比如"产品功能调研""客户 Brief 确认"。</p>
+          <p>③ <b>制作流程</b>：两列排列，每个阶段一个复选框。勾选一项 → 进度条实时更新。全部勾选完 → 进度 100%。</p>
+          <p>④ <b>工作流类型</b>下拉框：随时切换「自制内容」和「商单」，系统自动用对应的流程重新倒排。</p>
+          <p><b>右键选题卡</b>可以：重命名选题 / 存档（进度100%时）/ 放弃（进度0%时）。</p>` },
+        { title: '其他功能：角标、主题、数据', html: `<p><b>角标速查</b>：</p>
+          <p style="display:flex;align-items:center;gap:4px;"><span style="display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:#C5554A;color:#fff;font-size:0.5rem;font-weight:800;">自</span> 红色「自」= 自制内容，出现在选题卡左上角、日历标签右上角、侧栏选题名前</p>
+          <p style="display:flex;align-items:center;gap:4px;"><span style="display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:#C89B3C;color:#fff;font-size:0.5rem;font-weight:800;">商</span> 金色「商」= 商单，同上位置</p>
+          <p style="display:flex;align-items:center;gap:4px;"><span style="display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:#E04030;color:#fff;font-size:0.5rem;font-weight:800;">急</span> 红色「急」= 紧急选题，日历标签左上角。自制距发布≤3天、商单≤5天自动出现</p>
+          <p><b>个性化设置</b>：点击侧栏底部「设置」→ 日间/夜间模式一键切换、7 套完整配色可选、可创建自定义工作流类型。</p>
+          <p><b>数据安全</b>：所有数据自动存入浏览器内置数据库，清缓存不会丢失。定期点击侧栏「导出备份」下载 JSON 文件保存到 iCloud 或其他云盘。换设备时「导入恢复」即可。</p>
+          <p><b>更多功能</b>：侧栏可折叠（点 ◀ 按钮）；顶部跑马灯滚动显示紧急选题；已完成的选题可右键存档到「已存档」视图。</p>` }
       ];
       let _guideStep = 0;
       function renderGuideStep() {
@@ -2178,6 +2203,14 @@
         if (_guideStep < guideSteps.length - 1) { _guideStep++; renderGuideStep(); } else { closeGuide(); }
       });
       document.getElementById('guide-prev').addEventListener('click', () => { if (_guideStep > 0) { _guideStep--; renderGuideStep(); } });
+      // 键盘操作：左右箭头切换步骤，Escape 关闭
+      document.addEventListener('keydown', e => {
+        const overlay = document.getElementById('guide-modal-overlay');
+        if (!overlay.classList.contains('open')) return;
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); if (_guideStep < guideSteps.length - 1) { _guideStep++; renderGuideStep(); } else { closeGuide(); } }
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); if (_guideStep > 0) { _guideStep--; renderGuideStep(); } }
+        if (e.key === 'Escape') { e.preventDefault(); closeGuide(); }
+      });
       // 确认弹窗
       document.getElementById('confirm-modal-cancel').onclick = () => closeConfirm(false);
       document.getElementById('confirm-modal-ok').onclick = () => closeConfirm(true);
