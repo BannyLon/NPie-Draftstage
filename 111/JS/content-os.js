@@ -1816,7 +1816,7 @@
 
     function updateThemeUI() {
       const theme = localStorage.getItem('npiedraft-theme') || 'warm';
-      document.querySelectorAll('[data-theme-opt]').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
       const active = document.querySelector(`.theme-btn[data-theme="${theme}"]`);
       if (active) active.classList.add('active');
     }

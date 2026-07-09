@@ -189,7 +189,7 @@
       display: flex; align-items: center; justify-content: center;
       transition: background 0.15s; z-index: 20;
     }
-    .sidebar-toggle:hover { background: rgba(176,138,83,0.15); }
+    .sidebar-toggle:hover { background: var(--accent-soft); }
     .brand-row {
       display: flex; align-items: center; gap: 10px;
     }
@@ -258,7 +258,7 @@
     }
     .topic-item:hover { background: rgba(216,203,180,0.2); }
     .topic-item.selected {
-      outline: 2px solid rgba(176,138,83,0.5);
+      outline: 2px solid var(--accent); outline-offset: -2px;
       outline-offset: -2px;
     }
     /* ── 侧栏选题角标 ── */
@@ -483,8 +483,8 @@
     .day-date { font-size: 0.88rem; font-weight: 700; color: var(--text); line-height: 1; }
     .day-week { font-size: 0.58rem; color: var(--text-muted); line-height: 1; }
     .day-today-label { font-size: 0.56rem; color: var(--accent); font-weight: 700; line-height: 1; }
-    .day-cell.today { background: rgba(176,138,83,0.1); }
-    .day-cell.weekend { background: rgba(247,241,226,0.55); }
+    .day-cell.today { background: var(--accent-soft); }
+    .day-cell.weekend { background: var(--surface-muted); }
     .timeline-row {
       display: flex;
       border-bottom: 1px solid rgba(217,209,197,0.6);
@@ -567,10 +567,10 @@
       border-right: 1px solid rgba(217,209,197,0.45);
       cursor: pointer; transition: background 0.12s;
     }
-    .track-cell:hover { background: rgba(176,138,83,0.06); }
-    .track-cell.drop-target { background: rgba(176,138,83,0.18); }
-    .track-cell.today { background: rgba(176,138,83,0.04); }
-    .track-cell.weekend { background: rgba(247,241,226,0.45); }
+    .track-cell:hover { background: var(--accent-soft); opacity: 0.5; }
+    .track-cell.drop-target { background: var(--accent-soft); }
+    .track-cell.today { background: var(--accent-soft); opacity: 0.4; }
+    .track-cell.weekend { background: var(--surface-muted); }
     /* ── Task blocks ── */
     .task-block {
       position: absolute;
@@ -648,8 +648,8 @@
       box-shadow: var(--shadow);
       transition: outline 0.15s;
     }
-    .topic-card.type-self { background: linear-gradient(135deg, #FCFAF5 0%, #F7F0E4 100%); }
-    .topic-card.type-commercial { background: linear-gradient(135deg, #F7F8FA 0%, #ECF0F3 100%); }
+    .topic-card.type-self { background: linear-gradient(135deg, var(--surface) 0%, var(--surface) 60%, var(--accent-soft) 100%); }
+    .topic-card.type-commercial { background: linear-gradient(135deg, var(--surface) 0%, var(--surface-muted) 100%); }
     .topic-card.selected { outline: 2px solid rgba(176,138,83,0.35); }
     .topic-card.drag-over { outline: 2px dashed rgba(176,138,83,0.5); }
     .topic-card.is-urgent { border-left: 3px solid #E08840; }
@@ -688,11 +688,11 @@
     .card-progress-label { font-size: 0.62rem; color: var(--text-muted); }
     .card-progress-bar {
       width: 100%; height: 5px; border-radius: 99px;
-      background: rgba(217,209,197,0.4); overflow: hidden; margin-bottom: 14px;
+      background: var(--border); overflow: hidden; margin-bottom: 14px;
     }
     .card-progress-fill {
       height: 100%; border-radius: 99px;
-      background: linear-gradient(90deg, #B08A53, #8B9B7A);
+      background: linear-gradient(90deg, var(--accent), var(--green));
       transition: width 0.3s ease;
     }
 
@@ -727,7 +727,7 @@
       background: var(--surface-muted); margin-bottom: 3px;
       transition: background 0.15s;
     }
-    .prep-item.done { background: rgba(139,155,122,0.08); }
+    .prep-item.done { background: color-mix(in srgb, var(--green) 12%, transparent); }
     .prep-item.done .item-text { text-decoration: line-through; color: var(--text-muted); }
 
     /* Section 3 — 制作流程 两列 */
@@ -744,14 +744,29 @@
       transition: background 0.15s;
     }
     .workflow-item.done {
-      background: rgba(139,155,122,0.08);
+      background: color-mix(in srgb, var(--green) 12%, transparent);
     }
     .workflow-item.done .item-text {
       text-decoration: line-through;
       color: var(--text-muted);
     }
 
-    .item-checkbox { width: 13px; height: 13px; accent-color: var(--accent); flex-shrink: 0; cursor: pointer; }
+    .item-checkbox {
+      width: 15px; height: 15px; flex-shrink: 0; cursor: pointer;
+      appearance: none; -webkit-appearance: none;
+      border: 1.5px solid var(--border); border-radius: 3px;
+      background: var(--surface); transition: all 0.15s;
+      position: relative;
+    }
+    .item-checkbox:checked {
+      background: var(--accent); border-color: var(--accent);
+    }
+    .item-checkbox:checked::after {
+      content: ''; position: absolute; left: 3px; top: 1px;
+      width: 5px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+    .item-checkbox:hover { border-color: var(--accent); }
     .item-text { flex: 1; font-size: 0.74rem; line-height: 1.3; min-width: 0; }
     .item-date { font-size: 0.62rem; color: var(--text-muted); white-space: nowrap; flex-shrink: 0; }
     .item-remove {
