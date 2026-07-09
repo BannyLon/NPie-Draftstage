@@ -123,7 +123,7 @@
       selectedTopicId: null,
       viewStart: DEFAULT_START,
       viewEnd: DEFAULT_END,
-      activeNav: 'topics',
+      activeNav: localStorage.getItem('npiedraft-nav') || 'topics',
       drag: null,
       sidebarCollapsed: false
     };
@@ -501,6 +501,7 @@
       document.querySelectorAll('[data-nav]').forEach(btn => {
         btn.addEventListener('click', () => {
           state.activeNav = btn.dataset.nav;
+          localStorage.setItem('npiedraft-nav', state.activeNav);
           state.selectedTopicId = null;
           render();
           // 先 render 更新 DOM（显隐排期区域会影响选题卡位置），再滚动
@@ -519,6 +520,7 @@
         item.addEventListener('click', () => {
           state.selectedTopicId = item.dataset.sidebarTopic;
           state.activeNav = 'topics';
+          localStorage.setItem('npiedraft-nav', 'topics');
           render();
           // 等待渲染完成后滚动到对应选题卡
           setTimeout(() => {
@@ -2226,6 +2228,11 @@
       // 确认弹窗
       document.getElementById('confirm-modal-cancel').onclick = () => closeConfirm(false);
       document.getElementById('confirm-modal-ok').onclick = () => closeConfirm(true);
+      document.addEventListener('keydown', e => {
+        if (!document.getElementById('confirm-modal-overlay').classList.contains('open')) return;
+        if (e.key === 'Enter') { e.preventDefault(); closeConfirm(true); }
+        if (e.key === 'Escape') { e.preventDefault(); closeConfirm(false); }
+      });
 
       initTheme();
 
