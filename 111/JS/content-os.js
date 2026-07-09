@@ -550,15 +550,26 @@
       };
       document.getElementById('btn-import').onclick = () => document.getElementById('import-file').click();
       document.getElementById('btn-about').onclick = () => {
-        // 全屏遮罩展示品牌海报
         const overlay = document.createElement('div');
-        overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;cursor:pointer;';
-        overlay.innerHTML = `<iframe src="npie_poster.html" style="width:760px;height:1070px;max-width:96vw;max-height:94vh;border:none;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,0.5);"></iframe>`;
-        overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;cursor:pointer;';
+        const card = document.createElement('div');
+        card.style.cssText = 'background:var(--surface);border-radius:20px;padding:48px 52px 40px;max-width:560px;width:92vw;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.25);cursor:default;position:relative;font-family:var(--font,inherit);';
+        card.innerHTML = `<button style="position:absolute;top:16px;right:18px;width:32px;height:32px;border-radius:50%;border:none;background:transparent;font-size:1.2rem;cursor:pointer;color:var(--text-muted);">✕</button>
+          <div style="font-family:'Space Mono',monospace;font-size:0.62rem;letter-spacing:0.3em;color:var(--accent);text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:10px;"><span style="width:28px;height:1px;background:var(--accent);display:inline-block;"></span> Brand</div>
+          <div style="font-family:'Noto Serif SC',serif;font-size:3.2rem;font-weight:900;line-height:1;color:var(--text);margin-bottom:6px;">嗯哌</div>
+          <div style="font-family:'Playfair Display','Noto Serif SC',serif;font-size:2.6rem;font-weight:900;font-style:italic;color:transparent;-webkit-text-stroke:1.2px var(--text);line-height:1;margin-bottom:24px;">NPIE</div>
+          <div style="width:48px;height:1px;background:var(--border);margin-bottom:20px;"></div>
+          <p style="font-size:0.82rem;line-height:1.8;color:var(--text-muted);margin:0 0 16px;">NPIE 是一个<b style="color:var(--text);">内容创作工具品牌</b>，致力于为自媒体创作者提供优雅、高效的创作管理工具。</p>
+          <p style="font-size:0.82rem;line-height:1.8;color:var(--text-muted);margin:0 0 24px;">哌稿场 · 档期 是 NPIE 旗下的<b style="color:var(--text);">内容排期看板</b>——把选题策划、制作流程、进度追踪整合在一张画布上，让创作者从"脑子里记"变成"看板上一目了然"。</p>
+          <div style="display:flex;gap:16px;padding-top:16px;border-top:1px solid var(--border);font-size:0.66rem;color:var(--text-muted);font-family:'Space Mono',monospace;letter-spacing:0.06em;">
+            <span>Content & Creative Studio</span><span style="color:var(--border);">|</span><span>Since 2025</span>
+          </div>`;
+        overlay.appendChild(card);
+        const close = () => overlay.remove();
+        overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+        card.querySelector('button').addEventListener('click', close);
+        document.addEventListener('keydown', function onKey(e) { if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); } });
         document.body.appendChild(overlay);
-        // Esc 关闭
-        const onKey = e => { if (e.key === 'Escape') { overlay.remove(); document.removeEventListener('keydown', onKey); } };
-        document.addEventListener('keydown', onKey);
       };
       document.getElementById('btn-settings').onclick = () => openSettingsModal();
     }
