@@ -1532,16 +1532,16 @@
           <!-- 左上角类型角标 -->
           <span class="card-type-badge badge-${topic.type === 'self' ? 'self' : topic.type === 'commercial' ? 'commercial' : 'custom'}" title="${wfName}">${topic.type === 'self' ? '自' : topic.type === 'commercial' ? '商' : '定'}</span>
 
-          <!-- 第一部分：工作流类型 + 标题行 + 发布日期 + 进度 -->
-          <div class="card-wf-type">${esc(wfName)}
-            <select class="card-type-select" data-type-select="${topic.id}" style="margin-left:8px;font-size:0.6rem;padding:1px 4px;">
+          <!-- 第一部分：工作流类型下拉 + 标题行 + 发布日期 -->
+          <div class="card-wf-type">
+            <select class="card-type-select" data-type-select="${topic.id}">
               ${allWf.map(w => `<option value="${w.id}" ${topic.type === w.id ? 'selected' : ''}>${esc(w.name)}</option>`).join('')}
             </select>
           </div>
           <div class="card-head">
             <div class="card-head-left">
               <div class="card-title">${esc(topic.title)}</div>
-              <img class="card-obsidian-link ${topic.obsidianUrl ? 'has-url' : ''}" src="IMG/Obsidian.webp" alt="Obsidian" title="${topic.obsidianUrl ? '左键打开 Obsidian 笔记 / 右键编辑链接' : '设置 Obsidian 链接'}" data-obsidian-topic="${topic.id}" />
+              <img class="card-obsidian-link ${topic.obsidianUrl ? 'has-url' : ''}" src="IMG/Obsidian.webp" alt="" title="${topic.obsidianUrl ? '左键打开 Obsidian 笔记 / 右键编辑链接' : '设置 Obsidian 链接'}" data-obsidian-topic="${topic.id}" />
             </div>
             <div class="card-publish-date">
               <span class="card-publish-label">发布日期</span>

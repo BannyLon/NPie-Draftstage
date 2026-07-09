@@ -719,13 +719,14 @@
     .card-type-badge.badge-custom { background: #8B8AA5; }
 
     /* Section 1 — 标题 + 进度 */
-    .card-wf-type { font-size: 0.66rem; font-weight: 600; color: var(--accent); margin-bottom: 4px; letter-spacing: 0.04em; }
+    .card-wf-type { margin-bottom: 4px; }
+    .card-wf-type .card-type-select { font-size: 0.66rem; padding: 2px 6px; }
     .card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
     .card-head-left { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; }
     .card-title { font-size: 0.92rem; font-weight: 800; letter-spacing: -0.02em; flex: 1; min-width: 0; }
     .card-publish-date { flex-shrink: 0; text-align: center; margin-right: 8px; }
-    .card-publish-label { display: block; font-size: 0.56rem; color: var(--text-muted); line-height: 1.2; }
-    .card-publish-day { display: block; font-size: 0.88rem; font-weight: 700; color: var(--text); line-height: 1.2; }
+    .card-publish-label { display: block; font-size: 0.56rem; font-weight: 700; color: var(--text-muted); line-height: 1.2; }
+    .card-publish-day { display: block; font-size: 0.88rem; font-weight: 800; color: var(--text); line-height: 1.2; }
     .prep-empty-hint { font-size: 0.68rem; color: var(--text-muted); padding: 4px 2px 0; margin: 0; }
     /* ── Obsidian 链接图标 ── */
     .card-obsidian-link {
