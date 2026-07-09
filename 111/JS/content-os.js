@@ -332,19 +332,14 @@
       clearTimeout(_saveTimer);
       _saveTimer = setTimeout(() => saveNow(), 200);
     }
-    /** 即时写入 — 删除、存档等不可逆操作用 */
-    async function saveNow() {
+    /** 即时写入 — 删除、存档等不可逆操作：先同步写 localStorage，再异步写 IndexedDB */
+    function saveNow() {
       clearTimeout(_saveTimer);
-      try {
-        await idbSave(state.topics);
-      } catch (_) {
-        // IndexedDB 失败 → 回退 localStorage
-        try {
-          localStorage.setItem('content-os-v2', JSON.stringify(state.topics));
-        } catch (e) {
-          toast('⚠️ 存储空间不足，请导出备份后清理数据');
-        }
-      }
+      const json = JSON.stringify(state.topics);
+      // 1. 同步写入 localStorage（确保刷新时数据已在磁盘）
+      try { localStorage.setItem('content-os-v2', json); } catch (e) { toast('⚠️ 存储空间不足，请导出备份后清理数据'); }
+      // 2. 异步写入 IndexedDB（长期存储，清缓存不丢）
+      idbSave(state.topics).catch(() => {});
     }
 
     async function load() {
@@ -1040,9 +1035,9 @@
       if (!topic) return;
       const task = topic.tasks.find(t => t.id === taskId);
       if (!task) return;
-      showConfirm(`确认删除流程节点「${task.name}」？`, async () => {
+      showConfirm(`确认删除流程节点「${task.name}」？`, () => {
         topic.tasks = topic.tasks.filter(t => t.id !== taskId);
-        await saveNow();
+        saveNow();
         render();
         toast(`已删除「${task.name}」`);
       }, '删除节点', '删除');
@@ -1400,10 +1395,10 @@
         ? `该选题尚未开始执行，确认放弃「${topic.title}」？`
         : `确定彻底删除「${topic.title}」？此操作无法撤销。`;
       const title = mode === 'abandon' ? '放弃选题' : '彻底删除';
-      showConfirm(msg, async () => {
+      showConfirm(msg, () => {
         state.topics = state.topics.filter(t => t.id !== topicId);
         if (state.selectedTopicId === topicId) state.selectedTopicId = null;
-        await saveNow();
+        saveNow();
         render();
         toast(mode === 'abandon' ? `已放弃「${topic.title}」` : `已删除「${topic.title}」`);
       }, title, mode === 'abandon' ? '放弃' : '删除');
@@ -1418,9 +1413,9 @@
       const topic = state.topics.find(t => t.id === topicId);
       if (!topic) return;
       if (archive) {
-        showConfirm(`该选题已完成，确认存档「${topic.title}」？`, async () => {
+        showConfirm(`该选题已完成，确认存档「${topic.title}」？`, () => {
           topic.archived = true;
-          await saveNow(); render();
+          saveNow(); render();
           toast(`已存档「${topic.title}」`);
           if (state.selectedTopicId === topicId) state.selectedTopicId = null;
         }, '存档选题', '存档');
@@ -1996,12 +1991,12 @@
         alert(`无法删除：${usingTopics.length} 个选题正在使用此工作流（进度 > 0%）。请等待选题执行完毕后再删除。`);
         return;
       }
-      showConfirm(`确定删除工作流「${wf.name}」？`, async () => {
+      showConfirm(`确定删除工作流「${wf.name}」？`, () => {
         saveCustomWorkflows(customWfs.filter(w => w.id !== wfId));
         state.topics.forEach(t => { if (t.type === wfId) t.type = 'self'; });
         updateTypeSelect();
         renderWorkflowList();
-        await saveNow(); render();
+        saveNow(); render();
         toast(`已删除「${wf.name}」`);
       }, '删除工作流', '删除');
     }
