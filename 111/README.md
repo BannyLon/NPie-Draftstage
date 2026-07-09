@@ -86,27 +86,33 @@
 
 ### 项目结构
 ```
-111/
-├── content-os.html      # HTML 骨架（116 行）
+NPie_Draftstage/
+├── content-os.html       # HTML 骨架
 ├── CSS/
-│   └── content-os.css   # 全部样式（608 行）
+│   ├── content-os.css    # 全部样式
+│   └── theme-editorial.css  # 蓝黄杂志风（独立主题文件）
 ├── JS/
-│   └── content-os.js    # 全部逻辑（1678 行）
+│   └── content-os.js     # 全部逻辑
 ├── IMG/
-│   ├── NPIEAI_logo.jpg  # 品牌 Logo
-│   ├── Obsidian.webp    # 跳转Obsidian关联脚本图标
-│   ├── Export.svg       # 导出按钮图标
-│   └── Import.svg       # 导入按钮图标
-└── README.md
+│   ├── NPIEAI_logo.jpg   # 品牌 Logo
+│   ├── Obsidian.webp     # Obsidian 跳转图标
+│   ├── Export.svg        # 导出按钮图标
+│   ├── Import.svg        # 导入按钮图标
+│   ├── About.svg         # 使用说明图标
+│   └── Settings.svg      # 设置图标
+├── README.md
+├── prompt.md             # AI 复现完整提示词
+├── audit-report.md       # 全面审计报告
+└── audit-report-v2.md    # 复审报告
 ```
 
-> v2.7 起拆分为三层结构，修改样式只动 `CSS/`，修改逻辑只动 `JS/`，修改结构只动 `.html`，互不干扰。
+> v2.7 起拆分为三层结构，主题可独立扩增 CSS 文件。
 
 ### 操作指南
 
 | 操作 | 方式 |
 |------|------|
-| 新建选题 | 点击日历下方"+ 增加选题"按钮 |
+| 新建选题 | 点击日历下方「+ 增加选题」按钮，填写名称/类型/日期/状态/星评 |
 | 调整排期 | **拖拽**左侧选题标签到目标日期 → 整条排期重新按工作日倒排 |
 | 微调节点 | **拖拽**右侧单个任务块到目标日期 → 仅移动该节点 |
 | 勾选完成 | 在选题卡中勾选前置准备项或流程节点 → 进度条自动更新 |
@@ -115,37 +121,39 @@
 | 重命名 | 双击任务块文字 → 原地编辑 → Enter 确认 |
 | 存档/放弃 | 选题进度 100%→右键存档；0%→右键放弃 |
 | 导入/导出 | 侧边栏底部按钮 → JSON 文件备份/恢复 |
+| 使用说明 | 排期日历右上角「新手指南」按钮 → 5 步引导式弹窗 |
 
 ## 🛠️ 技术栈
 
 - **纯 HTML/CSS/JS**，三层分离，零构建工具，零框架依赖
 - Tailwind CSS（CDN）提供原子类辅助
 - Inter + Noto Sans SC 字体（Google Fonts）
-- localStorage 持久化 + JSON 导入/导出
+- IndexedDB 持久化（清缓存不丢）+ localStorage 兼容 + JSON 导入/导出
 - CSS 自定义属性（`--bg`, `--accent` 等）统一主题色
 
 ## 📝 版本历史
 
 | 版本 | 主要更新 |
 |------|----------|
-| v2.23 | 日历底部角标图例、暗色模式侧栏+日历选题标签全适配 |
-| v2.22 | 侧栏重构分区、选题目录自适应窗口 |
-| v2.21 | 侧栏吸底、主题改名、暗色任务块全适配 |
-| v2.20 | 暗色模式+六主题、设置面板、自定义工作流CRUD |
-| v2.19 | 暗色模式、三主题、自定义工作流、关于+设置入口 |
-| v2.18 | CSS圆润五星、跑马灯多维排序 |
-| v2.17 | 新增选题弹窗优化（单选按钮+星级+金额） |
-| v2.16 | 选题状态/影响力/金额字段、跑马灯融合 |
-| v2.15 | Obsidian链接完整交互、紧急角标优化 |
-| v2.10 | 选题卡类型角标、紧急标注、Obsidian链接 |
+| v3.6 | 新手指南全量重写+键盘导航 |
+| v3.5 | 新手指南移至排期日历右上角悬浮胶囊按钮 |
+| v3.4 | 使用说明改为5步引导式弹窗 |
+| v3.3 | 使用说明移Header+刷新闪烁修复 |
+| v3.2 | IndexedDB 持久化+清空样稿+使用说明 |
+| v3.1 | 导入校验/CDN降级/金额格式化/无障碍 |
+| v3.0 | 审计 Top5 修复（事件泄漏/存储/节假日/confirm 弹窗） |
+| v2.25 | 新增蓝黄杂志风主题（独立 CSS 文件） |
+| v2.23 | 日历底部角标图例、暗色模式全适配 |
+| v2.20 | 暗色模式+六主题、自定义工作流 CRUD |
+| v2.10 | 选题卡类型角标、紧急标注、Obsidian 链接 |
 | v2.9 | 正式命名：哌稿场·档期 (NPie Draftstage) |
 | v2.0 | 工作日倒排大重构 |
 | v1.0 | 基线版本 |
 
 回滚到任意版本：
 ```bash
-git checkout v2.24 -- content-os.html CSS/ JS/   # 最新
-git checkout v1.0  -- content-os.html             # 基线
+git checkout v3.6 -- content-os.html CSS/ JS/   # 最新
+git checkout v1.0  -- content-os.html           # 基线
 ```
 
 ## 📄 License
