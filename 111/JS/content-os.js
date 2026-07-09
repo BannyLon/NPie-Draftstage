@@ -343,14 +343,19 @@
     }
 
     async function load() {
-      // 1. 优先 IndexedDB
-      let topics = await idbLoad();
-      // 2. 回退 localStorage（数据迁移）
+      // localStorage 有同步写入，优先作为最新数据源
+      let topics = null;
+      try {
+        const raw = localStorage.getItem('content-os-v2');
+        if (raw) { topics = JSON.parse(raw); }
+      } catch(_) {}
+      // 回退 IndexedDB
       if (!topics || !topics.length) {
-        try {
-          const raw = localStorage.getItem('content-os-v2');
-          if (raw) { topics = JSON.parse(raw); if (topics.length) await idbSave(topics); }
-        } catch(_) {}
+        topics = await idbLoad();
+        // IndexedDB 有数据 → 迁移到 localStorage
+        if (topics && topics.length) {
+          try { localStorage.setItem('content-os-v2', JSON.stringify(topics)); } catch(_) {}
+        }
       }
       if (!topics || !Array.isArray(topics) || !topics.length) return false;
 
@@ -1786,6 +1791,7 @@
     let _confirmCallback = null;
 
     function showConfirm(msg, onOk, title = '确认操作', okText = '确认') {
+      if (_confirmCallback) { console.warn('showConfirm: 上一个确认未关闭就被覆盖', new Error().stack); }
       document.getElementById('confirm-modal-msg').textContent = msg;
       document.getElementById('confirm-modal-title').textContent = title;
       document.getElementById('confirm-modal-ok').textContent = okText;
