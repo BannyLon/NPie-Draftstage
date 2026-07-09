@@ -17,7 +17,9 @@
       --shadow: 0 12px 32px rgba(44, 42, 41, 0.06);
       --card-self: #FDF8F0;
       --card-commercial: #F5F6F8;
-      --card-comp: #FDFAF5;
+      --card-comp-self: #F8EDDC;
+      --card-comp-commercial: #EBEDF2;
+      --card-comp-local: var(--card-comp-self);
     }
     /* ── 暗色模式 ── */
     [data-theme="dark"] {
@@ -38,7 +40,7 @@
       --shadow: 0 12px 32px rgba(0,0,0,0.25);
       --card-self: #302820;
       --card-commercial: #252830;
-      --card-comp: #383430;
+      --card-comp-self: #3D3428; --card-comp-commercial: #303438;
     }
     /* ── 主题：冷灰 ── */
     [data-theme="cool"] {
@@ -57,7 +59,7 @@
       --yellow: #B8A060;
       --card-self: #F7F2F0;
       --card-commercial: #F0F3F6;
-      --card-comp: #FAF7F5;
+      --card-comp-self: #F0E4D8; --card-comp-commercial: #E6EAF0;
     }
     /* ── 主题：自然绿 ── */
     [data-theme="green"] {
@@ -75,7 +77,7 @@
       --blue: #6B8898;
       --yellow: #A09050;
       --card-self: #F6F3EC;
-      --card-commercial: #EEF0EC; --card-comp: #F6F8F4;
+      --card-commercial: #EEF0EC; --card-comp-self: #E8EDE2; --card-comp-commercial: #E4E8E8;
     }
     /* ── 主题：高级时尚杂志风 ── */
     [data-theme="magazine"] {
@@ -93,7 +95,7 @@
       --blue: #688090;
       --yellow: #B09040;
       --card-self: #F6F0E8;
-      --card-commercial: #EEECF0; --card-comp: #F6F4F6;
+      --card-commercial: #EEECF0; --card-comp-self: #ECE2E0; --card-comp-commercial: #E4E0EA;
     }
     /* ── 主题：草绿小清新风 ── */
     [data-theme="fresh"] {
@@ -111,7 +113,7 @@
       --blue: #6898A8;
       --yellow: #B8A040;
       --card-self: #F4F7EC;
-      --card-commercial: #EFF2F5; --card-comp: #F6F9FA;
+      --card-commercial: #EFF2F5; --card-comp-self: #E8F0E8; --card-comp-commercial: #E4EAEE;
     }
     /* ── 主题：暖金 ── */
     [data-theme="warmgold"] {
@@ -129,7 +131,7 @@
       --blue: #7898A8;
       --yellow: #C89830;
       --card-self: #FCF6EC;
-      --card-commercial: #F2F3F6; --card-comp: #FCFAF6;
+      --card-commercial: #F2F3F6; --card-comp-self: #F2E8D8; --card-comp-commercial: #E8EAF0;
     }
     /* ── 暗色模式全局修正：按钮/标签文字可读性 ── */
     [data-theme="dark"] .add-topic-btn { background: var(--accent); color: #1C1B1A; }
@@ -665,8 +667,8 @@
       box-shadow: var(--shadow);
       transition: outline 0.15s;
     }
-    .topic-card.type-self { background: var(--card-self); }
-    .topic-card.type-commercial { background: var(--card-commercial); }
+    .topic-card.type-self { background: var(--card-self); --card-comp-local: var(--card-comp-self); }
+    .topic-card.type-commercial { background: var(--card-commercial); --card-comp-local: var(--card-comp-commercial); }
     .topic-card.selected { outline: 2px solid rgba(176,138,83,0.35); }
     .topic-card.drag-over { outline: 2px dashed rgba(176,138,83,0.5); }
     .topic-card.is-urgent { border-left: 3px solid #E08840; }
@@ -697,7 +699,7 @@
       margin-top: 5px; padding: 3px 7px;
       border: 1px solid var(--border); border-radius: 6px;
       font-size: 0.72rem; font-weight: 600;
-      background: var(--card-comp); color: var(--text);
+      background: var(--card-comp-local); color: var(--text);
       cursor: pointer;
     }
     .card-progress-wrap { min-width: 64px; text-align: right; }
@@ -729,7 +731,7 @@
     .prep-row { display: flex; gap: 6px; margin-bottom: 6px; }
     .prep-input {
       flex: 1; padding: 6px 10px; border-radius: 6px;
-      border: 1px solid var(--border); background: var(--card-comp);
+      border: 1px solid var(--border); background: var(--card-comp-local);
       font-size: 0.76rem;
     }
     .prep-add-btn {
@@ -741,7 +743,7 @@
       display: flex; align-items: center; gap: 8px;
       padding: 6px 10px; border-radius: 6px;
       border: 1px solid var(--border);
-      background: var(--card-comp); margin-bottom: 3px;
+      background: var(--card-comp-local); margin-bottom: 3px;
       transition: background 0.15s;
     }
     .prep-item.done { background: color-mix(in srgb, var(--green) 12%, transparent); }
@@ -757,7 +759,7 @@
       display: flex; align-items: center; gap: 7px;
       padding: 6px 8px; border-radius: 6px;
       border: 1px solid var(--border);
-      background: var(--card-comp);
+      background: var(--card-comp-local);
       transition: background 0.15s;
     }
     .workflow-item.done {
