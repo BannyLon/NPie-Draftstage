@@ -290,6 +290,7 @@
     }
     .topic-item-badge.badge-self { background: #C5554A; }
     .topic-item-badge.badge-commercial { background: #C89B3C; }
+    .topic-item-badge.badge-custom { background: #8B8AA5; }
     .topic-item-title { font-size: 0.74rem; font-weight: 400; line-height: 1.3; flex: 1; min-width: 0; }
     .topic-item.topic-urgent { border-left-width: 4px; border-left-color: #E08840 !important; }
     .sidebar-bottom {
@@ -586,6 +587,7 @@
     }
     .tl-type-dot.dot-self { background: #C5554A; }
     .tl-type-dot.dot-commercial { background: #C89B3C; }
+    .tl-type-dot.dot-custom { background: #8B8AA5; }
     .tl-urgent-dot {
       position: absolute; top: -5px; left: -9px;
       display: flex; align-items: center; justify-content: center;
@@ -606,6 +608,7 @@
     .legend-dot.dot-self { background: #C5554A; }
     .legend-dot.dot-commercial { background: #C89B3C; }
     .legend-dot.dot-urgent { background: #E04030; }
+    .legend-dot.dot-custom { background: #8B8AA5; }
     .track-area {
       position: relative;
       display: flex;
@@ -713,6 +716,7 @@
     }
     .card-type-badge.badge-self { background: #C5554A; }
     .card-type-badge.badge-commercial { background: #C89B3C; }
+    .card-type-badge.badge-custom { background: #8B8AA5; }
 
     /* Section 1 — 标题 + 进度 */
     .card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 6px; }

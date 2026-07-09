@@ -41,9 +41,15 @@
     [data-theme="editorial"] .card-type-badge.badge-self { background: #2B7FD8; }
     [data-theme="editorial"] .card-type-badge.badge-commercial { background: #F4D758; color: #1A1A2E; }
     [data-theme="editorial"] .tl-type-dot.dot-self { background: #2B7FD8; }
+    [data-theme="editorial"] .tl-type-dot.dot-self { background: #2B7FD8; }
     [data-theme="editorial"] .tl-type-dot.dot-commercial { background: #F4D758; color: #1A1A2E; }
+    [data-theme="editorial"] .tl-type-dot.dot-custom { background: #8B8AA5; }
     [data-theme="editorial"] .topic-item-badge.badge-self { background: #2B7FD8; }
     [data-theme="editorial"] .topic-item-badge.badge-commercial { background: #F4D758; color: #1A1A2E; }
+    [data-theme="editorial"] .topic-item-badge.badge-custom { background: #8B8AA5; }
+    [data-theme="editorial"] .card-type-badge.badge-self { background: #2B7FD8; }
+    [data-theme="editorial"] .card-type-badge.badge-commercial { background: #F4D758; color: #1A1A2E; }
+    [data-theme="editorial"] .card-type-badge.badge-custom { background: #8B8AA5; }
     [data-theme="editorial"] .tl-urgent-dot { background: #E84A5F; }
     [data-theme="editorial"] .topic-label.tl-urgent .topic-label-card,
     [data-theme="editorial"] .topic-item.topic-urgent { border-left-color: #E84A5F !important; }

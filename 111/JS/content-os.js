@@ -450,7 +450,7 @@
             return `
               <div class="topic-item ${sel ? 'selected' : ''} ${urgent ? 'topic-urgent' : ''}" data-sidebar-topic="${topic.id}"
                    style="border-left-color: ${colorObj.main}; background-color: ${colorObj.bg};">
-                <span class="topic-item-badge badge-${topic.type}">${topic.type === 'self' ? '自' : '商'}</span>
+                <span class="topic-item-badge badge-${topic.type === 'self' ? 'self' : topic.type === 'commercial' ? 'commercial' : 'custom'}">${topic.type === 'self' ? '自' : topic.type === 'commercial' ? '商' : '定'}</span>
                 <span class="topic-item-title">${esc(topic.title)}</span>
               </div>
             `;
@@ -639,7 +639,7 @@
         rowsHtml += `<div class="topic-label ${sel ? 'selected' : ''} ${urgent ? 'tl-urgent' : ''}" draggable="true" data-label-id="${topic.id}">
           <div class="topic-label-card" style="border-left-color: ${urgent ? '#E08840' : colorObj.main}; background-color: ${colorObj.bg}; position: relative;">
             ${urgent ? '<span class="tl-urgent-dot" title="紧急选题">急</span>' : ''}
-            <span class="tl-type-dot dot-${topic.type}">${topic.type === 'self' ? '自' : '商'}</span>
+            <span class="tl-type-dot dot-${topic.type === 'self' ? 'self' : topic.type === 'commercial' ? 'commercial' : 'custom'}">${topic.type === 'self' ? '自' : topic.type === 'commercial' ? '商' : '定'}</span>
             <div class="topic-label-name" data-rename-label="${topic.id}" title="${esc(topic.title)}">${esc(topic.title)}</div>
             <div class="topic-label-meta">
               <span class="topic-label-date">${fmtShortDate(topic.publishDate)}</span>
@@ -697,10 +697,13 @@
           const posStyle = stackInfo.get(task.id) || '';
           // 无行内样式 → CSS top:50%;transform:translateY(-50%) 居中 + 基础尺寸
 
+          // 内置工作流用 CSS 类着色（暗色模式兼容），自定义工作流用行内色
+          const isBuiltin = topic.type === 'self' || topic.type === 'commercial';
+          const colorStyle = isBuiltin ? '' : `background:${task.color};`;
           const stageClass = task.id.startsWith('custom_') ? 'stage-custom' : `stage-${task.id}`;
           rowsHtml += `<div class="task-block ${stageClass} ${task.completed ? 'completed' : ''}"
             draggable="true" data-task-topic="${topic.id}" data-task-id="${esc(task.id)}"
-            style="left:${left}px;width:${width}px;${posStyle}">
+            style="left:${left}px;width:${width}px;${colorStyle}${posStyle}">
             <div class="task-block-name">${esc(task.name)}</div>
           </div>`;
         });
@@ -1505,7 +1508,7 @@
         <div class="topic-card type-${topic.type} ${sel ? 'selected' : ''} ${urgent ? 'is-urgent' : ''}" draggable="true" data-card-id="${topic.id}" style="position:relative;">
 
           <!-- 左上角类型角标 -->
-          <span class="card-type-badge badge-${topic.type}" title="${topic.type === 'self' ? '自制内容' : '商单'}">${topic.type === 'self' ? '自' : '商'}</span>
+          <span class="card-type-badge badge-${topic.type === 'self' ? 'self' : topic.type === 'commercial' ? 'commercial' : 'custom'}" title="${topic.type === 'self' ? '自制内容' : topic.type === 'commercial' ? '商单' : '自定义工作流'}">${topic.type === 'self' ? '自' : topic.type === 'commercial' ? '商' : '定'}</span>
 
           <!-- 第一部分：标题 + 进度 -->
           <div class="card-head">
