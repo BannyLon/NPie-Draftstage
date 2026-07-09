@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>嗯哌 Npie — 品牌海报</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@300;400;700&family=Space+Mono:wght@400;700&display=swap');
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --ink: #0a0a0a;
+    --bone: #f5f0e8;
+    --warm: #e8dfc8;
+    --accent: #c8a96e;
+    --rust: #8b3a2a;
+    --pale: #f9f6f0;
+    --mid: #7a7060;
+  }
+
+  html, body {
+    width: 100%;
+    min-height: 100vh;
+    background: #1a1612;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+
+  .poster {
+    width: 760px;
+    min-height: 1070px;
+    background: var(--bone);
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+  }
+
+  /* Noise texture overlay */
+  .poster::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  /* ── HEADER BAR ── */
+  .header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 52px 22px;
+    border-bottom: 1px solid var(--ink);
+  }
+
+  .issue-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    color: var(--mid);
+    text-transform: uppercase;
+  }
+
+  .header-center {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--ink);
+    text-transform: uppercase;
+  }
+
+  .header-right {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--mid);
+    letter-spacing: 0.12em;
+  }
+
+  /* ── HERO SECTION ── */
+  .hero {
+    padding: 60px 52px 0;
+    position: relative;
+  }
+
+  .hero-eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.35em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .hero-eyebrow::before {
+    content: '';
+    width: 32px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 108px;
+    font-weight: 900;
+    line-height: 0.88;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+    position: relative;
+  }
+
+  .hero-title .chinese {
+    display: block;
+  }
+
+  .hero-title .roman {
+    display: block;
+    font-style: italic;
+    color: transparent;
+    -webkit-text-stroke: 1.5px var(--ink);
+    font-size: 88px;
+  }
+
+  .hero-subtitle {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 13px;
+    font-weight: 300;
+    color: var(--mid);
+    letter-spacing: 0.25em;
+    margin-top: 28px;
+    padding-top: 22px;
+    border-top: 1px solid rgba(0,0,0,0.15);
+    line-height: 2;
+    max-width: 480px;
+  }
+
+  /* ── DIVIDER LINE ── */
+  .mid-rule {
+    margin: 50px 52px 0;
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+
+  .mid-rule span {
+    flex: 1;
+    height: 1px;
+    background: var(--ink);
+  }
+
+  .mid-rule em {
+    font-family: 'Space Mono', monospace;
+    font-style: normal;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--mid);
+    padding: 0 18px;
+    text-transform: uppercase;
+  }
+
+  /* ── TWO COLUMN BODY ── */
+  .body-grid {
+    display: grid;
+    grid-template-columns: 1fr 1px 1fr;
+    gap: 0 0;
+    padding: 44px 52px 50px;
+    align-items: start;
+  }
+
+  .col-divider {
+    background: rgba(0,0,0,0.12);
+    margin: 0 36px;
+    align-self: stretch;
+  }
+
+  /* Column content */
+  .col h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.25;
+    margin-bottom: 16px;
+  }
+
+  .col h2 .zh {
+    display: block;
+    font-size: 16px;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--mid);
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+    font-family: 'Noto Serif SC', serif;
+  }
+
+  .col p {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 12.5px;
+    font-weight: 300;
+    line-height: 2.1;
+    color: #3a3530;
+    margin-bottom: 18px;
+  }
+
+  .col p strong {
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  /* Chemistry pill */
+  .chem-tag {
+    display: inline-block;
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--bone);
+    background: var(--ink);
+    padding: 4px 10px;
+    margin-bottom: 20px;
+  }
+
+  /* Pull quote */
+  .pull-quote {
+    margin: 24px 0 20px;
+    padding: 20px 0 20px;
+    border-top: 2px solid var(--ink);
+    border-bottom: 1px solid rgba(0,0,0,0.15);
+  }
+
+  .pull-quote p {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    font-style: italic;
+    font-weight: 400;
+    line-height: 1.6;
+    color: var(--ink);
+    margin: 0;
+  }
+
+  /* ── TABLE / FORMULA SECTION ── */
+  .formula-block {
+    margin: 0 52px;
+    padding: 30px 36px;
+    background: var(--ink);
+    position: relative;
+  }
+
+  .formula-block::before {
+    content: 'FORMULA';
+    position: absolute;
+    top: -9px;
+    left: 36px;
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    background: var(--ink);
+    color: var(--accent);
+    padding: 0 8px;
+  }
+
+  .formula-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 0;
+  }
+
+  .formula-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .formula-symbol {
+    font-family: 'Playfair Display', serif;
+    font-size: 44px;
+    font-weight: 900;
+    font-style: italic;
+    color: var(--accent);
+    line-height: 1;
+    min-width: 44px;
+  }
+
+  .formula-desc {
+    padding-top: 4px;
+  }
+
+  .formula-desc strong {
+    display: block;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--bone);
+    margin-bottom: 6px;
+  }
+
+  .formula-desc span {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 11px;
+    color: rgba(245,240,232,0.65);
+    line-height: 1.7;
+    font-weight: 300;
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    padding: 24px 52px 32px;
+    border-top: 1px solid var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .footer-brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--ink);
+  }
+
+  .footer-tagline {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    color: var(--mid);
+    text-transform: uppercase;
+    text-align: center;
+  }
+
+  .footer-mono {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: var(--mid);
+    letter-spacing: 0.1em;
+  }
+
+  /* decorative large N background */
+  .bg-letter {
+    position: absolute;
+    right: -20px;
+    top: 40px;
+    font-family: 'Playfair Display', serif;
+    font-size: 520px;
+    font-weight: 900;
+    font-style: italic;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(0,0,0,0.05);
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+    z-index: 0;
+  }
+
+  .hero { z-index: 1; }
+
+  .reaction-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 22px 0 0;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--mid);
+    letter-spacing: 0.12em;
+  }
+
+  .reaction-line .node {
+    background: var(--ink);
+    color: var(--bone);
+    padding: 5px 12px;
+    font-size: 10px;
+  }
+
+  .reaction-line .arrow {
+    color: var(--accent);
+    font-size: 16px;
+  }
+</style>
+</head>
+<body>
+
+<div class="poster">
+  <!-- Background decorative letter -->
+  <div class="bg-letter">N</div>
+
+  <!-- Header -->
+  <header class="header-bar">
+    <div class="issue-tag">品牌溯源 · Vol.01</div>
+    <div class="header-center">嗯哌 / Npie</div>
+    <div class="header-right">2025</div>
+  </header>
+
+  <!-- Hero -->
+  <main>
+    <section class="hero">
+      <div class="hero-eyebrow">Brand Origin Story</div>
+      <h1 class="hero-title">
+        <span class="chinese">嗯哌</span>
+        <span class="roman">Npie</span>
+      </h1>
+      <p class="hero-subtitle">把「疑问」，催化为「生产力」<br>Turning Curiosity Into Productivity</p>
+
+      <div class="reaction-line">
+        <span class="node">嗯 ń</span>
+        <span class="arrow">→</span>
+        <span class="node">哌 pài</span>
+        <span class="arrow">→</span>
+        <span class="node">生产力</span>
+      </div>
+    </section>
+
+    <!-- Mid rule -->
+    <div class="mid-rule">
+      <span></span>
+      <em>命名哲学</em>
+      <span></span>
+    </div>
+
+    <!-- Body -->
+    <section class="body-grid">
+
+      <!-- Left col -->
+      <div class="col">
+        <div class="chem-tag">化学 · 极客基因</div>
+        <h2>
+          <span class="zh">从「哌」开始</span>
+          The Catalyst
+        </h2>
+        <p>
+          「哌」源于化学音译——哌啶、哌嗪——
+          天然携带一种<strong>生僻感</strong>与<strong>理工科气质</strong>。
+          在分子结构中，它是骨架，是催化剂。
+        </p>
+        <p>
+          这恰好映射了 AI 工作流与 Agent
+          在现代生产力中扮演的角色：
+          <strong>不是终点，而是加速器</strong>。
+        </p>
+
+        <div class="pull-quote">
+          <p>"在化学中，催化剂不被消耗，<br>却改变了一切反应的速率。"</p>
+        </div>
+
+        <p>
+          选「哌」，是选择了一种
+          <strong>系统与结构的隐喻</strong>——
+          冷静、精准、有效。
+        </p>
+      </div>
+
+      <!-- Divider -->
+      <div class="col-divider"></div>
+
+      <!-- Right col -->
+      <div class="col">
+        <div class="chem-tag">语言 · 认知起点</div>
+        <h2>
+          <span class="zh">再到「嗯」</span>
+          The Question
+        </h2>
+        <p>
+          「嗯？」是人类面对未知世界的
+          第一个声音。它代表<strong>好奇心</strong>、
+          代表疑问，代表思考真正开始的瞬间。
+        </p>
+        <p>
+          在 AI 语境中，它是
+          <strong>Prompt 的第一行</strong>——
+          一切自动化与工作流的原始输入。
+          没有这个「嗯」，就没有后续的一切。
+        </p>
+        <p>
+          两字相合，形成完整的<strong>反应堆模型</strong>：
+          疑问作为燃料输入，经由系统催化，
+          输出为可度量的实际生产力。
+        </p>
+      </div>
+
+    </section>
+
+    <!-- Formula block -->
+    <div class="formula-block">
+      <div class="formula-row">
+        <div class="formula-item">
+          <div class="formula-symbol">N</div>
+          <div class="formula-desc">
+            <strong>未知数 / 无限变量</strong>
+            <span>代表问题空间与无限可能性<br>一切探索从未知出发</span>
+          </div>
+        </div>
+        <div class="formula-item">
+          <div class="formula-symbol">π</div>
+          <div class="formula-desc">
+            <strong>无穷不循环常数</strong>
+            <span>代表系统、结构与生态<br>持续产出结构化价值</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-brand">嗯哌 / Npie</div>
+    <div class="footer-tagline">用工具 · 用工作流 · 用系统<br>撬动指数级生产力</div>
+    <div class="footer-mono">npie.studio</div>
+  </footer>
+
+</div>
+
+</body>
+</html>

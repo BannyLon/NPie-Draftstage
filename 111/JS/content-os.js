@@ -550,7 +550,15 @@
       };
       document.getElementById('btn-import').onclick = () => document.getElementById('import-file').click();
       document.getElementById('btn-about').onclick = () => {
-        document.getElementById('guide-modal-overlay').classList.add('open');
+        // 全屏遮罩展示品牌海报
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;cursor:pointer;';
+        overlay.innerHTML = `<iframe src="npie_poster.html" style="width:760px;height:1070px;max-width:96vw;max-height:94vh;border:none;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,0.5);"></iframe>`;
+        overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+        document.body.appendChild(overlay);
+        // Esc 关闭
+        const onKey = e => { if (e.key === 'Escape') { overlay.remove(); document.removeEventListener('keydown', onKey); } };
+        document.addEventListener('keydown', onKey);
       };
       document.getElementById('btn-settings').onclick = () => openSettingsModal();
     }
