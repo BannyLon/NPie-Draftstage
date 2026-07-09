@@ -114,6 +114,19 @@
         { id: 'cover',   name: '封面',             days: 1, color: '#C8B8A0' },
         { id: 'copy',    name: '文案',             days: 1, color: '#D4C0B0' },
         { id: 'publish', name: '发布',             days: 1, color: '#A09080' },
+      ],
+      collab: [
+        { id: 'plan',      name: '选题策划',     days: 1, color: '#B08A53' },
+        { id: 'script',    name: '脚本',         days: 1, color: '#A46858' },
+        { id: 'a_roll',    name: 'A-roll',       days: 1, color: '#8B9B7A' },
+        { id: 'handoff',   name: '🔄 交接',      days: 1, color: '#E88040' },
+        { id: 'partner',   name: '合作方制作',   days: 2, color: '#3BA0A0' },
+        { id: 'handback',  name: '🔄 回接',      days: 1, color: '#E88040' },
+        { id: 'final_edit',name: '精剪',         days: 1, color: '#C6A25C' },
+        { id: 'package',   name: '包装',         days: 1, color: '#B5A890' },
+        { id: 'cover',     name: '封面',         days: 1, color: '#C8B8A0' },
+        { id: 'copy',      name: '文案',         days: 1, color: '#D4C0B0' },
+        { id: 'publish',   name: '发布',         days: 1, color: '#A09080' },
       ]
     };
 
@@ -449,8 +462,8 @@
             const colorObj = getTopicColor(index);
             return `
               <div class="topic-item ${sel ? 'selected' : ''} ${urgent ? 'topic-urgent' : ''}" data-sidebar-topic="${topic.id}"
-                   style="border-left-color: ${colorObj.main}; background-color: ${colorObj.bg};">
-                <span class="topic-item-badge badge-${topic.type === 'self' ? 'self' : topic.type === 'commercial' ? 'commercial' : 'custom'}">${topic.type === 'self' ? '自' : topic.type === 'commercial' ? '商' : '定'}</span>
+                   style="border-left-color: ${colorObj.main}; background-color: ${colorObj.bg}; position:relative;">
+                <span class="topic-item-badge badge-${topic.type === 'self' ? 'self' : topic.type === 'commercial' ? 'commercial' : topic.type === 'collab' ? 'collab' : 'custom'}">${topic.type === 'self' ? '自' : topic.type === 'commercial' ? '商' : topic.type === 'collab' ? '合' : '定'}</span>
                 <span class="topic-item-title">${esc(topic.title)}</span>
               </div>
             `;
@@ -659,7 +672,7 @@
         rowsHtml += `<div class="topic-label ${sel ? 'selected' : ''} ${urgent ? 'tl-urgent' : ''}" draggable="true" data-label-id="${topic.id}">
           <div class="topic-label-card" style="border-left-color: ${urgent ? '#E08840' : colorObj.main}; background-color: ${colorObj.bg}; position: relative;">
             ${urgent ? '<span class="tl-urgent-dot" title="紧急选题">急</span>' : ''}
-            <span class="tl-type-dot dot-${topic.type === 'self' ? 'self' : topic.type === 'commercial' ? 'commercial' : 'custom'}">${topic.type === 'self' ? '自' : topic.type === 'commercial' ? '商' : '定'}</span>
+            <span class="tl-type-dot dot-${topic.type === 'self' ? 'self' : topic.type === 'commercial' ? 'commercial' : 'custom'}">${topic.type === 'self' ? '自' : topic.type === 'commercial' ? '商' : topic.type === 'collab' ? '合' : '定'}</span>
             <div class="topic-label-name" data-rename-label="${topic.id}" title="${esc(topic.title)}">${esc(topic.title)}</div>
             <div class="topic-label-meta">
               <span class="topic-label-date">${fmtShortDate(topic.publishDate)}</span>
@@ -718,7 +731,7 @@
           // 无行内样式 → CSS top:50%;transform:translateY(-50%) 居中 + 基础尺寸
 
           // 内置工作流用 CSS 类着色（暗色模式兼容），自定义工作流用行内色
-          const isBuiltin = topic.type === 'self' || topic.type === 'commercial';
+          const isBuiltin = topic.type === 'self' || topic.type === 'commercial' || topic.type === 'collab';
           const colorStyle = isBuiltin ? '' : `background:${task.color};`;
           const stageClass = task.id.startsWith('custom_') ? 'stage-custom' : `stage-${task.id}`;
           rowsHtml += `<div class="task-block ${stageClass} ${task.completed ? 'completed' : ''}"
@@ -1530,28 +1543,27 @@
         <div class="topic-card type-${topic.type} ${sel ? 'selected' : ''} ${urgent ? 'is-urgent' : ''}" draggable="true" data-card-id="${topic.id}" style="position:relative;">
 
           <!-- 左上角类型角标 -->
-          <span class="card-type-badge badge-${topic.type === 'self' ? 'self' : topic.type === 'commercial' ? 'commercial' : 'custom'}" title="${wfName}">${topic.type === 'self' ? '自' : topic.type === 'commercial' ? '商' : '定'}</span>
+          <span class="card-type-badge badge-${topic.type === 'self' ? 'self' : topic.type === 'commercial' ? 'commercial' : topic.type === 'collab' ? 'collab' : 'custom'}" title="${wfName}">${topic.type === 'self' ? '自' : topic.type === 'commercial' ? '商' : topic.type === 'collab' ? '合' : '定'}</span>
 
-          <!-- 第一行：工作流类型 + 发布日期标签 -->
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <!-- 第一行：工作流类型下拉（发布日期绝对定位右上角，不影响行距） -->
+          <div style="margin-bottom:4px;position:relative;">
             <select class="card-type-select" data-type-select="${topic.id}" style="font-size:0.66rem;padding:2px 6px;">
               ${allWf.map(w => `<option value="${w.id}" ${topic.type === w.id ? 'selected' : ''}>${esc(w.name)}</option>`).join('')}
             </select>
-            <span style="font-size:0.6rem;font-weight:700;color:var(--text-muted);">发布日期</span>
+            <div class="card-publish-date" style="position:absolute;top:0;right:0;">
+              <span class="card-publish-label">发布日期</span>
+              <span class="card-publish-day">${fmtShortDate(topic.publishDate)}</span>
+            </div>
           </div>
-          <!-- 第二行：选题名称 + 日期值 + Obsidian图标 -->
+          <!-- 第二行：选题名称 + Obsidian图标 -->
           <div class="card-head">
             <div class="card-head-left">
-              <div class="card-title">${esc(topic.title)}</div>
+              <span class="card-title">${esc(topic.title)}<span class="card-obsidian-wrap ${topic.obsidianUrl ? 'has-url' : ''}" title="${topic.obsidianUrl ? '左键打开 Obsidian 笔记 / 右键编辑链接' : '设置 Obsidian 链接'}" data-obsidian-topic="${topic.id}" style="margin-left:0.55em;vertical-align:middle;"><img class="card-obsidian-icon" src="IMG/Obsidian.webp" alt="" /></span></span>
             </div>
-            <span style="font-size:0.92rem;font-weight:800;color:var(--text);white-space:nowrap;margin-right:6px;">${fmtShortDate(topic.publishDate)}</span>
-            <span class="card-obsidian-wrap ${topic.obsidianUrl ? 'has-url' : ''}" title="${topic.obsidianUrl ? '左键打开 Obsidian 笔记 / 右键编辑链接' : '设置 Obsidian 链接'}" data-obsidian-topic="${topic.id}">
-              <img class="card-obsidian-icon" src="IMG/Obsidian.webp" alt="" />
-            </span>
           </div>
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
             <div class="card-progress-bar" style="flex:1;margin-bottom:0;"><div class="card-progress-fill" style="width:${pct}%"></div></div>
-            <span style="font-size:0.78rem;font-weight:700;color:var(--text);white-space:nowrap;">${pct}%</span>
+            <span class="card-progress-pct" style="font-size:0.78rem;font-weight:700;color:var(--text);white-space:nowrap;">${pct}%</span>
           </div>
 
           <!-- 第二部分：前置准备 -->
@@ -1922,7 +1934,8 @@
     function allWorkflows() {
       const builtin = [
         { id: 'self', name: '自制内容', stages: WORKFLOWS.self, isBuiltin: true },
-        { id: 'commercial', name: '商单', stages: WORKFLOWS.commercial, isBuiltin: true }
+        { id: 'commercial', name: '商单', stages: WORKFLOWS.commercial, isBuiltin: true },
+        { id: 'collab', name: '合作内容', stages: WORKFLOWS.collab, isBuiltin: true }
       ];
       const custom = getCustomWorkflows().map(w => ({ ...w, isBuiltin: false }));
       return [...builtin, ...custom];
