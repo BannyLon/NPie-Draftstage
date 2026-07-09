@@ -331,6 +331,16 @@
     }
 
     /** 持久化 */
+    /** 为动态生成元素添加无障碍属性 */
+    function addAriaLabels() {
+      document.querySelectorAll('.topic-label-card').forEach((el, i) => el.setAttribute('aria-label', '选题标签，可拖拽移动排期'));
+      document.querySelectorAll('.task-block').forEach(el => el.setAttribute('aria-label', '任务块，可拖拽微调日期，双击重命名，右键删除'));
+      document.querySelectorAll('.track-cell').forEach(el => el.setAttribute('aria-label', '日历格子，拖拽选题或任务块到此处'));
+      document.querySelectorAll('.card-type-badge').forEach(el => el.setAttribute('aria-label', el.classList.contains('badge-self') ? '自制内容' : '商单'));
+      document.querySelectorAll('.tl-urgent-dot').forEach(el => el.setAttribute('aria-label', '紧急选题'));
+      document.querySelectorAll('.item-checkbox').forEach(el => el.setAttribute('aria-label', '勾选完成'));
+    }
+
     let _saveTimer;
     function save() {
       clearTimeout(_saveTimer);
@@ -1694,7 +1704,11 @@
       if (!title || !publishDate) { toast('请填写名称与发布日期'); return; }
       const status = document.querySelector('input[name="modal-status"]:checked')?.value || 'normal';
       const priority = parseInt(document.getElementById('modal-priority-val').value) || 0;
-      const budget = document.getElementById('modal-budget').value.trim();
+      let budget = document.getElementById('modal-budget').value.trim();
+      // 纯数字自动格式化：50000 → ¥50,000
+      if (/^\d+$/.test(budget)) {
+        budget = '¥' + Number(budget).toLocaleString('zh-CN');
+      }
       const topic = { id: uid(), title, type, publishDate, prep: [], tasks: [], archived: false, obsidianUrl: '', status, priority, budget };
       topic.tasks = buildWorkflow(topic);
       state.topics.push(topic);
@@ -1752,6 +1766,7 @@
       renderSidebar();
       renderTimeline();
       renderCards();
+      setTimeout(addAriaLabels, 0);
       // 确保 timeline 宽度正确
       setTimeout(() => {
         const timelineScroll = document.getElementById('timeline-scroll');
@@ -2012,6 +2027,13 @@
 
     /** 初始化 */
     function init() {
+      // CDN 加载失败检测
+      window.addEventListener('error', e => {
+        if (e.target && (e.target.tagName === 'LINK' || e.target.tagName === 'SCRIPT')) {
+          document.getElementById('offline-warning').style.display = 'block';
+        }
+      }, true);
+
       // 全局拖拽状态（只绑定一次，避免每次 render 泄漏）
       window._npiedraft_dragActive = false;
       window._npiedraft_dragLabelId = null;
@@ -2090,19 +2112,23 @@
         reader.onload = ev => {
           try {
             const data = JSON.parse(ev.target.result);
-            if (!Array.isArray(data.topics)) throw new Error('invalid');
-            state.topics = data.topics.map(t => ({
-              ...t, prep: normalizePrep(t.prep),
-              archived: t.archived ?? false,
-              obsidianUrl: t.obsidianUrl ?? '',
-              status: t.status ?? 'normal',
-              priority: t.priority ?? 0,
-              budget: t.budget ?? '',
-              tasks: t.tasks?.length ? t.tasks : buildWorkflow(t)
-            }));
+            if (!data.topics || !Array.isArray(data.topics)) throw new Error('缺少 topics 数组');
+            if (data.topics.length > 200) throw new Error('选题数量超过上限(200)');
+            state.topics = data.topics.map((t, i) => {
+              if (!t.id || !t.title || !t.publishDate) throw new Error(`第${i+1}条选题缺少必要字段(id/title/publishDate)`);
+              return {
+                ...t, prep: normalizePrep(t.prep),
+                archived: t.archived ?? false,
+                obsidianUrl: typeof t.obsidianUrl === 'string' ? t.obsidianUrl : '',
+                status: ['normal','important','urgent'].includes(t.status) ? t.status : 'normal',
+                priority: Math.min(5, Math.max(0, parseInt(t.priority) || 0)),
+                budget: typeof t.budget === 'string' ? t.budget : '',
+                tasks: t.tasks?.length ? t.tasks : buildWorkflow(t)
+              };
+            });
             save(); render();
-            toast('导入成功');
-          } catch (_) { toast('导入失败'); }
+            toast(`导入成功 (${state.topics.length} 条选题)`);
+          } catch (e) { toast('导入失败：' + (e.message || '数据格式错误')); }
         };
         reader.readAsText(file);
         e.target.value = '';

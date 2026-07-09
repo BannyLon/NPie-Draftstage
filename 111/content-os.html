@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="CSS/theme-editorial.css" />
 </head>
 <body>
+  <div id="offline-warning" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#E84A5F;color:#fff;text-align:center;padding:8px;font-size:0.78rem;font-weight:600;">⚠️ 网络连接异常，部分样式可能无法加载。请检查网络后刷新页面。</div>
   <div class="app-shell">
     <aside class="sidebar" id="sidebar"></aside>
     <main class="main-panel">
@@ -91,7 +92,7 @@
       </div>
       <div class="modal-field" id="modal-budget-field" style="display:none;">
         <label>金额</label>
-        <input type="text" id="modal-budget" placeholder="如 ¥50,000" />
+        <input type="text" id="modal-budget" placeholder="如 50000" inputmode="numeric" pattern="[0-9,.]*" />
       </div>
       <div class="modal-actions">
         <button class="modal-btn modal-btn-cancel" id="modal-cancel">取消</button>
