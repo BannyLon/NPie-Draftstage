@@ -14,7 +14,14 @@
       });
     }
     async function idbSave(topics) {
-      try { const d = await idb(); d.transaction('kv','readwrite').objectStore('kv').put(topics, 'topics'); } catch(_) {}
+      const d = await idb();
+      return new Promise((ok, no) => {
+        const tx = d.transaction('kv', 'readwrite');
+        tx.objectStore('kv').put(topics, 'topics');
+        tx.oncomplete = () => ok();
+        tx.onerror = () => no(tx.error);
+        tx.onabort = () => no(tx.error);
+      });
     }
     async function idbLoad() {
       try {
@@ -317,8 +324,15 @@
     /** 即时写入 — 删除、存档等不可逆操作用 */
     async function saveNow() {
       clearTimeout(_saveTimer);
-      try { await idbSave(state.topics); } catch (_) {
-        try { localStorage.setItem('content-os-v2', JSON.stringify(state.topics)); } catch (e) { toast('⚠️ 存储空间不足，请导出备份后清理数据'); }
+      try {
+        await idbSave(state.topics);
+      } catch (_) {
+        // IndexedDB 失败 → 回退 localStorage
+        try {
+          localStorage.setItem('content-os-v2', JSON.stringify(state.topics));
+        } catch (e) {
+          toast('⚠️ 存储空间不足，请导出备份后清理数据');
+        }
       }
     }
 
