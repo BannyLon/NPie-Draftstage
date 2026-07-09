@@ -227,6 +227,27 @@
     </div>
   </div>
 
+  <!-- 使用说明弹窗 -->
+  <div class="modal-overlay" id="guide-modal-overlay">
+    <div class="modal-box" style="width:560px;max-width:94vw;max-height:80vh;overflow-y:auto;">
+      <div class="modal-title">使用说明</div>
+      <div style="font-size:0.8rem;line-height:1.8;color:var(--text);">
+        <p><strong>📅 排期逻辑</strong> — 拖拽左侧选题标签到日历日期，系统自动按工作日倒排所有制作节点，跳过周末与法定节假日。</p>
+        <p><strong>🖱️ 拖拽操作</strong> — 拖选题标签 = 移动整条排期；拖任务块 = 仅调整单个节点。</p>
+        <p><strong>📋 选题卡</strong> — 前置准备可自由增删勾选；制作流程自动倒排；勾选即推进进度条。</p>
+        <p><strong>🖱️ 右键菜单</strong> — 右键日历空格子 = 新增日程；右键任务块 = 删除节点；右键选题卡 = 存档/放弃。</p>
+        <p><strong>✏️ 双击重命名</strong> — 双击日历上的任务块可原地编辑名称。</p>
+        <p><strong>🔴 角标含义</strong> — 红圈「自」= 自制内容；金圈「商」= 商单；红圈「急」= 紧急选题（距发布 ≤3/5 天）。</p>
+        <p><strong>📦 数据安全</strong> — 数据自动保存至浏览器 IndexedDB，清缓存不丢失。定期使用侧栏「导出备份」保存 JSON 文件到云盘。</p>
+        <p><strong>🎨 主题切换</strong> — 点击侧栏底部「设置」→ 外观/主题，7 套配色 + 暗色模式可选。</p>
+        <p><strong>🔗 Obsidian 联动</strong> — 选题卡右侧图标点击可绑定 Obsidian 笔记链接。</p>
+      </div>
+      <div class="modal-actions" style="margin-top:12px;">
+        <button class="modal-btn modal-btn-primary" id="guide-modal-close" style="width:100%;">我知道了</button>
+      </div>
+    </div>
+  </div>
+
   <input type="file" id="import-file" accept="application/json" hidden />
   <div id="toast"></div>
 

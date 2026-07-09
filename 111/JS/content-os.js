@@ -1,7 +1,31 @@
     /**
      * @file 哌稿场 · 档期 (NPie Draftstage)
-     * @description 单文件原生 JS 实现，含倒排日历与选题卡联动
+     * @description 内容创作排期看板 — 工作日倒排 + 选题卡 + 日历联动
      */
+
+    // ── IndexedDB 持久化（优先）─────────────────────────
+    const IDB_NAME = 'npiedraft', IDB_VER = 1;
+    function idb() {
+      return new Promise((ok, no) => {
+        const r = indexedDB.open(IDB_NAME, IDB_VER);
+        r.onupgradeneeded = () => { r.result.createObjectStore('kv'); };
+        r.onsuccess = () => ok(r.result);
+        r.onerror = () => no(r.error);
+      });
+    }
+    async function idbSave(topics) {
+      try { const d = await idb(); d.transaction('kv','readwrite').objectStore('kv').put(topics, 'topics'); } catch(_) {}
+    }
+    async function idbLoad() {
+      try {
+        const d = await idb();
+        return new Promise(ok => {
+          const r = d.transaction('kv','readonly').objectStore('kv').get('topics');
+          r.onsuccess = () => ok(r.result);
+          r.onerror = () => ok(null);
+        });
+      } catch(_) { return null; }
+    }
 
     const MS_DAY = 86400000;
     const TODAY = (() => { const d = new Date(); d.setHours(0,0,0,0); return d; })();
@@ -238,63 +262,7 @@
 
     /** 初始化模拟数据 */
     function seedData() {
-      const base = addDays(TODAY, 14);
-      state.topics = [
-        {
-          id: 't1', title: 'DJI Mic Mini 2s', type: 'self',
-          publishDate: fmt(addDays(base, 0)),
-          prep: [
-            { text: '产品功能研究与竞品对比', completed: true },
-            { text: '收集官方素材与参数', completed: false }
-          ],
-          tasks: []
-        },
-        {
-          id: 't2', title: '夏日充电器横评', type: 'commercial',
-          publishDate: fmt(addDays(base, 7)),
-          prep: [
-            { text: '客户 Brief 确认', completed: true },
-            { text: '品牌审核节点预留', completed: false }
-          ],
-          tasks: []
-        },
-        {
-          id: 't3', title: '用 AI 做 BGM 教程', type: 'self',
-          publishDate: fmt(addDays(base, 14)),
-          prep: [{ text: '音乐风格探索与工具调研', completed: false }],
-          tasks: []
-        },
-        {
-          id: 't4', title: 'WAIC 大会现场报道', type: 'commercial',
-          publishDate: fmt(addDays(base, 21)),
-          prep: [
-            { text: '展会日程与采访名单', completed: false },
-            { text: '媒体证件与设备清单', completed: false }
-          ],
-          tasks: []
-        },
-        {
-          id: 't5', title: '桌面收纳好物分享', type: 'self',
-          publishDate: fmt(addDays(base, 28)),
-          prep: [{ text: '选品清单整理', completed: false }],
-          tasks: []
-        },
-        {
-          id: 't6', title: '智能手表续航实测', type: 'self',
-          publishDate: fmt(addDays(base, 35)),
-          prep: [{ text: '测试方案设计', completed: false }],
-          tasks: []
-        }
-      ];
-      state.topics.forEach(t => {
-        t.archived = false;
-        t.obsidianUrl = t.obsidianUrl || '';
-        t.status = t.status || 'normal';
-        t.priority = t.priority || 0;
-        t.budget = t.budget || '';
-        t.prep = normalizePrep(t.prep);
-        t.tasks = buildWorkflow(t);
-      });
+      state.topics = [];
     }
 
     /** 扩展时间轴右边界 */
@@ -344,22 +312,27 @@
     let _saveTimer;
     function save() {
       clearTimeout(_saveTimer);
-      _saveTimer = setTimeout(() => {
-        try {
-          localStorage.setItem('content-os-v2', JSON.stringify(state.topics));
-        } catch (e) {
-          toast('⚠️ 存储空间不足，请导出备份后清理数据');
+      _saveTimer = setTimeout(async () => {
+        // 优先 IndexedDB，失败回退 localStorage
+        try { await idbSave(state.topics); } catch (_) {
+          try { localStorage.setItem('content-os-v2', JSON.stringify(state.topics)); } catch (e) { toast('⚠️ 存储空间不足，请导出备份后清理数据'); }
         }
       }, 200);
     }
 
-    function load() {
-      try {
-        const raw = localStorage.getItem('content-os-v2');
-        if (!raw) return false;
-        const topics = JSON.parse(raw);
-        if (!Array.isArray(topics) || !topics.length) return false;
+    async function load() {
+      // 1. 优先 IndexedDB
+      let topics = await idbLoad();
+      // 2. 回退 localStorage（数据迁移）
+      if (!topics || !topics.length) {
+        try {
+          const raw = localStorage.getItem('content-os-v2');
+          if (raw) { topics = JSON.parse(raw); if (topics.length) await idbSave(topics); }
+        } catch(_) {}
+      }
+      if (!topics || !Array.isArray(topics) || !topics.length) return false;
 
+      try {
         state.topics = topics.map(t => {
           const newTopic = { ...t, prep: normalizePrep(t.prep) };
           if (newTopic.archived == null) newTopic.archived = false; // 向后兼容旧数据
@@ -471,7 +444,7 @@
         <div class="sidebar-footer">
           <div class="sidebar-links">
             <button class="sidebar-link" id="btn-about" title="关于嗯哌">
-              <img src="IMG/About.svg" alt="" class="sidebar-link-icon" /><span>关于嗯哌</span>
+              <img src="IMG/About.svg" alt="" class="sidebar-link-icon" /><span>使用说明</span>
             </button>
             <button class="sidebar-link" id="btn-settings" title="设置">
               <img src="IMG/Settings.svg" alt="" class="sidebar-link-icon" /><span>设置</span>
@@ -547,7 +520,9 @@
         toast('已导出备份');
       };
       document.getElementById('btn-import').onclick = () => document.getElementById('import-file').click();
-      document.getElementById('btn-about').onclick = () => {}; // 预留
+      document.getElementById('btn-about').onclick = () => {
+        document.getElementById('guide-modal-overlay').classList.add('open');
+      };
       document.getElementById('btn-settings').onclick = () => openSettingsModal();
     }
 
@@ -2026,7 +2001,7 @@
     }
 
     /** 初始化 */
-    function init() {
+    async function init() {
       // CDN 加载失败检测
       window.addEventListener('error', e => {
         if (e.target && (e.target.tagName === 'LINK' || e.target.tagName === 'SCRIPT')) {
@@ -2047,7 +2022,8 @@
       });
       document.addEventListener('mouseup', () => { window._npiedraft_dragActive = false; window._npiedraft_dragLabelId = null; });
 
-      if (!load()) seedData();
+      const loaded = await load();
+      if (!loaded) seedData();
       updateBounds();
 
       document.getElementById('btn-add-topic').onclick = () => openAddModal();
@@ -2173,6 +2149,13 @@
         document.getElementById('wf-editor').style.display = 'none';
       });
       // 初始化主题
+      // 使用说明弹窗
+      document.getElementById('guide-modal-close').onclick = () => {
+        document.getElementById('guide-modal-overlay').classList.remove('open');
+      };
+      document.getElementById('guide-modal-overlay').addEventListener('click', e => {
+        if (e.target.id === 'guide-modal-overlay') e.target.classList.remove('open');
+      });
       // 确认弹窗
       document.getElementById('confirm-modal-cancel').onclick = () => closeConfirm(false);
       document.getElementById('confirm-modal-ok').onclick = () => closeConfirm(true);
