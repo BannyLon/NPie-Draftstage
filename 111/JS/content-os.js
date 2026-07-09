@@ -1957,11 +1957,16 @@
           <span class="wf-item-name">${esc(w.name)}</span>
           <span class="wf-item-tag">${w.isBuiltin ? '内置' : '自定义'} · ${w.stages.length} 节点</span>
           <div class="wf-item-actions">
+            <button class="wf-icon-btn" data-wf-copy="${w.id}" title="复制">📋</button>
             <button class="wf-icon-btn" data-wf-edit="${w.id}" title="编辑">✎</button>
             ${!w.isBuiltin ? `<button class="wf-icon-btn danger" data-wf-del="${w.id}" title="删除">✕</button>` : ''}
           </div>
         </div>
       `).join('');
+      // 复制按钮
+      el.querySelectorAll('[data-wf-copy]').forEach(btn => {
+        btn.addEventListener('click', () => duplicateWorkflow(btn.dataset.wfCopy));
+      });
       // 编辑按钮
       el.querySelectorAll('[data-wf-edit]').forEach(btn => {
         btn.addEventListener('click', () => openWorkflowEditor(btn.dataset.wfEdit));
@@ -1970,6 +1975,23 @@
       el.querySelectorAll('[data-wf-del]').forEach(btn => {
         btn.addEventListener('click', () => deleteWorkflow(btn.dataset.wfDel));
       });
+    }
+
+    function duplicateWorkflow(wfId) {
+      const all = allWorkflows();
+      const wf = all.find(w => w.id === wfId);
+      if (!wf) return;
+      const customWfs = getCustomWorkflows();
+      const newId = 'cw_' + Date.now();
+      customWfs.push({
+        id: newId,
+        name: wf.name + ' 副本',
+        stages: wf.stages.map(s => ({ ...s, id: s.id === 'cover' || s.id === 'copy' || s.id === 'publish' ? s.id : 's' + Date.now() + Math.random().toString(36).slice(2, 5) }))
+      });
+      saveCustomWorkflows(customWfs);
+      updateTypeSelect();
+      renderWorkflowList();
+      toast(`已复制「${wf.name}」`);
     }
 
     function openWorkflowEditor(wfId) {
