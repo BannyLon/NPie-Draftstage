@@ -1799,6 +1799,7 @@
       document.getElementById('confirm-modal-ok').textContent = okText;
       _confirmCallback = onOk;
       document.getElementById('confirm-modal-overlay').classList.add('open');
+      setTimeout(() => document.getElementById('confirm-modal-ok').focus(), 50);
     }
 
     function closeConfirm(confirmed) {
@@ -2228,8 +2229,8 @@
       // 确认弹窗
       document.getElementById('confirm-modal-cancel').onclick = () => closeConfirm(false);
       document.getElementById('confirm-modal-ok').onclick = () => closeConfirm(true);
-      document.addEventListener('keydown', e => {
-        if (!document.getElementById('confirm-modal-overlay').classList.contains('open')) return;
+      // 键盘支持：监听 overlay 自身
+      document.getElementById('confirm-modal-overlay').addEventListener('keydown', e => {
         if (e.key === 'Enter') { e.preventDefault(); closeConfirm(true); }
         if (e.key === 'Escape') { e.preventDefault(); closeConfirm(false); }
       });
