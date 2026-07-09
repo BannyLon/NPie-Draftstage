@@ -16,6 +16,7 @@
       --shadow: 0 2px 16px rgba(26,26,46,0.06);
       --card-self: #FDF8F2;
       --card-commercial: #F2F4F8;
+      --card-comp: #FDFAF6;
       font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
     }
     [data-theme="editorial"] .brand-title { font-family: 'Fraunces', 'Noto Serif SC', serif; font-style: italic; font-size: 0.78rem; letter-spacing: 0; text-transform: none; }

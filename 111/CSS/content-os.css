@@ -17,6 +17,7 @@
       --shadow: 0 12px 32px rgba(44, 42, 41, 0.06);
       --card-self: #FDF8F0;
       --card-commercial: #F5F6F8;
+      --card-comp: #FDFAF5;
     }
     /* ── 暗色模式 ── */
     [data-theme="dark"] {
@@ -37,6 +38,7 @@
       --shadow: 0 12px 32px rgba(0,0,0,0.25);
       --card-self: #302820;
       --card-commercial: #252830;
+      --card-comp: #383430;
     }
     /* ── 主题：冷灰 ── */
     [data-theme="cool"] {
@@ -55,6 +57,7 @@
       --yellow: #B8A060;
       --card-self: #F7F2F0;
       --card-commercial: #F0F3F6;
+      --card-comp: #FAF7F5;
     }
     /* ── 主题：自然绿 ── */
     [data-theme="green"] {
@@ -72,7 +75,7 @@
       --blue: #6B8898;
       --yellow: #A09050;
       --card-self: #F6F3EC;
-      --card-commercial: #EEF0EC;
+      --card-commercial: #EEF0EC; --card-comp: #F6F8F4;
     }
     /* ── 主题：高级时尚杂志风 ── */
     [data-theme="magazine"] {
@@ -90,7 +93,7 @@
       --blue: #688090;
       --yellow: #B09040;
       --card-self: #F6F0E8;
-      --card-commercial: #EEECF0;
+      --card-commercial: #EEECF0; --card-comp: #F6F4F6;
     }
     /* ── 主题：草绿小清新风 ── */
     [data-theme="fresh"] {
@@ -108,7 +111,7 @@
       --blue: #6898A8;
       --yellow: #B8A040;
       --card-self: #F4F7EC;
-      --card-commercial: #EFF2F5;
+      --card-commercial: #EFF2F5; --card-comp: #F6F9FA;
     }
     /* ── 主题：暖金 ── */
     [data-theme="warmgold"] {
@@ -126,7 +129,7 @@
       --blue: #7898A8;
       --yellow: #C89830;
       --card-self: #FCF6EC;
-      --card-commercial: #F2F3F6;
+      --card-commercial: #F2F3F6; --card-comp: #FCFAF6;
     }
     /* ── 暗色模式全局修正：按钮/标签文字可读性 ── */
     [data-theme="dark"] .add-topic-btn { background: var(--accent); color: #1C1B1A; }
@@ -694,7 +697,7 @@
       margin-top: 5px; padding: 3px 7px;
       border: 1px solid var(--border); border-radius: 6px;
       font-size: 0.72rem; font-weight: 600;
-      background: var(--surface); color: var(--text);
+      background: var(--card-comp); color: var(--text);
       cursor: pointer;
     }
     .card-progress-wrap { min-width: 64px; text-align: right; }
@@ -726,7 +729,7 @@
     .prep-row { display: flex; gap: 6px; margin-bottom: 6px; }
     .prep-input {
       flex: 1; padding: 6px 10px; border-radius: 6px;
-      border: 1px solid var(--border); background: var(--surface);
+      border: 1px solid var(--border); background: var(--card-comp);
       font-size: 0.76rem;
     }
     .prep-add-btn {
@@ -738,7 +741,7 @@
       display: flex; align-items: center; gap: 8px;
       padding: 6px 10px; border-radius: 6px;
       border: 1px solid var(--border);
-      background: var(--surface); margin-bottom: 3px;
+      background: var(--card-comp); margin-bottom: 3px;
       transition: background 0.15s;
     }
     .prep-item.done { background: color-mix(in srgb, var(--green) 12%, transparent); }
@@ -754,7 +757,7 @@
       display: flex; align-items: center; gap: 7px;
       padding: 6px 8px; border-radius: 6px;
       border: 1px solid var(--border);
-      background: var(--surface);
+      background: var(--card-comp);
       transition: background 0.15s;
     }
     .workflow-item.done {
