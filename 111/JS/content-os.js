@@ -2235,6 +2235,39 @@
         if (e.key === 'Escape') { e.preventDefault(); closeConfirm(false); }
       });
 
+      // ── 全局弹窗键盘支持：Esc 关闭 / Enter 确认 ──
+      document.addEventListener('keydown', e => {
+        const overlays = [
+          { id: 'modal-overlay', close: closeModal, confirm: confirmAdd, focus: 'modal-confirm' },
+          { id: 'schedule-modal-overlay', close: closeScheduleModal, confirm: confirmSchedule, focus: 'schedule-modal-confirm' },
+          { id: 'obsidian-modal-overlay', close: closeObsidianModal, confirm: confirmObsidianUrl, focus: 'obsidian-modal-confirm' },
+          { id: 'rename-modal-overlay', close: closeRenameModal, confirm: confirmRename, focus: 'rename-modal-confirm' },
+          { id: 'settings-modal-overlay', close: closeSettingsModal, confirm: null, focus: null },
+          { id: 'confirm-modal-overlay', close: () => closeConfirm(false), confirm: () => closeConfirm(true), focus: 'confirm-modal-ok' },
+          { id: 'guide-modal-overlay', close: closeGuide, confirm: null, focus: null },
+        ];
+        for (const ov of overlays) {
+          const el = document.getElementById(ov.id);
+          if (!el || !el.classList.contains('open')) continue;
+          if (e.key === 'Escape') { e.preventDefault(); ov.close(); return; }
+          if (e.key === 'Enter' && ov.confirm) {
+            // 如果焦点在 textarea 或 contentEditable，不触发（允许换行）
+            if (e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+            e.preventDefault(); ov.confirm(); return;
+          }
+          return; // 只处理最上层弹窗
+        }
+      });
+      // 弹窗打开时自动聚焦
+      const _origOpenAdd = openAddModal;
+      openAddModal = function(d) { _origOpenAdd(d); setTimeout(() => document.getElementById('modal-title').focus(), 80); };
+      const _origOpenSched = openScheduleModal;
+      openScheduleModal = function(a,b) { _origOpenSched(a,b); setTimeout(() => document.getElementById('schedule-modal-name').focus(), 80); };
+      const _origOpenObs = openObsidianModal;
+      openObsidianModal = function(a) { _origOpenObs(a); setTimeout(() => document.getElementById('obsidian-modal-input').focus(), 80); };
+      const _origOpenRename = openRenameModal;
+      openRenameModal = function(a) { _origOpenRename(a); setTimeout(() => document.getElementById('rename-modal-input').focus(), 80); };
+
       initTheme();
 
       render();
