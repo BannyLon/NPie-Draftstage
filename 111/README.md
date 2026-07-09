@@ -100,10 +100,7 @@ NPie_Draftstage/
 │   ├── Import.svg        # 导入按钮图标
 │   ├── About.svg         # 使用说明图标
 │   └── Settings.svg      # 设置图标
-├── README.md
-├── prompt.md             # AI 复现完整提示词
-├── audit-report.md       # 全面审计报告
-└── audit-report-v2.md    # 复审报告
+└── README.md
 ```
 
 > v2.7 起拆分为三层结构，主题可独立扩增 CSS 文件。
@@ -135,25 +132,26 @@ NPie_Draftstage/
 
 | 版本 | 主要更新 |
 |------|----------|
-| v3.6 | 新手指南全量重写+键盘导航 |
-| v3.5 | 新手指南移至排期日历右上角悬浮胶囊按钮 |
-| v3.4 | 使用说明改为5步引导式弹窗 |
-| v3.3 | 使用说明移Header+刷新闪烁修复 |
-| v3.2 | IndexedDB 持久化+清空样稿+使用说明 |
-| v3.1 | 导入校验/CDN降级/金额格式化/无障碍 |
-| v3.0 | 审计 Top5 修复（事件泄漏/存储/节假日/confirm 弹窗） |
-| v2.25 | 新增蓝黄杂志风主题（独立 CSS 文件） |
-| v2.23 | 日历底部角标图例、暗色模式全适配 |
-| v2.20 | 暗色模式+六主题、自定义工作流 CRUD |
-| v2.10 | 选题卡类型角标、紧急标注、Obsidian 链接 |
-| v2.9 | 正式命名：哌稿场·档期 (NPie Draftstage) |
+| v4.17 | 工作流编辑器节点拖拽排序 |
+| v4.16 | 工作流一键复制功能 |
+| v4.15 | 内置合作内容工作流+合字角标 |
+| v4.14 | 选题卡布局重构（工作流+日期双行） |
+| v4.11 | 关于嗯哌品牌卡片弹窗 |
+| v4.5 | 全弹窗键盘支持（Esc/Enter） |
+| v4.2 | load优先localStorage，根除刷新丢数据 |
+| v4.0 | saveNow即时写入+防丢数据 |
+| v3.2 | IndexedDB持久化+清空样稿+使用说明 |
+| v3.0 | 审计Top5修复（事件泄漏/存储/confirm弹窗） |
+| v2.25 | 蓝黄杂志风主题（独立CSS文件） |
+| v2.20 | 暗色模式+六主题+自定义工作流CRUD |
+| v2.10 | 选题卡类型角标+紧急标注+Obsidian链接 |
 | v2.0 | 工作日倒排大重构 |
 | v1.0 | 基线版本 |
 
 回滚到任意版本：
 ```bash
-git checkout v3.6 -- content-os.html CSS/ JS/   # 最新
-git checkout v1.0  -- content-os.html           # 基线
+git checkout v4.17 -- content-os.html CSS/ JS/   # 最新
+git checkout v1.0  -- content-os.html             # 基线
 ```
 
 ## 📄 License
