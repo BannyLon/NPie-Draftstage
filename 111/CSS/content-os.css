@@ -68,19 +68,19 @@
     }
     /* ── 主题：高级时尚杂志风 ── */
     [data-theme="magazine"] {
-      --bg: #F5F0EB;
-      --surface: #FFFFFF;
-      --surface-muted: #FAF6F2;
-      --border: #D8D0C8;
-      --text: #1A1A1A;
-      --text-muted: #6B6058;
-      --muted-2: #A09890;
-      --accent: #B88040;
-      --accent-soft: #E8D8C4;
-      --green: #889880;
-      --red: #B87060;
-      --blue: #7890A0;
-      --yellow: #C0A050;
+      --bg: #EAE0D6;
+      --surface: #F8F4EE;
+      --surface-muted: #F0EAE2;
+      --border: #D0C4B4;
+      --text: #1C1814;
+      --text-muted: #7A6E60;
+      --muted-2: #A89880;
+      --accent: #8B5E30;
+      --accent-soft: #E0D0BC;
+      --green: #809070;
+      --red: #A86050;
+      --blue: #688090;
+      --yellow: #B09040;
     }
     /* ── 主题：草绿小清新风 ── */
     [data-theme="fresh"] {
@@ -114,60 +114,6 @@
       --blue: #7898A8;
       --yellow: #C89830;
     }
-    /* ── 主题：Esther 不二风格（蓝黄红品牌色系） ── */
-    [data-theme="esther"] {
-      --bg: #fefcf6;
-      --surface: #FFFFFF;
-      --surface-muted: #faf6eb;
-      --border: rgba(26,26,46,0.08);
-      --text: #1A1A2E;
-      --text-muted: #4A4A5A;
-      --muted-2: #8A8A9A;
-      --accent: #2B7FD8;
-      --accent-soft: #E8F0FA;
-      --green: #2d6a4f;
-      --red: #E84A5F;
-      --blue: #2B7FD8;
-      --yellow: #F4D758;
-      --shadow: 0 2px 16px rgba(26,26,46,0.06);
-      font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-    }
-    [data-theme="esther"] .brand-title { font-family: 'Fraunces', 'Noto Serif SC', serif; font-style: italic; font-size: 0.78rem; letter-spacing: 0; text-transform: none; }
-    [data-theme="esther"] .brand-subtitle { font-family: 'Noto Serif SC', serif; font-weight: 900; }
-    [data-theme="esther"] .card-title,
-    [data-theme="esther"] .topics-title-large,
-    [data-theme="esther"] .timeline-hero-title { font-family: 'Noto Serif SC', serif; font-weight: 900; }
-    [data-theme="esther"] .nav-pill { font-weight: 500; }
-    [data-theme="esther"] .nav-pill.active { background: #E8F0FA; color: #2B7FD8; font-weight: 700; }
-    [data-theme="esther"] .topic-item { border-radius: 10px; border: 1px solid rgba(26,26,46,0.06); }
-    [data-theme="esther"] .topic-item.selected { outline-color: #2B7FD8; }
-    [data-theme="esther"] .topic-card { border-radius: 14px; border: 1px solid rgba(26,26,46,0.08); transition: transform 0.2s, box-shadow 0.2s; }
-    [data-theme="esther"] .topic-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(26,26,46,0.1); }
-    [data-theme="esther"] .topic-card.selected { outline-color: #2B7FD8; }
-    [data-theme="esther"] .task-block { border-radius: 6px; font-weight: 500; }
-    [data-theme="esther"] .add-topic-btn { background: #1A1A2E; border-radius: 10px; }
-    [data-theme="esther"] .add-topic-btn:hover { background: #2B7FD8; }
-    [data-theme="esther"] .modal-btn-primary { background: #2B7FD8; border-radius: 10px; }
-    [data-theme="esther"] .modal-btn-primary:hover { background: #1E6AC0; }
-    [data-theme="esther"] .modal-box { border-radius: 16px; }
-    [data-theme="esther"] .card-type-badge.badge-self { background: #2B7FD8; }
-    [data-theme="esther"] .card-type-badge.badge-commercial { background: #F4D758; color: #1A1A2E; }
-    [data-theme="esther"] .tl-type-dot.dot-self { background: #2B7FD8; }
-    [data-theme="esther"] .tl-type-dot.dot-commercial { background: #F4D758; color: #1A1A2E; }
-    [data-theme="esther"] .topic-item-badge.badge-self { background: #2B7FD8; }
-    [data-theme="esther"] .topic-item-badge.badge-commercial { background: #F4D758; color: #1A1A2E; }
-    [data-theme="esther"] .tl-urgent-dot { background: #E84A5F; }
-    [data-theme="esther"] .topic-label.tl-urgent .topic-label-card,
-    [data-theme="esther"] .topic-item.topic-urgent { border-left-color: #E84A5F !important; }
-    [data-theme="esther"] .topic-card.is-urgent { border-left: 3px solid #E84A5F; }
-    [data-theme="esther"] .card-progress-fill { background: linear-gradient(90deg, #2B7FD8, #F4D758); }
-    [data-theme="esther"] .topic-label-card { border-radius: 10px; }
-    [data-theme="esther"] .section-card { border-radius: 14px; }
-    [data-theme="esther"] .sidebar { border-right-color: rgba(26,26,46,0.06); }
-    [data-theme="esther"] .header-ticker { border-radius: 8px; background: #faf6eb; border-color: rgba(26,26,46,0.06); }
-    [data-theme="esther"] .sidebar-slogan span:first-child { font-family: 'Fraunces', serif; font-style: italic; }
-    [data-theme="esther"] ::selection { background: #F4D758; color: #1A1A2E; }
-
     /* ── 暗色模式全局修正：按钮/标签文字可读性 ── */
     [data-theme="dark"] .add-topic-btn { background: var(--accent); color: #1C1B1A; }
     [data-theme="dark"] .add-topic-btn:hover { background: #D4A86A; }
@@ -874,7 +820,18 @@
       font-size: 0.78rem; font-weight: 600; color: var(--text);
     }
     .theme-btn:hover { border-color: var(--accent); }
-    .theme-btn.active { border-color: var(--accent); background: var(--accent-soft); }
+    .theme-btn.active {
+      border-color: var(--accent); border-width: 3px;
+      background: var(--accent-soft);
+      position: relative;
+    }
+    .theme-btn.active::after {
+      content: '✓'; position: absolute; top: -6px; right: -4px;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--accent); color: #fff;
+      font-size: 0.55rem; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+    }
     .theme-btn .swatch { display: flex; gap: 3px; justify-content: center; margin-bottom: 6px; }
     .theme-btn .swatch span { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
     .mode-toggle { display: flex; gap: 8px; }
