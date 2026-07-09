@@ -2093,12 +2093,13 @@
       document.getElementById('obsidian-modal-confirm').onclick = confirmObsidianUrl;
       document.getElementById('obsidian-modal-test').onclick    = () => {
         const url = document.getElementById('obsidian-modal-input').value.trim();
-        if (!url.startsWith('obsidian://')) { toast('链接格式错误，应以 obsidian:// 开头'); return; }
-        window.open(url, '_blank');
+        if (!url.startsWith('obsidian://open')) { toast('格式错误：应以 obsidian://open 开头'); return; }
+        if (!url.includes('vault=')) { toast('格式错误：缺少 vault= 参数（你的 Obsidian 仓库名）'); return; }
+        if (!url.includes('file=')) { toast('格式错误：缺少 file= 参数（笔记路径或标题）'); return; }
         const confirmBtn = document.getElementById('obsidian-modal-confirm');
         confirmBtn.disabled = false;
         confirmBtn.style.opacity = '';
-        document.getElementById('obsidian-test-hint').textContent = '✓ 测试通过，点击「确认」保存';
+        document.getElementById('obsidian-test-hint').textContent = '✓ 格式校验通过，点击「确认」保存（链接有效性请保存后在 Obsidian 中验证）';
         document.getElementById('obsidian-test-hint').style.color = 'var(--green)';
       };
       document.getElementById('obsidian-modal-clear').onclick   = () => {
@@ -2109,7 +2110,7 @@
         const confirmBtn = document.getElementById('obsidian-modal-confirm');
         confirmBtn.disabled = true;
         confirmBtn.style.opacity = '0.5';
-        document.getElementById('obsidian-test-hint').textContent = '💡 请先点击「测试链接」验证链接有效后再保存';
+        document.getElementById('obsidian-test-hint').textContent = '💡 请输入 obsidian:// 链接后点击「测试链接」校验格式，通过后方可保存';
         document.getElementById('obsidian-test-hint').style.color = 'var(--text-muted)';
       });
       document.getElementById('obsidian-modal-input').addEventListener('keydown', e => {
