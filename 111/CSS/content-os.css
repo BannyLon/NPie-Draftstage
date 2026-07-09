@@ -349,6 +349,9 @@
       transition: all 0.15s; white-space: nowrap;
     }
     .header-guide-btn:hover { background: var(--accent-soft); color: var(--text); border-color: var(--accent); }
+    .guide-step-indicator { display: flex; gap: 6px; margin-bottom: 14px; }
+    .guide-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: all 0.2s; }
+    .guide-dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
     .main-header-brand {
       display: flex; align-items: center; gap: 10px; flex-shrink: 0;
     }

@@ -18,10 +18,8 @@
     <main class="main-panel">
       <div class="main-header">
         <div class="header-ticker" id="header-ticker"></div>
-        <div class="main-header-actions">
-          <button class="header-guide-btn" id="btn-header-guide" title="使用说明">📖 使用说明</button>
-        </div>
         <div class="main-header-brand">
+          <button class="header-guide-btn" id="btn-header-guide" title="使用说明">📖 使用说明</button>
           <img class="main-header-logo" src="IMG/NPIEAI_logo.jpg" alt="NPIE" />
           <span class="main-header-title">哌稿场 · 档期<br><small>NPie Draftstage</small></span>
         </div>
@@ -230,48 +228,19 @@
     </div>
   </div>
 
-  <!-- 使用说明弹窗 -->
+  <!-- 使用说明弹窗（多步骤引导） -->
   <div class="modal-overlay" id="guide-modal-overlay">
-    <div class="modal-box" style="width:560px;max-width:94vw;max-height:80vh;overflow-y:auto;">
-      <div class="modal-title">使用说明</div>
-      <div style="font-size:0.8rem;line-height:1.9;color:var(--text);">
-        <h3 style="font-size:0.9rem;margin:0 0 6px;">🚀 快速上手 (3步)</h3>
-        <p>1. 点击日历左下角 <b>「+ 增加选题」</b>，填写选题名称、选择工作流类型（自制/商单）、设置发布日期。</p>
-        <p>2. 系统会自动按<b>工作日倒排</b>所有制作节点——从发布日期往前推算，周末和节假日自动跳过。</p>
-        <p>3. 在日历上<b>拖拽</b>选题标签或任务块来调整排期；在选题卡上<b>勾选</b>完成项推进进度。</p>
-
-        <h3 style="font-size:0.9rem;margin:12px 0 6px;">📅 排期日历怎么用</h3>
-        <p>· <b>拖左侧选题标签</b>到新日期 → 整条选题的发布日改变，所有节点重新倒排。</p>
-        <p>· <b>拖右侧任务块</b>到新日期 → 只移动这一个节点，其他节点不动。</p>
-        <p>· <b>右键日历空格子</b> → 新增自定义日程（如"品牌素材整理"）。</p>
-        <p>· <b>右键有任务的格子</b> → 删除该节点。</p>
-        <p>· <b>双击任务块</b> → 原地重命名，Enter 确认，Esc 取消。</p>
-        <p>· <b>封面/文案/发布</b>三个节点始终堆叠在发布日当天，自动垂直排列。</p>
-
-        <h3 style="font-size:0.9rem;margin:12px 0 6px;">📋 选题卡怎么用</h3>
-        <p>· <b>前置准备</b>：自由添加准备项，勾选完成。如"产品功能调研""客户Brief确认"。</p>
-        <p>· <b>制作流程</b>：两列排列，每个节点一个复选框，勾选即推进进度条。</p>
-        <p>· <b>工作流类型</b>：下拉可切换"自制内容"或"商单"，切换后系统按对应流程重新倒排。</p>
-        <p>· <b>Obsidian 链接</b>：标题右侧小图标 → 点击可绑定 Obsidian 笔记，再次点击直接跳转。</p>
-        <p>· <b>右键选题卡</b> → 重命名 / 存档(进度100%时) / 放弃(进度0%时)。</p>
-
-        <h3 style="font-size:0.9rem;margin:12px 0 6px;">🔴 角标说明</h3>
-        <p>· <span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#C5554A;color:#fff;font-size:0.45rem;font-weight:800;vertical-align:middle;">自</span> <b>自制内容</b> — 红色圆圈，选题卡左上角、日历标签右上角、侧栏选题名前。</p>
-        <p>· <span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#C89B3C;color:#fff;font-size:0.45rem;font-weight:800;vertical-align:middle;">商</span> <b>商单</b> — 金色圆圈，同上位置。</p>
-        <p>· <span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#E04030;color:#fff;font-size:0.45rem;font-weight:800;vertical-align:middle;">急</span> <b>紧急选题</b> — 红色圆圈，日历标签左上角。自制距发布≤3天、商单≤5天自动显示。</p>
-
-        <h3 style="font-size:0.9rem;margin:12px 0 6px;">📦 数据安全</h3>
-        <p>· 所有数据自动保存到浏览器内置数据库，<b>清缓存不会丢失</b>。</p>
-        <p>· 定期点击侧栏 <b>「导出备份」</b>下载 JSON 文件保存到 iCloud 或云盘。</p>
-        <p>· 换设备或换浏览器后，点击 <b>「导入恢复」</b>选择之前导出的备份文件即可。</p>
-
-        <h3 style="font-size:0.9rem;margin:12px 0 6px;">🎨 个性化</h3>
-        <p>· 点击侧栏底部 <b>「设置」</b> → 外观/主题/工作流。</p>
-        <p>· 日间/夜间模式一键切换；7 套配色方案可选。</p>
-        <p>· 可自定义工作流类型（如"播客制作"），系统自动追加封面/文案/发布节点。</p>
+    <div class="modal-box" style="width:520px;max-width:94vw;position:relative;">
+      <button id="guide-modal-x" style="position:absolute;top:10px;right:12px;width:28px;height:28px;border-radius:50%;border:none;background:transparent;font-size:1.1rem;cursor:pointer;color:var(--text-muted);line-height:1;">✕</button>
+      <div class="modal-title" id="guide-step-title">欢迎使用哌稿场</div>
+      <div class="guide-step-indicator" style="display:flex;gap:6px;margin-bottom:14px;">
+        <span class="guide-dot active" data-gs="0"></span><span class="guide-dot" data-gs="1"></span><span class="guide-dot" data-gs="2"></span><span class="guide-dot" data-gs="3"></span><span class="guide-dot" data-gs="4"></span>
       </div>
-      <div class="modal-actions" style="margin-top:12px;">
-        <button class="modal-btn modal-btn-primary" id="guide-modal-close" style="width:100%;">我知道了</button>
+      <div id="guide-step-content" style="font-size:0.82rem;line-height:1.8;color:var(--text);min-height:180px;"></div>
+      <div class="modal-actions" style="margin-top:14px;justify-content:space-between;">
+        <button class="modal-btn modal-btn-cancel" id="guide-prev" style="visibility:hidden;">← 上一步</button>
+        <span id="guide-step-num" style="font-size:0.7rem;color:var(--text-muted);"></span>
+        <button class="modal-btn modal-btn-primary" id="guide-next">下一步 →</button>
       </div>
     </div>
   </div>

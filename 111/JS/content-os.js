@@ -2149,16 +2149,35 @@
         document.getElementById('wf-editor').style.display = 'none';
       });
       // 初始化主题
-      // 使用说明弹窗
-      document.getElementById('guide-modal-close').onclick = () => {
-        document.getElementById('guide-modal-overlay').classList.remove('open');
-      };
-      document.getElementById('guide-modal-overlay').addEventListener('click', e => {
-        if (e.target.id === 'guide-modal-overlay') e.target.classList.remove('open');
+      // 使用说明多步骤引导
+      const guideSteps = [
+        { title: '欢迎使用哌稿场 · 档期', html: '<p>哌稿场是<b>自媒体创作排期管理工具</b>，帮你把选题策划、制作流程、进度追踪整合在一张看板上。</p><p>核心思路：<b>选定发布日期 → 系统自动倒排所有制作节点 → 你只管按节点执行。</b></p><p>周末和法定节假日自动跳过，商单和自制内容分开管理。</p><p style="color:var(--text-muted);font-size:0.72rem;">点击右下角「下一步」开始了解具体操作 👇</p>' },
+        { title: '① 创建你的第一条选题', html: '<p>点击日历左下角 <b>「+ 增加选题」</b>按钮。</p><p>填写：<b>选题名称</b>（如"DJI Mic Mini 2s"）→ <b>工作流类型</b>（自制/商单）→ <b>发布日期</b>。</p><p>可选：<b>状态标记</b>（普通/重要/紧急）、<b>影响力星级</b>（1-5星）、商单可填<b>金额</b>。</p><p>确认后系统自动按工作日倒排所有制作阶段。</p>' },
+        { title: '② 查看和调整排期', html: '<p>日历上每条选题一行，<b>彩色任务块</b>代表各个制作阶段。</p><p><b>拖拽左侧选题标签</b> → 整条排期移到新日期，所有节点重新倒排。</p><p><b>拖拽右侧任务块</b> → 仅移动这一个节点。</p><p><b>右键日历空格子</b> → 新增自定义日程（如"品牌素材整理"）。<br><b>右键有任务的格子</b> → 删除该节点。</p><p><b>双击任务块</b> → 原地重命名，Enter 确认，Esc 取消。</p>' },
+        { title: '③ 使用选题卡追踪进度', html: '<p>向下滚动到<b>选题卡</b>区域，每条选题一张卡片。</p><p><b>前置准备</b>：自由添加准备项（如"产品调研"），勾选完成。<br><b>制作流程</b>：每个节点一个复选框，勾选后进度条自动推进。</p><p><b>工作流类型</b>下拉可随时切换自制/商单，系统重新倒排。<br><b>Obsidian 链接</b>：标题右侧图标可绑定笔记，点击跳转。</p><p><b>右键选题卡</b> → 重命名 / 存档(100%时) / 放弃(0%时)。</p>' },
+        { title: '④ 角标、主题与数据安全', html: '<p><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#C5554A;color:#fff;font-size:0.45rem;text-align:center;line-height:14px;">自</span> <b>自制内容</b> &nbsp; <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#C89B3C;color:#fff;font-size:0.45rem;text-align:center;line-height:14px;">商</span> <b>商单</b> &nbsp; <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#E04030;color:#fff;font-size:0.45rem;text-align:center;line-height:14px;">急</span> <b>紧急</b></p><p>点击侧栏 <b>「设置」</b>：日间/夜间模式、7套配色、自定义工作流。</p><p>数据自动保存至浏览器数据库，<b>清缓存不丢失</b>。定期用侧栏<b>「导出备份」</b>存 JSON 到云盘。</p><p>顶部跑马灯滚动显示紧急选题，鼠标悬停可暂停查看。</p>' }
+      ];
+      let _guideStep = 0;
+      function renderGuideStep() {
+        const s = guideSteps[_guideStep];
+        document.getElementById('guide-step-title').textContent = s.title;
+        document.getElementById('guide-step-content').innerHTML = s.html;
+        document.querySelectorAll('.guide-dot').forEach((d, i) => d.classList.toggle('active', i === _guideStep));
+        document.getElementById('guide-prev').style.visibility = _guideStep === 0 ? 'hidden' : '';
+        const nextBtn = document.getElementById('guide-next');
+        if (_guideStep === guideSteps.length - 1) { nextBtn.textContent = '完成 ✓'; nextBtn.style.background = 'var(--green)'; }
+        else { nextBtn.textContent = '下一步 →'; nextBtn.style.background = ''; }
+        document.getElementById('guide-step-num').textContent = `${_guideStep+1} / ${guideSteps.length}`;
+      }
+      function openGuide() { _guideStep = 0; renderGuideStep(); document.getElementById('guide-modal-overlay').classList.add('open'); }
+      function closeGuide() { document.getElementById('guide-modal-overlay').classList.remove('open'); }
+      document.getElementById('btn-header-guide').onclick = openGuide;
+      document.getElementById('guide-modal-x').onclick = closeGuide;
+      document.getElementById('guide-modal-overlay').addEventListener('click', e => { if (e.target.id === 'guide-modal-overlay') closeGuide(); });
+      document.getElementById('guide-next').addEventListener('click', () => {
+        if (_guideStep < guideSteps.length - 1) { _guideStep++; renderGuideStep(); } else { closeGuide(); }
       });
-      document.getElementById('btn-header-guide').onclick = () => {
-        document.getElementById('guide-modal-overlay').classList.add('open');
-      };
+      document.getElementById('guide-prev').addEventListener('click', () => { if (_guideStep > 0) { _guideStep--; renderGuideStep(); } });
       // 确认弹窗
       document.getElementById('confirm-modal-cancel').onclick = () => closeConfirm(false);
       document.getElementById('confirm-modal-ok').onclick = () => closeConfirm(true);
