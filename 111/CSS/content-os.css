@@ -341,14 +341,20 @@
       background: var(--surface);
       flex-shrink: 0; gap: 16px;
     }
-    .main-header-actions { flex-shrink: 0; display: flex; align-items: center; }
-    .header-guide-btn {
-      padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border);
-      background: var(--surface-muted); color: var(--text-muted);
-      font-size: 0.72rem; font-weight: 600; cursor: pointer;
-      transition: all 0.15s; white-space: nowrap;
+    .guide-float-btn {
+      position: absolute; top: 16px; right: 20px; z-index: 20;
+      display: flex; align-items: center; gap: 6px;
+      padding: 7px 14px 7px 10px;
+      border-radius: 24px; border: 1.5px solid var(--accent);
+      background: var(--surface); color: var(--accent);
+      font-size: 0.76rem; font-weight: 700; cursor: pointer;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      transition: all 0.2s;
     }
-    .header-guide-btn:hover { background: var(--accent-soft); color: var(--text); border-color: var(--accent); }
+    .guide-float-btn:hover {
+      background: var(--accent); color: #fff;
+      transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    }
     .guide-step-indicator { display: flex; gap: 6px; margin-bottom: 14px; }
     .guide-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: all 0.2s; }
     .guide-dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
