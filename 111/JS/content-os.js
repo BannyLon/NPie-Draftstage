@@ -3,25 +3,36 @@
      * @description 内容创作排期看板 — 工作日倒排 + 选题卡 + 日历联动
      */
 
-    // ── IndexedDB 持久化（优先）─────────────────────────
+    // ── IndexedDB 持久化（优先，单连接防写入冲突）─────────
     const IDB_NAME = 'npiedraft', IDB_VER = 1;
+    let _idb = null;
     function idb() {
+      if (_idb) return Promise.resolve(_idb);
       return new Promise((ok, no) => {
         const r = indexedDB.open(IDB_NAME, IDB_VER);
         r.onupgradeneeded = () => { r.result.createObjectStore('kv'); };
-        r.onsuccess = () => ok(r.result);
+        r.onsuccess = () => { _idb = r.result; _idb.onclose = () => { _idb = null; }; ok(_idb); };
         r.onerror = () => no(r.error);
       });
     }
+    let _writeQueue = Promise.resolve();
     async function idbSave(topics) {
-      const d = await idb();
-      return new Promise((ok, no) => {
-        const tx = d.transaction('kv', 'readwrite');
-        tx.objectStore('kv').put(topics, 'topics');
-        tx.oncomplete = () => ok();
-        tx.onerror = () => no(tx.error);
-        tx.onabort = () => no(tx.error);
-      });
+      // 串行化写入，防止并发事务冲突
+      const prev = _writeQueue;
+      let resolveQueue;
+      _writeQueue = new Promise(r => { resolveQueue = r; });
+      await prev;
+      try {
+        const d = await idb();
+        await new Promise((ok, no) => {
+          const tx = d.transaction('kv', 'readwrite');
+          const store = tx.objectStore('kv');
+          const req = store.put(topics, 'topics');
+          req.onsuccess = () => ok();
+          req.onerror = () => no(req.error);
+        });
+      } catch(_) { throw _; }
+      finally { resolveQueue(); }
     }
     async function idbLoad() {
       try {
@@ -1029,9 +1040,9 @@
       if (!topic) return;
       const task = topic.tasks.find(t => t.id === taskId);
       if (!task) return;
-      showConfirm(`确认删除流程节点「${task.name}」？`, () => {
+      showConfirm(`确认删除流程节点「${task.name}」？`, async () => {
         topic.tasks = topic.tasks.filter(t => t.id !== taskId);
-        saveNow();
+        await saveNow();
         render();
         toast(`已删除「${task.name}」`);
       }, '删除节点', '删除');
@@ -1389,10 +1400,10 @@
         ? `该选题尚未开始执行，确认放弃「${topic.title}」？`
         : `确定彻底删除「${topic.title}」？此操作无法撤销。`;
       const title = mode === 'abandon' ? '放弃选题' : '彻底删除';
-      showConfirm(msg, () => {
+      showConfirm(msg, async () => {
         state.topics = state.topics.filter(t => t.id !== topicId);
         if (state.selectedTopicId === topicId) state.selectedTopicId = null;
-        saveNow();
+        await saveNow();
         render();
         toast(mode === 'abandon' ? `已放弃「${topic.title}」` : `已删除「${topic.title}」`);
       }, title, mode === 'abandon' ? '放弃' : '删除');
@@ -1407,11 +1418,11 @@
       const topic = state.topics.find(t => t.id === topicId);
       if (!topic) return;
       if (archive) {
-        showConfirm(`该选题已完成，确认存档「${topic.title}」？`, () => {
+        showConfirm(`该选题已完成，确认存档「${topic.title}」？`, async () => {
           topic.archived = true;
+          await saveNow(); render();
           toast(`已存档「${topic.title}」`);
           if (state.selectedTopicId === topicId) state.selectedTopicId = null;
-          saveNow(); render();
         }, '存档选题', '存档');
       } else {
         topic.archived = false;
@@ -1985,12 +1996,12 @@
         alert(`无法删除：${usingTopics.length} 个选题正在使用此工作流（进度 > 0%）。请等待选题执行完毕后再删除。`);
         return;
       }
-      showConfirm(`确定删除工作流「${wf.name}」？`, () => {
+      showConfirm(`确定删除工作流「${wf.name}」？`, async () => {
         saveCustomWorkflows(customWfs.filter(w => w.id !== wfId));
         state.topics.forEach(t => { if (t.type === wfId) t.type = 'self'; });
         updateTypeSelect();
         renderWorkflowList();
-        saveNow(); render();
+        await saveNow(); render();
         toast(`已删除「${wf.name}」`);
       }, '删除工作流', '删除');
     }
