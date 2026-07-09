@@ -9,16 +9,16 @@
     const DEFAULT_START = new Date(YEAR, 6, 1);
     const DEFAULT_END = new Date(YEAR, 11, 31);
 
-    // ── 2026 年中国法定节假日（日期字符串 Set）────────────────
-    const HOLIDAYS = new Set([
-      '2026-01-01', // 元旦
-      '2026-02-17','2026-02-18','2026-02-19','2026-02-20','2026-02-21','2026-02-22','2026-02-23', // 春节
-      '2026-04-05', // 清明
-      '2026-05-01','2026-05-02','2026-05-03','2026-05-04','2026-05-05', // 劳动节
-      '2026-06-19', // 端午
-      '2026-09-25', // 中秋
-      '2026-10-01','2026-10-02','2026-10-03','2026-10-04','2026-10-05','2026-10-06','2026-10-07', // 国庆
-    ]);
+    // ── 中国法定节假日（2026-2027）────────────────
+    const HOLIDAYS_RAW = [
+      '2026-01-01','2026-02-17','2026-02-18','2026-02-19','2026-02-20','2026-02-21','2026-02-22','2026-02-23',
+      '2026-04-05','2026-05-01','2026-05-02','2026-05-03','2026-05-04','2026-05-05','2026-06-19',
+      '2026-09-25','2026-10-01','2026-10-02','2026-10-03','2026-10-04','2026-10-05','2026-10-06','2026-10-07',
+      '2027-01-01','2027-02-06','2027-02-07','2027-02-08','2027-02-09','2027-02-10','2027-02-11','2027-02-12',
+      '2027-04-05','2027-05-01','2027-05-02','2027-05-03','2027-05-04','2027-05-05','2027-06-09',
+      '2027-09-15','2027-10-01','2027-10-02','2027-10-03','2027-10-04','2027-10-05','2027-10-06','2027-10-07',
+    ];
+    const HOLIDAYS = new Set(HOLIDAYS_RAW);
 
     /** 是否为工作日（非周末、非法定假日） */
     function isBusinessDay(d) {
@@ -331,8 +331,16 @@
     }
 
     /** 持久化 */
+    let _saveTimer;
     function save() {
-      try { localStorage.setItem('content-os-v2', JSON.stringify(state.topics)); } catch (_) {}
+      clearTimeout(_saveTimer);
+      _saveTimer = setTimeout(() => {
+        try {
+          localStorage.setItem('content-os-v2', JSON.stringify(state.topics));
+        } catch (e) {
+          toast('⚠️ 存储空间不足，请导出备份后清理数据');
+        }
+      }, 200);
     }
 
     function load() {
@@ -843,22 +851,10 @@
         });
       });
 
-      /** 鼠标拖拽整条排期（增强体验） */
+      /** 鼠标拖拽整条排期（增强体验）— 使用 init 中全局绑定的 _dragLabelId */
       inner.querySelectorAll('.topic-label').forEach(label => {
-        let dragging = false;
-        let topicId = label.dataset.labelId;
-
-        label.addEventListener('mousedown', e => {
-          if (e.button !== 0) return;
-          dragging = true;
-          topicId = label.dataset.labelId;
-          state.selectedTopicId = topicId;
-        });
-
-        document.addEventListener('mouseup', () => { dragging = false; });
-
         label.addEventListener('mouseenter', () => {
-          if (!dragging) return;
+          if (!window._npiedraft_dragActive || window._npiedraft_dragLabelId !== label.dataset.labelId) return;
           const row = label.closest('.timeline-row');
           if (row) row.style.background = 'rgba(176,138,83,0.04)';
         });
@@ -1032,11 +1028,12 @@
       if (!topic) return;
       const task = topic.tasks.find(t => t.id === taskId);
       if (!task) return;
-      if (!confirm(`确认删除流程节点「${task.name}」？`)) return;
-      topic.tasks = topic.tasks.filter(t => t.id !== taskId);
-      save();
-      render();
-      toast(`已删除「${task.name}」`);
+      showConfirm(`确认删除流程节点「${task.name}」？`, () => {
+        topic.tasks = topic.tasks.filter(t => t.id !== taskId);
+        save();
+        render();
+        toast(`已删除「${task.name}」`);
+      }, '删除节点', '删除');
     }
 
     /** ── 右键菜单 ─────────────────────────────────────── */
@@ -1390,12 +1387,14 @@
       const msg = mode === 'abandon'
         ? `该选题尚未开始执行，确认放弃「${topic.title}」？`
         : `确定彻底删除「${topic.title}」？此操作无法撤销。`;
-      if (!confirm(msg)) return;
-      state.topics = state.topics.filter(t => t.id !== topicId);
-      if (state.selectedTopicId === topicId) state.selectedTopicId = null;
-      save();
-      render();
-      toast(mode === 'abandon' ? `已放弃「${topic.title}」` : `已删除「${topic.title}」`);
+      const title = mode === 'abandon' ? '放弃选题' : '彻底删除';
+      showConfirm(msg, () => {
+        state.topics = state.topics.filter(t => t.id !== topicId);
+        if (state.selectedTopicId === topicId) state.selectedTopicId = null;
+        save();
+        render();
+        toast(mode === 'abandon' ? `已放弃「${topic.title}」` : `已删除「${topic.title}」`);
+      }, title, mode === 'abandon' ? '放弃' : '删除');
     }
 
     /**
@@ -1407,16 +1406,18 @@
       const topic = state.topics.find(t => t.id === topicId);
       if (!topic) return;
       if (archive) {
-        if (!confirm(`该选题已完成，确认存档「${topic.title}」？`)) return;
-        topic.archived = true;
-        toast(`已存档「${topic.title}」`);
+        showConfirm(`该选题已完成，确认存档「${topic.title}」？`, () => {
+          topic.archived = true;
+          toast(`已存档「${topic.title}」`);
+          if (state.selectedTopicId === topicId) state.selectedTopicId = null;
+          save(); render();
+        }, '存档选题', '存档');
       } else {
         topic.archived = false;
         toast(`已恢复「${topic.title}」`);
+        if (state.selectedTopicId === topicId) state.selectedTopicId = null;
+        save(); render();
       }
-      if (state.selectedTopicId === topicId) state.selectedTopicId = null;
-      save();
-      render();
     }
 
     /** @param {string} fromId @param {string} toId */
@@ -1768,6 +1769,24 @@
       }, 0);
     }
 
+    /** ── 自定义确认弹窗 ──────────────────────────────── */
+
+    let _confirmCallback = null;
+
+    function showConfirm(msg, onOk, title = '确认操作', okText = '确认') {
+      document.getElementById('confirm-modal-msg').textContent = msg;
+      document.getElementById('confirm-modal-title').textContent = title;
+      document.getElementById('confirm-modal-ok').textContent = okText;
+      _confirmCallback = onOk;
+      document.getElementById('confirm-modal-overlay').classList.add('open');
+    }
+
+    function closeConfirm(confirmed) {
+      document.getElementById('confirm-modal-overlay').classList.remove('open');
+      if (confirmed && _confirmCallback) _confirmCallback();
+      _confirmCallback = null;
+    }
+
     /** ── 设置弹窗 ─────────────────────────────────────── */
 
     let _editingWfId = null; // 正在编辑的工作流 id
@@ -1960,14 +1979,14 @@
         alert(`无法删除：${usingTopics.length} 个选题正在使用此工作流（进度 > 0%）。请等待选题执行完毕后再删除。`);
         return;
       }
-      if (!confirm(`确定删除工作流「${wf.name}」？`)) return;
-      saveCustomWorkflows(customWfs.filter(w => w.id !== wfId));
-      // 将使用此工作流的选题回退为自制
-      state.topics.forEach(t => { if (t.type === wfId) t.type = 'self'; });
-      updateTypeSelect();
-      renderWorkflowList();
-      save(); render();
-      toast(`已删除「${wf.name}」`);
+      showConfirm(`确定删除工作流「${wf.name}」？`, () => {
+        saveCustomWorkflows(customWfs.filter(w => w.id !== wfId));
+        state.topics.forEach(t => { if (t.type === wfId) t.type = 'self'; });
+        updateTypeSelect();
+        renderWorkflowList();
+        save(); render();
+        toast(`已删除「${wf.name}」`);
+      }, '删除工作流', '删除');
     }
 
     /** 更新新增选题弹窗的工作流类型下拉 */
@@ -1993,6 +2012,19 @@
 
     /** 初始化 */
     function init() {
+      // 全局拖拽状态（只绑定一次，避免每次 render 泄漏）
+      window._npiedraft_dragActive = false;
+      window._npiedraft_dragLabelId = null;
+      document.addEventListener('mousedown', e => {
+        const label = e.target.closest('.topic-label');
+        if (label && e.button === 0) {
+          window._npiedraft_dragActive = true;
+          window._npiedraft_dragLabelId = label.dataset.labelId;
+          if (window._npiedraft_dragLabelId) state.selectedTopicId = window._npiedraft_dragLabelId;
+        }
+      });
+      document.addEventListener('mouseup', () => { window._npiedraft_dragActive = false; window._npiedraft_dragLabelId = null; });
+
       if (!load()) seedData();
       updateBounds();
 
@@ -2115,6 +2147,13 @@
         document.getElementById('wf-editor').style.display = 'none';
       });
       // 初始化主题
+      // 确认弹窗
+      document.getElementById('confirm-modal-cancel').onclick = () => closeConfirm(false);
+      document.getElementById('confirm-modal-ok').onclick = () => closeConfirm(true);
+      document.getElementById('confirm-modal-overlay').addEventListener('click', e => {
+        if (e.target.id === 'confirm-modal-overlay') closeConfirm(false);
+      });
+
       initTheme();
 
       render();

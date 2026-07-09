@@ -214,6 +214,18 @@
     </div>
   </div>
 
+  <!-- 确认弹窗 -->
+  <div class="modal-overlay" id="confirm-modal-overlay">
+    <div class="modal-box" style="width:380px;max-width:92vw;">
+      <div class="modal-title" id="confirm-modal-title">确认操作</div>
+      <p id="confirm-modal-msg" style="font-size:0.82rem;color:var(--text);line-height:1.5;margin:0 0 14px;"></p>
+      <div class="modal-actions">
+        <button class="modal-btn modal-btn-cancel" id="confirm-modal-cancel">取消</button>
+        <button class="modal-btn modal-btn-primary" id="confirm-modal-ok" style="background:var(--red);">确认</button>
+      </div>
+    </div>
+  </div>
+
   <input type="file" id="import-file" accept="application/json" hidden />
   <div id="toast"></div>
 
