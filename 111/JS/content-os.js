@@ -444,7 +444,7 @@
         <div class="sidebar-footer">
           <div class="sidebar-links">
             <button class="sidebar-link" id="btn-about" title="关于嗯哌">
-              <img src="IMG/About.svg" alt="" class="sidebar-link-icon" /><span>使用说明</span>
+              <img src="IMG/About.svg" alt="" class="sidebar-link-icon" /><span>关于嗯哌</span>
             </button>
             <button class="sidebar-link" id="btn-settings" title="设置">
               <img src="IMG/Settings.svg" alt="" class="sidebar-link-icon" /><span>设置</span>
@@ -2156,6 +2156,9 @@
       document.getElementById('guide-modal-overlay').addEventListener('click', e => {
         if (e.target.id === 'guide-modal-overlay') e.target.classList.remove('open');
       });
+      document.getElementById('btn-header-guide').onclick = () => {
+        document.getElementById('guide-modal-overlay').classList.add('open');
+      };
       // 确认弹窗
       document.getElementById('confirm-modal-cancel').onclick = () => closeConfirm(false);
       document.getElementById('confirm-modal-ok').onclick = () => closeConfirm(true);
@@ -2166,6 +2169,8 @@
       initTheme();
 
       render();
+      // 数据加载完成，显示界面，消除白屏闪烁
+      document.querySelector('.app-shell').classList.add('ready');
     }
 
     init();
