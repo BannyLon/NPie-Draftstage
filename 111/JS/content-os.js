@@ -857,11 +857,8 @@
           e.stopPropagation();
           const topic = state.topics.find(t => t.id === icon.dataset.obsidianLabel);
           if (!topic) return;
-          if (topic.obsidianUrl) {
-            window.location.href = topic.obsidianUrl;
-          } else {
-            openObsidianModal(topic.id);
-          }
+          // 已有链接也打开编辑弹窗（可修改或测试）
+          openObsidianModal(topic.id);
         });
       });
 
@@ -1381,6 +1378,7 @@
 
     function confirmObsidianUrl() {
       const url = document.getElementById('obsidian-modal-input').value.trim();
+      if (url && !url.startsWith('obsidian://')) { toast('链接格式错误，应以 obsidian:// 开头'); return; }
       const topic = state.topics.find(t => t.id === _obsidianTopicId);
       if (!topic) return;
       topic.obsidianUrl = url;
@@ -1578,11 +1576,8 @@
           e.stopPropagation();
           const topic = state.topics.find(t => t.id === icon.dataset.obsidianTopic);
           if (!topic) return;
-          if (topic.obsidianUrl) {
-            window.location.href = topic.obsidianUrl;
-          } else {
-            openObsidianModal(topic.id);
-          }
+          // 已有链接也打开编辑弹窗（可修改或测试）
+          openObsidianModal(topic.id);
         });
       });
 
@@ -2085,10 +2080,20 @@
       // Obsidian 链接弹窗
       document.getElementById('obsidian-modal-cancel').onclick  = closeObsidianModal;
       document.getElementById('obsidian-modal-confirm').onclick = confirmObsidianUrl;
+      document.getElementById('obsidian-modal-test').onclick    = () => {
+        const url = document.getElementById('obsidian-modal-input').value.trim();
+        if (!url.startsWith('obsidian://')) { toast('链接格式错误，应以 obsidian:// 开头'); return; }
+        window.open(url, '_blank');
+        document.getElementById('obsidian-modal-test-msg').style.display = 'block';
+        document.getElementById('obsidian-modal-test-msg').textContent = '✓ 已在新建标签页中打开，确认无误后点击「确认」保存';
+      };
       document.getElementById('obsidian-modal-clear').onclick   = () => {
         document.getElementById('obsidian-modal-input').value = '';
         confirmObsidianUrl();
       };
+      document.getElementById('obsidian-modal-input').addEventListener('input', () => {
+        document.getElementById('obsidian-modal-test-msg').style.display = 'none';
+      });
       document.getElementById('obsidian-modal-input').addEventListener('keydown', e => {
         if (e.key === 'Enter') confirmObsidianUrl();
       });
