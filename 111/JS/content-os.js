@@ -1532,21 +1532,22 @@
           <!-- 左上角类型角标 -->
           <span class="card-type-badge badge-${topic.type === 'self' ? 'self' : topic.type === 'commercial' ? 'commercial' : 'custom'}" title="${wfName}">${topic.type === 'self' ? '自' : topic.type === 'commercial' ? '商' : '定'}</span>
 
-          <!-- 第一部分：工作流类型下拉 + 标题行 + 发布日期 -->
-          <div class="card-wf-type">
-            <select class="card-type-select" data-type-select="${topic.id}">
+          <!-- 第一行：工作流类型 + 发布日期标签 -->
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <select class="card-type-select" data-type-select="${topic.id}" style="font-size:0.66rem;padding:2px 6px;">
               ${allWf.map(w => `<option value="${w.id}" ${topic.type === w.id ? 'selected' : ''}>${esc(w.name)}</option>`).join('')}
             </select>
+            <span style="font-size:0.6rem;font-weight:700;color:var(--text-muted);">发布日期</span>
           </div>
+          <!-- 第二行：选题名称 + 日期值 + Obsidian图标 -->
           <div class="card-head">
             <div class="card-head-left">
               <div class="card-title">${esc(topic.title)}</div>
-              <img class="card-obsidian-link ${topic.obsidianUrl ? 'has-url' : ''}" src="IMG/Obsidian.webp" alt="" title="${topic.obsidianUrl ? '左键打开 Obsidian 笔记 / 右键编辑链接' : '设置 Obsidian 链接'}" data-obsidian-topic="${topic.id}" />
             </div>
-            <div class="card-publish-date">
-              <span class="card-publish-label">发布日期</span>
-              <span class="card-publish-day">${fmtShortDate(topic.publishDate)}</span>
-            </div>
+            <span style="font-size:0.92rem;font-weight:800;color:var(--text);white-space:nowrap;margin-right:6px;">${fmtShortDate(topic.publishDate)}</span>
+            <span class="card-obsidian-wrap ${topic.obsidianUrl ? 'has-url' : ''}" title="${topic.obsidianUrl ? '左键打开 Obsidian 笔记 / 右键编辑链接' : '设置 Obsidian 链接'}" data-obsidian-topic="${topic.id}">
+              <img class="card-obsidian-icon" src="IMG/Obsidian.webp" alt="" />
+            </span>
           </div>
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
             <div class="card-progress-bar" style="flex:1;margin-bottom:0;"><div class="card-progress-fill" style="width:${pct}%"></div></div>
