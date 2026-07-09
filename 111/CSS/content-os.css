@@ -577,6 +577,17 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.15);
     }
     .topic-label.tl-urgent .topic-label-card { border-left-color: #E08840 !important; }
+    /* ── 日历底部角标图例 ── */
+    .legend-bar { display: flex; align-items: center; gap: 14px; font-size: 0.66rem; color: var(--text-muted); flex-wrap: wrap; }
+    .legend-item { display: inline-flex; align-items: center; gap: 4px; }
+    .legend-dot {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 15px; height: 15px; border-radius: 50%;
+      color: #fff; font-size: 0.45rem; font-weight: 800;
+    }
+    .legend-dot.dot-self { background: #C5554A; }
+    .legend-dot.dot-commercial { background: #C89B3C; }
+    .legend-dot.dot-urgent { background: #E04030; }
     .track-area {
       position: relative;
       display: flex;

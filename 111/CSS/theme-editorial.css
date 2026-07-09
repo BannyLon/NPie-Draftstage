@@ -54,4 +54,7 @@
     [data-theme="editorial"] .sidebar { border-right-color: rgba(26,26,46,0.06); }
     [data-theme="editorial"] .header-ticker { border-radius: 8px; background: #faf6eb; border-color: rgba(26,26,46,0.06); }
     [data-theme="editorial"] .sidebar-slogan span:first-child { font-family: 'Fraunces', serif; font-style: italic; }
+    [data-theme="editorial"] .legend-dot.dot-self { background: #2B7FD8; }
+    [data-theme="editorial"] .legend-dot.dot-commercial { background: #F4D758; color: #1A1A2E; }
+    [data-theme="editorial"] .legend-dot.dot-urgent { background: #E84A5F; }
     [data-theme="editorial"] ::selection { background: #F4D758; color: #1A1A2E; }
