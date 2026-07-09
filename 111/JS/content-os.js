@@ -2029,9 +2029,6 @@
       document.getElementById('btn-add-topic').onclick = () => openAddModal();
       document.getElementById('modal-cancel').onclick = closeModal;
       document.getElementById('modal-confirm').onclick = confirmAdd;
-      document.getElementById('modal-overlay').addEventListener('click', e => {
-        if (e.target.id === 'modal-overlay') closeModal();
-      });
       // 星评点击
       document.querySelectorAll('#modal-priority span').forEach(star => {
         star.addEventListener('click', () => {
@@ -2050,9 +2047,6 @@
       // 新增日程弹窗
       document.getElementById('schedule-modal-cancel').onclick  = closeScheduleModal;
       document.getElementById('schedule-modal-confirm').onclick = confirmSchedule;
-      document.getElementById('schedule-modal-overlay').addEventListener('click', e => {
-        if (e.target.id === 'schedule-modal-overlay') closeScheduleModal();
-      });
       document.getElementById('schedule-modal-name').addEventListener('keydown', e => {
         if (e.key === 'Enter') confirmSchedule();
       });
@@ -2064,9 +2058,6 @@
         document.getElementById('obsidian-modal-input').value = '';
         confirmObsidianUrl();
       };
-      document.getElementById('obsidian-modal-overlay').addEventListener('click', e => {
-        if (e.target.id === 'obsidian-modal-overlay') closeObsidianModal();
-      });
       document.getElementById('obsidian-modal-input').addEventListener('keydown', e => {
         if (e.key === 'Enter') confirmObsidianUrl();
       });
@@ -2074,9 +2065,6 @@
       // 重命名弹窗
       document.getElementById('rename-modal-cancel').onclick  = closeRenameModal;
       document.getElementById('rename-modal-confirm').onclick = confirmRename;
-      document.getElementById('rename-modal-overlay').addEventListener('click', e => {
-        if (e.target.id === 'rename-modal-overlay') closeRenameModal();
-      });
       document.getElementById('rename-modal-input').addEventListener('keydown', e => {
         if (e.key === 'Enter') confirmRename();
       });
@@ -2111,9 +2099,6 @@
       });
 
       // 设置弹窗事件
-      document.getElementById('settings-modal-overlay').addEventListener('click', e => {
-        if (e.target.id === 'settings-modal-overlay') closeSettingsModal();
-      });
       document.getElementById('settings-modal-close').onclick = closeSettingsModal;
       document.querySelectorAll('.settings-tab').forEach(tab => {
         tab.addEventListener('click', () => switchSettingsTab(tab.dataset.stab));
@@ -2157,7 +2142,7 @@
           <p>自制内容和商单分开管理，每个选题可以绑定 Obsidian 笔记。</p>
           <p style="color:var(--text-muted);font-size:0.72rem;">按 → 键或点击「下一步」继续 👇</p>` },
         { title: '第一步：创建选题', html: `<p>点击排期日历<b>底部的「+ 增加选题」</b>按钮，弹出创建窗口：</p>
-          <p><b>必填项</b>：选题名称（如"DJI Mic Mini 2s 评测"）、工作流类型（自制内容 / 商单）、发布日期。</p>
+          <p><b>必填项</b>：选题名称（如"掌握NotebookLM 2.0（2026 版）"）、工作流类型（自制内容 / 商单 / ……）、发布日期。</p>
           <p><b>选填项</b>：状态标记（普通 / 重要 / 紧急）、影响力星级（点击星星 1-5 颗）、商单可选填金额（如 50000，自动格式化 ¥50,000）。</p>
           <p>点击「确认添加」后，系统立即按<b>工作日倒排</b>生成所有制作阶段——比如发布日期是周五，最后一个制作节点"包装"会自动排到周四，周末被跳过。</p>` },
         { title: '第二步：看懂排期日历', html: `<p>日历是哌稿场的<b>核心操作区</b>。每一行是一条选题，每个<b>彩色方块</b>是一个制作阶段。</p>
@@ -2198,7 +2183,6 @@
       function closeGuide() { document.getElementById('guide-modal-overlay').classList.remove('open'); }
       document.getElementById('btn-header-guide').onclick = openGuide;
       document.getElementById('guide-modal-x').onclick = closeGuide;
-      document.getElementById('guide-modal-overlay').addEventListener('click', e => { if (e.target.id === 'guide-modal-overlay') closeGuide(); });
       document.getElementById('guide-next').addEventListener('click', () => {
         if (_guideStep < guideSteps.length - 1) { _guideStep++; renderGuideStep(); } else { closeGuide(); }
       });
@@ -2214,9 +2198,6 @@
       // 确认弹窗
       document.getElementById('confirm-modal-cancel').onclick = () => closeConfirm(false);
       document.getElementById('confirm-modal-ok').onclick = () => closeConfirm(true);
-      document.getElementById('confirm-modal-overlay').addEventListener('click', e => {
-        if (e.target.id === 'confirm-modal-overlay') closeConfirm(false);
-      });
 
       initTheme();
 

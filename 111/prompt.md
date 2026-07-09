@@ -40,10 +40,7 @@ NPie_Draftstage/
 │   ├── Import.svg             # 导入图标
 │   ├── About.svg              # 使用说明图标
 │   └── Settings.svg           # 设置图标
-├── README.md
-├── prompt.md
-├── audit-report.md
-└── audit-report-v2.md
+└── README.md
 ```
 
 ---
