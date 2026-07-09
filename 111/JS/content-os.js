@@ -2013,14 +2013,36 @@
           <button class="wf-icon-btn danger" data-wf-sdel="${s.id}">✕</button>
         </div>
       `).join('');
+      // 节点拖拽排序
+      setupStageDrag(document.getElementById('wf-editor-stages'));
       document.getElementById('wf-editor').style.display = 'block';
+    }
+
+    function setupStageDrag(container) {
+      let dragRow = null;
+      container.querySelectorAll('.wf-stage-row').forEach(row => {
+        row.setAttribute('draggable', 'true');
+        row.addEventListener('dragstart', e => { dragRow = row; row.style.opacity = '0.5'; });
+        row.addEventListener('dragend', () => { dragRow = null; row.style.opacity = ''; });
+        row.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
+        row.addEventListener('drop', e => {
+          e.preventDefault();
+          if (dragRow && dragRow !== row) {
+            const rows = [...container.querySelectorAll('.wf-stage-row')];
+            const fromIdx = rows.indexOf(dragRow);
+            const toIdx = rows.indexOf(row);
+            if (fromIdx < toIdx) row.after(dragRow);
+            else row.before(dragRow);
+          }
+        });
+      });
     }
 
     function addWorkflowStageRow() {
       const stagesEl = document.getElementById('wf-editor-stages');
-      const idx = Date.now();
       const row = document.createElement('div');
       row.className = 'wf-stage-row';
+      row.setAttribute('draggable', 'true');
       row.innerHTML = `
         <input type="text" placeholder="节点名" />
         <input type="number" value="1" min="1" max="30" class="wf-days" placeholder="天" />
@@ -2028,6 +2050,21 @@
         <button class="wf-icon-btn danger">✕</button>
       `;
       row.querySelector('.wf-icon-btn').addEventListener('click', () => row.remove());
+      // 拖拽事件
+      row.addEventListener('dragstart', e => { row.style.opacity = '0.5'; });
+      row.addEventListener('dragend', () => { row.style.opacity = ''; });
+      row.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
+      row.addEventListener('drop', e => {
+        e.preventDefault();
+        const dragRow = [...stagesEl.querySelectorAll('.wf-stage-row')].find(r => r.style.opacity === '0.5');
+        if (dragRow && dragRow !== row) {
+          const rows = [...stagesEl.querySelectorAll('.wf-stage-row')];
+          const fromIdx = rows.indexOf(dragRow);
+          const toIdx = rows.indexOf(row);
+          if (fromIdx < toIdx) row.after(dragRow);
+          else row.before(dragRow);
+        }
+      });
       stagesEl.appendChild(row);
     }
 
