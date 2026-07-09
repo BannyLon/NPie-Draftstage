@@ -647,7 +647,7 @@
               <span class="topic-label-progress">${progress}%</span>
             </div>
           </div>
-          <img class="topic-label-arrow ${topic.obsidianUrl ? 'has-url' : ''}" src="IMG/Obsidian.webp" alt="" title="${topic.obsidianUrl ? '打开 Obsidian 笔记' : '设置 Obsidian 链接'}" data-obsidian-label="${topic.id}" />
+          <img class="topic-label-arrow ${topic.obsidianUrl ? 'has-url' : ''}" src="IMG/Obsidian.webp" alt="" title="${topic.obsidianUrl ? '左键打开 Obsidian 笔记 / 右键编辑链接' : '设置 Obsidian 链接'}" data-obsidian-label="${topic.id}" />
         </div>`;
         rowsHtml += `<div class="track-area" data-track-id="${topic.id}">`;
         dates.forEach(d => {
@@ -862,6 +862,13 @@
           } else {
             openObsidianModal(topic.id);
           }
+        });
+        // 右键 → 始终打开编辑弹窗（修改链接）
+        icon.addEventListener('contextmenu', e => {
+          e.preventDefault();
+          e.stopPropagation();
+          const topic = state.topics.find(t => t.id === icon.dataset.obsidianLabel);
+          if (topic) openObsidianModal(topic.id);
         });
       });
 
@@ -1504,7 +1511,7 @@
           <div class="card-head">
             <div class="card-head-left">
               <div class="card-title">${esc(topic.title)}</div>
-              <img class="card-obsidian-link ${topic.obsidianUrl ? 'has-url' : ''}" src="IMG/Obsidian.webp" alt="Obsidian" title="${topic.obsidianUrl ? '打开 Obsidian 笔记' : '设置 Obsidian 链接'}" data-obsidian-topic="${topic.id}" />
+              <img class="card-obsidian-link ${topic.obsidianUrl ? 'has-url' : ''}" src="IMG/Obsidian.webp" alt="Obsidian" title="${topic.obsidianUrl ? '左键打开 Obsidian 笔记 / 右键编辑链接' : '设置 Obsidian 链接'}" data-obsidian-topic="${topic.id}" />
               <select class="card-type-select" data-type-select="${topic.id}">
                 <option value="self" ${topic.type === 'self' ? 'selected' : ''}>自制内容</option>
                 <option value="commercial" ${topic.type === 'commercial' ? 'selected' : ''}>商单</option>
@@ -1589,6 +1596,13 @@
           } else {
             openObsidianModal(topic.id);
           }
+        });
+        // 右键 → 始终打开编辑弹窗（修改链接）
+        icon.addEventListener('contextmenu', e => {
+          e.preventDefault();
+          e.stopPropagation();
+          const topic = state.topics.find(t => t.id === icon.dataset.obsidianTopic);
+          if (topic) openObsidianModal(topic.id);
         });
       });
 
