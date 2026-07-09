@@ -15,6 +15,8 @@
       --blue: #7C8E99;
       --yellow: #C6A25C;
       --shadow: 0 12px 32px rgba(44, 42, 41, 0.06);
+      --card-self: #FDF8F0;
+      --card-commercial: #F5F6F8;
     }
     /* ── 暗色模式 ── */
     [data-theme="dark"] {
@@ -33,6 +35,8 @@
       --blue: #8A9AA5;
       --yellow: #C8A860;
       --shadow: 0 12px 32px rgba(0,0,0,0.25);
+      --card-self: #302820;
+      --card-commercial: #252830;
     }
     /* ── 主题：冷灰 ── */
     [data-theme="cool"] {
@@ -49,6 +53,8 @@
       --red: #A07060;
       --blue: #6B8A9E;
       --yellow: #B8A060;
+      --card-self: #F7F2F0;
+      --card-commercial: #F0F3F6;
     }
     /* ── 主题：自然绿 ── */
     [data-theme="green"] {
@@ -65,6 +71,8 @@
       --red: #A06858;
       --blue: #6B8898;
       --yellow: #A09050;
+      --card-self: #F6F3EC;
+      --card-commercial: #EEF0EC;
     }
     /* ── 主题：高级时尚杂志风 ── */
     [data-theme="magazine"] {
@@ -81,6 +89,8 @@
       --red: #A86050;
       --blue: #688090;
       --yellow: #B09040;
+      --card-self: #F6F0E8;
+      --card-commercial: #EEECF0;
     }
     /* ── 主题：草绿小清新风 ── */
     [data-theme="fresh"] {
@@ -97,6 +107,8 @@
       --red: #C07058;
       --blue: #6898A8;
       --yellow: #B8A040;
+      --card-self: #F4F7EC;
+      --card-commercial: #EFF2F5;
     }
     /* ── 主题：暖金 ── */
     [data-theme="warmgold"] {
@@ -113,6 +125,8 @@
       --red: #B87858;
       --blue: #7898A8;
       --yellow: #C89830;
+      --card-self: #FCF6EC;
+      --card-commercial: #F2F3F6;
     }
     /* ── 暗色模式全局修正：按钮/标签文字可读性 ── */
     [data-theme="dark"] .add-topic-btn { background: var(--accent); color: #1C1B1A; }
@@ -648,8 +662,8 @@
       box-shadow: var(--shadow);
       transition: outline 0.15s;
     }
-    .topic-card.type-self { background: linear-gradient(135deg, var(--surface) 0%, var(--surface) 60%, var(--accent-soft) 100%); }
-    .topic-card.type-commercial { background: linear-gradient(135deg, var(--surface) 0%, var(--surface-muted) 100%); }
+    .topic-card.type-self { background: var(--card-self); }
+    .topic-card.type-commercial { background: var(--card-commercial); }
     .topic-card.selected { outline: 2px solid rgba(176,138,83,0.35); }
     .topic-card.drag-over { outline: 2px dashed rgba(176,138,83,0.5); }
     .topic-card.is-urgent { border-left: 3px solid #E08840; }
@@ -680,7 +694,7 @@
       margin-top: 5px; padding: 3px 7px;
       border: 1px solid var(--border); border-radius: 6px;
       font-size: 0.72rem; font-weight: 600;
-      background: var(--surface-muted); color: var(--text);
+      background: var(--surface); color: var(--text);
       cursor: pointer;
     }
     .card-progress-wrap { min-width: 64px; text-align: right; }
@@ -712,19 +726,19 @@
     .prep-row { display: flex; gap: 6px; margin-bottom: 6px; }
     .prep-input {
       flex: 1; padding: 6px 10px; border-radius: 6px;
-      border: 1px solid var(--border); background: var(--surface-muted);
+      border: 1px solid var(--border); background: var(--surface);
       font-size: 0.76rem;
     }
     .prep-add-btn {
       width: 30px; height: 30px; border-radius: 6px;
-      border: none; background: var(--text); color: #fff;
+      border: none; background: var(--text); color: var(--surface);
       font-weight: 700; cursor: pointer; font-size: 0.9rem;
     }
     .prep-item {
       display: flex; align-items: center; gap: 8px;
       padding: 6px 10px; border-radius: 6px;
-      border: 1px solid rgba(217,209,197,0.7);
-      background: var(--surface-muted); margin-bottom: 3px;
+      border: 1px solid var(--border);
+      background: var(--surface); margin-bottom: 3px;
       transition: background 0.15s;
     }
     .prep-item.done { background: color-mix(in srgb, var(--green) 12%, transparent); }
@@ -739,8 +753,8 @@
     .workflow-item {
       display: flex; align-items: center; gap: 7px;
       padding: 6px 8px; border-radius: 6px;
-      border: 1px solid rgba(217,209,197,0.6);
-      background: var(--surface-muted);
+      border: 1px solid var(--border);
+      background: var(--surface);
       transition: background 0.15s;
     }
     .workflow-item.done {
