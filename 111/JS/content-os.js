@@ -312,12 +312,14 @@
     let _saveTimer;
     function save() {
       clearTimeout(_saveTimer);
-      _saveTimer = setTimeout(async () => {
-        // 优先 IndexedDB，失败回退 localStorage
-        try { await idbSave(state.topics); } catch (_) {
-          try { localStorage.setItem('content-os-v2', JSON.stringify(state.topics)); } catch (e) { toast('⚠️ 存储空间不足，请导出备份后清理数据'); }
-        }
-      }, 200);
+      _saveTimer = setTimeout(() => saveNow(), 200);
+    }
+    /** 即时写入 — 删除、存档等不可逆操作用 */
+    async function saveNow() {
+      clearTimeout(_saveTimer);
+      try { await idbSave(state.topics); } catch (_) {
+        try { localStorage.setItem('content-os-v2', JSON.stringify(state.topics)); } catch (e) { toast('⚠️ 存储空间不足，请导出备份后清理数据'); }
+      }
     }
 
     async function load() {
@@ -871,7 +873,7 @@
       // 追加自定义日程
       topic.tasks = topic.tasks.concat(customTasks);
 
-      save();
+      saveNow();
       render();
       toast(`「${topic.title}」发布日 → ${newPublishDate}`);
     }
@@ -913,7 +915,7 @@
         task.endDate   = fmt(addDays(parse(newStart), Math.max(0, duration)));
       }
 
-      save();
+      saveNow();
       render();
       toast(`已调整「${topic.title}」节点日期`);
     }
@@ -1015,7 +1017,7 @@
       if (!task) return;
       showConfirm(`确认删除流程节点「${task.name}」？`, () => {
         topic.tasks = topic.tasks.filter(t => t.id !== taskId);
-        save();
+        saveNow();
         render();
         toast(`已删除「${task.name}」`);
       }, '删除节点', '删除');
@@ -1355,7 +1357,7 @@
       const topic = state.topics.find(t => t.id === _obsidianTopicId);
       if (!topic) return;
       topic.obsidianUrl = url;
-      save(); render();
+      saveNow(); render();
       closeObsidianModal();
       toast(url ? 'Obsidian 链接已设置' : 'Obsidian 链接已清除');
     }
@@ -1376,7 +1378,7 @@
       showConfirm(msg, () => {
         state.topics = state.topics.filter(t => t.id !== topicId);
         if (state.selectedTopicId === topicId) state.selectedTopicId = null;
-        save();
+        saveNow();
         render();
         toast(mode === 'abandon' ? `已放弃「${topic.title}」` : `已删除「${topic.title}」`);
       }, title, mode === 'abandon' ? '放弃' : '删除');
@@ -1395,13 +1397,13 @@
           topic.archived = true;
           toast(`已存档「${topic.title}」`);
           if (state.selectedTopicId === topicId) state.selectedTopicId = null;
-          save(); render();
+          saveNow(); render();
         }, '存档选题', '存档');
       } else {
         topic.archived = false;
         toast(`已恢复「${topic.title}」`);
         if (state.selectedTopicId === topicId) state.selectedTopicId = null;
-        save(); render();
+        saveNow(); render();
       }
     }
 
@@ -1412,7 +1414,7 @@
       if (fi < 0 || ti < 0 || fi === ti) return;
       const [item] = state.topics.splice(fi, 1);
       state.topics.splice(ti, 0, item);
-      save();
+      saveNow();
       render();
       toast('已调整选题顺序');
     }
@@ -1687,7 +1689,7 @@
       const topic = { id: uid(), title, type, publishDate, prep: [], tasks: [], archived: false, obsidianUrl: '', status, priority, budget };
       topic.tasks = buildWorkflow(topic);
       state.topics.push(topic);
-      save();
+      saveNow();
       closeModal();
       render();
       toast(`已添加「${title}」`);
@@ -1974,7 +1976,7 @@
         state.topics.forEach(t => { if (t.type === wfId) t.type = 'self'; });
         updateTypeSelect();
         renderWorkflowList();
-        save(); render();
+        saveNow(); render();
         toast(`已删除「${wf.name}」`);
       }, '删除工作流', '删除');
     }
