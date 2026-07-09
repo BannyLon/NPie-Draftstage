@@ -555,14 +555,15 @@
         const card = document.createElement('div');
         card.style.cssText = 'background:var(--surface);border-radius:20px;padding:48px 52px 40px;max-width:560px;width:92vw;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.25);cursor:default;position:relative;font-family:var(--font,inherit);';
         card.innerHTML = `<button style="position:absolute;top:16px;right:18px;width:32px;height:32px;border-radius:50%;border:none;background:transparent;font-size:1.2rem;cursor:pointer;color:var(--text-muted);">✕</button>
-          <div style="font-family:'Space Mono',monospace;font-size:0.62rem;letter-spacing:0.3em;color:var(--accent);text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:10px;"><span style="width:28px;height:1px;background:var(--accent);display:inline-block;"></span> Brand</div>
-          <div style="font-family:'Noto Serif SC',serif;font-size:3.2rem;font-weight:900;line-height:1;color:var(--text);margin-bottom:6px;">嗯哌</div>
-          <div style="font-family:'Playfair Display','Noto Serif SC',serif;font-size:2.6rem;font-weight:900;font-style:italic;color:transparent;-webkit-text-stroke:1.2px var(--text);line-height:1;margin-bottom:24px;">NPIE</div>
-          <div style="width:48px;height:1px;background:var(--border);margin-bottom:20px;"></div>
-          <p style="font-size:0.82rem;line-height:1.8;color:var(--text-muted);margin:0 0 16px;">NPIE 是一个<b style="color:var(--text);">内容创作工具品牌</b>，致力于为自媒体创作者提供优雅、高效的创作管理工具。</p>
-          <p style="font-size:0.82rem;line-height:1.8;color:var(--text-muted);margin:0 0 24px;">哌稿场 · 档期 是 NPIE 旗下的<b style="color:var(--text);">内容排期看板</b>——把选题策划、制作流程、进度追踪整合在一张画布上，让创作者从"脑子里记"变成"看板上一目了然"。</p>
-          <div style="display:flex;gap:16px;padding-top:16px;border-top:1px solid var(--border);font-size:0.66rem;color:var(--text-muted);font-family:'Space Mono',monospace;letter-spacing:0.06em;">
-            <span>Content & Creative Studio</span><span style="color:var(--border);">|</span><span>Since 2025</span>
+          <div style="font-family:'Space Mono',monospace;font-size:0.62rem;letter-spacing:0.3em;color:var(--accent);text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:10px;"><span style="width:28px;height:1px;background:var(--accent);display:inline-block;"></span> Content Creator</div>
+          <div style="font-family:'Noto Serif SC',serif;font-size:3rem;font-weight:900;line-height:1;color:var(--text);margin-bottom:4px;">嗯哌</div>
+          <div style="font-family:'Playfair Display','Noto Serif SC',serif;font-size:2.4rem;font-weight:900;font-style:italic;color:transparent;-webkit-text-stroke:1.2px var(--text);line-height:1;margin-bottom:22px;">NPIE</div>
+          <div style="width:48px;height:1px;background:var(--border);margin-bottom:18px;"></div>
+          <p style="font-size:0.82rem;line-height:1.8;color:var(--text-muted);margin:0 0 14px;">嗯哌（NPIE）是一个<b style="color:var(--text);">自媒体创作者品牌</b>，专注内容创作、知识分享与数字工具开发。</p>
+          <p style="font-size:0.82rem;line-height:1.8;color:var(--text-muted);margin:0 0 14px;">主理人以创作者视角出发，制作与分享<b style="color:var(--text);">创作方法论、工具评测、效率工作流</b>等深度内容，帮助同行创作者提升内容生产的质量与效率。</p>
+          <p style="font-size:0.82rem;line-height:1.8;color:var(--text-muted);margin:0 0 22px;">本应用「哌稿场 · 档期」为嗯哌主理人开发的<b style="color:var(--text);">创作排期工具</b>，源于真实创作场景中的需求——管理多条内容选题的制作流程与发布时间。</p>
+          <div style="display:flex;gap:16px;padding-top:14px;border-top:1px solid var(--border);font-size:0.66rem;color:var(--text-muted);font-family:'Space Mono',monospace;letter-spacing:0.06em;">
+            <span>Content Creator</span><span style="color:var(--border);">|</span><span>Since 2025</span>
           </div>`;
         overlay.appendChild(card);
         const close = () => overlay.remove();
@@ -1519,32 +1520,38 @@
     /** 渲染选题卡网格 */
     function renderCards() {
       const grid = document.getElementById('cards-grid');
+      const allWf = allWorkflows();
       grid.innerHTML = visibleTopics().map(topic => {
         const pct = calcProgress(topic);
         const urgent = isTopicUrgent(topic);
         const sel = state.selectedTopicId === topic.id;
+        const wfName = (allWf.find(w => w.id === topic.type) || {}).name || (topic.type === 'self' ? '自制内容' : topic.type === 'commercial' ? '商单' : '自定义');
         return `
         <div class="topic-card type-${topic.type} ${sel ? 'selected' : ''} ${urgent ? 'is-urgent' : ''}" draggable="true" data-card-id="${topic.id}" style="position:relative;">
 
           <!-- 左上角类型角标 -->
-          <span class="card-type-badge badge-${topic.type === 'self' ? 'self' : topic.type === 'commercial' ? 'commercial' : 'custom'}" title="${topic.type === 'self' ? '自制内容' : topic.type === 'commercial' ? '商单' : '自定义工作流'}">${topic.type === 'self' ? '自' : topic.type === 'commercial' ? '商' : '定'}</span>
+          <span class="card-type-badge badge-${topic.type === 'self' ? 'self' : topic.type === 'commercial' ? 'commercial' : 'custom'}" title="${wfName}">${topic.type === 'self' ? '自' : topic.type === 'commercial' ? '商' : '定'}</span>
 
-          <!-- 第一部分：标题 + 进度 -->
+          <!-- 第一部分：工作流类型 + 标题行 + 发布日期 + 进度 -->
+          <div class="card-wf-type">${esc(wfName)}
+            <select class="card-type-select" data-type-select="${topic.id}" style="margin-left:8px;font-size:0.6rem;padding:1px 4px;">
+              ${allWf.map(w => `<option value="${w.id}" ${topic.type === w.id ? 'selected' : ''}>${esc(w.name)}</option>`).join('')}
+            </select>
+          </div>
           <div class="card-head">
             <div class="card-head-left">
               <div class="card-title">${esc(topic.title)}</div>
               <img class="card-obsidian-link ${topic.obsidianUrl ? 'has-url' : ''}" src="IMG/Obsidian.webp" alt="Obsidian" title="${topic.obsidianUrl ? '左键打开 Obsidian 笔记 / 右键编辑链接' : '设置 Obsidian 链接'}" data-obsidian-topic="${topic.id}" />
-              <select class="card-type-select" data-type-select="${topic.id}">
-                <option value="self" ${topic.type === 'self' ? 'selected' : ''}>自制内容</option>
-                <option value="commercial" ${topic.type === 'commercial' ? 'selected' : ''}>商单</option>
-              </select>
             </div>
-            <div class="card-progress-wrap">
-              <div class="card-progress-pct">${pct}%</div>
-              <div class="card-progress-label">完成进度</div>
+            <div class="card-publish-date">
+              <span class="card-publish-label">发布日期</span>
+              <span class="card-publish-day">${fmtShortDate(topic.publishDate)}</span>
             </div>
           </div>
-          <div class="card-progress-bar"><div class="card-progress-fill" style="width:${pct}%"></div></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+            <div class="card-progress-bar" style="flex:1;margin-bottom:0;"><div class="card-progress-fill" style="width:${pct}%"></div></div>
+            <span style="font-size:0.78rem;font-weight:700;color:var(--text);white-space:nowrap;">${pct}%</span>
+          </div>
 
           <!-- 第二部分：前置准备 -->
           <div class="card-section">
@@ -1553,6 +1560,7 @@
               <input class="prep-input" placeholder="添加准备项…" data-prep-in="${topic.id}" />
               <button class="prep-add-btn" data-prep-add="${topic.id}">+</button>
             </div>
+            ${topic.prep.length === 0 ? '<p class="prep-empty-hint">暂无前置任务，可自行添加</p>' : ''}
             ${topic.prep.map((p, i) => `
               <div class="prep-item ${p.completed ? 'done' : ''}">
                 <input type="checkbox" class="item-checkbox" data-prep-chk="${topic.id}:${i}" ${p.completed ? 'checked' : ''} />
