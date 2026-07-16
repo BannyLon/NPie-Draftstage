@@ -1,0 +1,2469 @@
+    /**
+     * @file 哌稿场 · 档期 (NPie Draftstage)
+     * @description 内容创作排期看板 — 工作日倒排 + 选题卡 + 日历联动
+     */
+
+    // ── IndexedDB 持久化（优先，单连接防写入冲突）─────────
+    const IDB_NAME = 'npiedraft', IDB_VER = 1;
+    let _idb = null;
+    function idb() {
+      if (_idb) return Promise.resolve(_idb);
+      return new Promise((ok, no) => {
+        const r = indexedDB.open(IDB_NAME, IDB_VER);
+        r.onupgradeneeded = () => { r.result.createObjectStore('kv'); };
+        r.onsuccess = () => { _idb = r.result; _idb.onclose = () => { _idb = null; }; ok(_idb); };
+        r.onerror = () => no(r.error);
+      });
+    }
+    let _writeQueue = Promise.resolve();
+    async function idbSave(topics) {
+      // 串行化写入，防止并发事务冲突
+      const prev = _writeQueue;
+      let resolveQueue;
+      _writeQueue = new Promise(r => { resolveQueue = r; });
+      await prev;
+      try {
+        const d = await idb();
+        await new Promise((ok, no) => {
+          const tx = d.transaction('kv', 'readwrite');
+          const store = tx.objectStore('kv');
+          const req = store.put(topics, 'topics');
+          req.onsuccess = () => ok();
+          req.onerror = () => no(req.error);
+        });
+      } catch(_) { throw _; }
+      finally { resolveQueue(); }
+    }
+    async function idbLoad() {
+      try {
+        const d = await idb();
+        return new Promise(ok => {
+          const r = d.transaction('kv','readonly').objectStore('kv').get('topics');
+          r.onsuccess = () => ok(r.result);
+          r.onerror = () => ok(null);
+        });
+      } catch(_) { return null; }
+    }
+
+    const MS_DAY = 86400000;
+    const TODAY = (() => { const d = new Date(); d.setHours(0,0,0,0); return d; })();
+    const YEAR = TODAY.getFullYear();
+    const DEFAULT_START = new Date(YEAR, 6, 1);
+    const DEFAULT_END = new Date(YEAR, 11, 31);
+
+    // ── 中国法定节假日（2026-2027）────────────────
+    const HOLIDAYS_RAW = [
+      '2026-01-01','2026-02-17','2026-02-18','2026-02-19','2026-02-20','2026-02-21','2026-02-22','2026-02-23',
+      '2026-04-05','2026-05-01','2026-05-02','2026-05-03','2026-05-04','2026-05-05','2026-06-19',
+      '2026-09-25','2026-10-01','2026-10-02','2026-10-03','2026-10-04','2026-10-05','2026-10-06','2026-10-07',
+      '2027-01-01','2027-02-06','2027-02-07','2027-02-08','2027-02-09','2027-02-10','2027-02-11','2027-02-12',
+      '2027-04-05','2027-05-01','2027-05-02','2027-05-03','2027-05-04','2027-05-05','2027-06-09',
+      '2027-09-15','2027-10-01','2027-10-02','2027-10-03','2027-10-04','2027-10-05','2027-10-06','2027-10-07',
+    ];
+    const HOLIDAYS = new Set(HOLIDAYS_RAW);
+
+    /** 是否为工作日（非周末、非法定假日） */
+    function isBusinessDay(d) {
+      const day = d.getDay();
+      if (day === 0 || day === 6) return false;
+      if (HOLIDAYS.has(fmt(d))) return false;
+      return true;
+    }
+
+    /** 往前找最近的一个工作日（不含 date 本身） */
+    function prevBusinessDay(date) {
+      const d = new Date(date);
+      d.setDate(d.getDate() - 1);
+      while (!isBusinessDay(d)) d.setDate(d.getDate() - 1);
+      return d;
+    }
+
+    /** 往前减 n 个工作日，返回结果日期 */
+    function subtractBusinessDays(date, n) {
+      const d = new Date(date);
+      let count = 0;
+      while (count < n) {
+        d.setDate(d.getDate() - 1);
+        if (isBusinessDay(d)) count++;
+      }
+      return d;
+    }
+
+    /** @type {Record<string, Array<{id:string,name:string,days:number,color:string,desc?:string}>>} */
+    const WORKFLOWS = {
+      self: [
+        { id: 'prep',    name: '前置准备',   days: 1, color: '#B08A53' },
+        { id: 'script',  name: '脚本',       days: 1, color: '#A46858' },
+        { id: 'a_roll',  name: 'A-roll',     days: 1, color: '#8B9B7A' },
+        { id: 'b_roll',  name: 'B-roll',     days: 1, color: '#7C8E99' },
+        { id: 'edit',    name: '剪辑',       days: 2, color: '#C6A25C' },
+        { id: 'package', name: '包装',       days: 1, color: '#B5A890' },
+        { id: 'cover',   name: '封面',       days: 1, color: '#C8B8A0' },
+        { id: 'copy',    name: '文案',       days: 1, color: '#D4C0B0' },
+        { id: 'publish', name: '发布',       days: 1, color: '#A09080' },
+      ],
+      commercial: [
+        { id: 'brief',   name: '收到并拆解 Brief', days: 2, color: '#C8A080' },
+        { id: 'outline', name: '完成脚本大纲',     days: 3, color: '#B89870' },
+        { id: 'review',  name: '品牌审核',         days: 2, color: '#9B8AA5' },
+        { id: 'script',  name: '脚本',             days: 1, color: '#A46858' },
+        { id: 'a_roll',  name: 'A-roll',           days: 1, color: '#8B9B7A' },
+        { id: 'b_roll',  name: 'B-roll',           days: 1, color: '#7C8E99' },
+        { id: 'edit',    name: '剪辑',             days: 2, color: '#C6A25C' },
+        { id: 'package', name: '包装',             days: 1, color: '#B5A890' },
+        { id: 'cover',   name: '封面',             days: 1, color: '#C8B8A0' },
+        { id: 'copy',    name: '文案',             days: 1, color: '#D4C0B0' },
+        { id: 'publish', name: '发布',             days: 1, color: '#A09080' },
+      ],
+      collab: [
+        { id: 'plan',      name: '选题策划',     days: 1, color: '#B08A53' },
+        { id: 'script',    name: '脚本',         days: 1, color: '#A46858' },
+        { id: 'a_roll',    name: 'A-roll',       days: 1, color: '#8B9B7A' },
+        { id: 'handoff',   name: '🔄 交接',      days: 1, color: '#E88040' },
+        { id: 'partner',   name: '合作方制作',   days: 2, color: '#3BA0A0' },
+        { id: 'handback',  name: '🔄 回接',      days: 1, color: '#E88040' },
+        { id: 'final_edit',name: '精剪',         days: 1, color: '#C6A25C' },
+        { id: 'package',   name: '包装',         days: 1, color: '#B5A890' },
+        { id: 'cover',     name: '封面',         days: 1, color: '#C8B8A0' },
+        { id: 'copy',      name: '文案',         days: 1, color: '#D4C0B0' },
+        { id: 'publish',   name: '发布',         days: 1, color: '#A09080' },
+      ]
+    };
+
+    /** @type {{topics: Topic[], selectedTopicId: string|null, viewStart: Date, viewEnd: Date, activeNav: string, drag: object|null}} */
+    const state = {
+      topics: [],
+      selectedTopicId: null,
+      viewStart: DEFAULT_START,
+      viewEnd: DEFAULT_END,
+      activeNav: localStorage.getItem('npiedraft-nav') || 'topics',
+      drag: null,
+      sidebarCollapsed: false
+    };
+
+    /**
+     * @typedef {{text: string, completed: boolean}} PrepItem
+     * @typedef {{id: string, name: string, days: number, color: string, startDate: string, endDate: string, completed: boolean}} Task
+     * @typedef {{id: string, title: string, publishDate: string, type: 'self'|'commercial', prep: PrepItem[], tasks: Task[], archived: boolean, obsidianUrl: string, status: string, priority: number, budget: string}} Topic
+     */
+
+    /** @returns {string} */
+    function uid() { return 't' + Date.now() + Math.random().toString(36).slice(2, 6); }
+
+    /** @param {Date} d @param {number} n @returns {Date} */
+    function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+
+    /** @param {Date} d @returns {string} 本地日期 YYYY-MM-DD，不用 UTC */
+    function fmt(d) {
+      return d.getFullYear() + '-' +
+        String(d.getMonth() + 1).padStart(2, '0') + '-' +
+        String(d.getDate()).padStart(2, '0');
+    }
+
+    /** @param {string} s @returns {Date} */
+    function parse(s) { return new Date(s + 'T00:00:00'); }
+
+    /** @param {string} s @returns {string} */
+    function esc(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    /** 颜色数组 */
+    const TOPIC_COLORS = [
+      { main: '#B08A53', bg: '#F5EFE6' },
+      { main: '#A46858', bg: '#F3EAE7' },
+      { main: '#8B9B7A', bg: '#E7ECE4' },
+      { main: '#7C8E99', bg: '#E5E9EC' },
+      { main: '#C6A25C', bg: '#F8F3E7' },
+      { main: '#9B8AA5', bg: '#ECE8EF' },
+      { main: '#6B8E8F', bg: '#E3EAEA' },
+      { main: '#D4A373', bg: '#F8F1E8' }
+    ];
+
+    /** 获取选题颜色 */
+    function getTopicColor(index) {
+      return TOPIC_COLORS[index % TOPIC_COLORS.length];
+    }
+
+    /** 格式化日期为 M/D 格式 */
+    function fmtShortDate(dateStr) {
+      const d = parse(dateStr);
+      return `${d.getMonth() + 1}/${d.getDate()}`;
+    }
+
+    /**
+     * 按工作日倒排：从发布日期往前推算所有阶段日期
+     * 封面/文案/发布固定在发布日当天（堆叠），其余阶段连续排在之前的营业日
+     * @param {Topic} topic
+     * @returns {Task[]}
+     */
+    function buildWorkflow(topic) {
+      const wf = getWorkflowById(topic.type) || WORKFLOWS.self;
+      const publishDate = topic.publishDate;
+      // 先统一算所有非堆叠阶段的日期
+      const nonStack = wf.filter(s => !['cover', 'copy', 'publish'].includes(s.id));
+      const dateCache = {};
+      let cursor = parse(publishDate);
+      // 从后往前倒排
+      for (let i = nonStack.length - 1; i >= 0; i--) {
+        const stage = nonStack[i];
+        const end = prevBusinessDay(cursor);
+        const start = subtractBusinessDays(new Date(end), stage.days - 1);
+        dateCache[stage.id] = { startDate: fmt(start), endDate: fmt(end) };
+        cursor = new Date(start);
+      }
+
+      return wf.map(stage => {
+        const existing = (topic.tasks || []).find(t => t.id === stage.id);
+        if (['cover', 'copy', 'publish'].includes(stage.id)) {
+          return {
+            id: stage.id, name: stage.name, days: stage.days, color: stage.color,
+            completed: existing ? existing.completed : false,
+            startDate: publishDate, endDate: publishDate
+          };
+        }
+        return {
+          id: stage.id, name: stage.name, days: stage.days, color: stage.color,
+          completed: existing ? existing.completed : false,
+          ...dateCache[stage.id]
+        };
+      });
+    }
+
+    /** @param {Topic} topic @returns {number} 仅统计制作流程节点，不含前置准备 */
+    function calcProgress(topic) {
+      const wfTasks = topic.tasks.filter(t => !t.id.startsWith('custom_'));
+      const total = wfTasks.length;
+      if (!total) return 0;
+      const done = wfTasks.filter(t => t.completed).length;
+      return Math.round((done / total) * 100);
+    }
+
+    /**
+     * 跑马灯筛选规则（多维度）：
+     *   状态=紧急          → 始终显示
+     *   状态=重要 + ≤7天   → 显示
+     *   影响力4-5星 + ≤7天 → 显示
+     *   商单有金额 + ≤7天  → 显示
+     *   自制≤3天 / 商单≤5天 → 显示（基础规则）
+     */
+    function isTopicUrgent(topic) {
+      if (topic.archived || calcProgress(topic) >= 100) return false;
+      const today = new Date(); today.setHours(0,0,0,0);
+      const days = Math.round((parse(topic.publishDate) - today) / MS_DAY);
+      // 紧急标记：无视天数
+      if (topic.status === 'urgent') return true;
+      // 重要 / 高影响力 / 商单有金额：宽限至 7 天
+      const highPriority = (topic.status === 'important') || (topic.priority >= 4) || (!!topic.budget && topic.type === 'commercial');
+      if (highPriority && days <= 7) return true;
+      // 基础规则
+      const limit = topic.type === 'commercial' ? 5 : 3;
+      return days <= limit;
+    }
+
+    /** 跑马灯排序权重（越大越靠前） */
+    function tickerWeight(topic) {
+      let w = 0;
+      const today = new Date(); today.setHours(0,0,0,0);
+      const days = Math.round((parse(topic.publishDate) - today) / MS_DAY);
+      // 状态
+      if (topic.status === 'urgent') w += 200;
+      else if (topic.status === 'important') w += 80;
+      // 影响力
+      w += (topic.priority || 0) * 15;
+      // 商单金额（有金额+40，金额含数字可以按量级加）
+      if (topic.budget && topic.type === 'commercial') {
+        w += 40;
+        const nums = topic.budget.match(/[\d.]+/g);
+        if (nums) {
+          const val = parseFloat(nums.join(''));
+          if (val >= 100000) w += 30;
+          else if (val >= 10000) w += 15;
+        }
+      }
+      // 临近度（越近权重越高）
+      w += Math.max(0, 50 - days * 5);
+      return w;
+    }
+
+    /** 规范化前置准备数据结构 */
+    function normalizePrep(prep) {
+      if (!Array.isArray(prep)) return [];
+      return prep.map(p => typeof p === 'string' ? { text: p, completed: false } : { text: p.text || '', completed: !!p.completed });
+    }
+
+    /** 初始化模拟数据 */
+    function seedData() {
+      state.topics = [];
+    }
+
+    /** 扩展时间轴右边界 */
+    function updateBounds() {
+      let maxEnd = DEFAULT_END;
+      state.topics.forEach(t => {
+        const pd = parse(t.publishDate);
+        if (pd > maxEnd) maxEnd = pd;
+        t.tasks.forEach(task => {
+          const ed = parse(task.endDate);
+          if (ed > maxEnd) maxEnd = ed;
+        });
+      });
+      state.viewEnd = maxEnd;
+      state.viewStart = DEFAULT_START;
+    }
+
+    /** @returns {Date[]} */
+    function getDates() {
+      const dates = [];
+      const n = Math.round((state.viewEnd - state.viewStart) / MS_DAY) + 1;
+      for (let i = 0; i < n; i++) dates.push(addDays(state.viewStart, i));
+      document.documentElement.style.setProperty('--timeline-day-count', n);
+      return dates;
+    }
+
+    /** @param {string} msg */
+    function toast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(el._timer);
+      el._timer = setTimeout(() => el.classList.remove('show'), 2400);
+    }
+
+    /** 持久化 */
+    /** 为动态生成元素添加无障碍属性 */
+    function addAriaLabels() {
+      document.querySelectorAll('.topic-label-card').forEach((el, i) => el.setAttribute('aria-label', '选题标签，可拖拽移动排期'));
+      document.querySelectorAll('.task-block').forEach(el => el.setAttribute('aria-label', '任务块，可拖拽微调日期，双击重命名，右键删除'));
+      document.querySelectorAll('.track-cell').forEach(el => el.setAttribute('aria-label', '日历格子，拖拽选题或任务块到此处'));
+      document.querySelectorAll('.card-type-badge').forEach(el => el.setAttribute('aria-label', el.classList.contains('badge-self') ? '自制内容' : '商单'));
+      document.querySelectorAll('.tl-urgent-dot').forEach(el => el.setAttribute('aria-label', '紧急选题'));
+      document.querySelectorAll('.item-checkbox').forEach(el => el.setAttribute('aria-label', '勾选完成'));
+    }
+
+    let _saveTimer;
+    function save() {
+      clearTimeout(_saveTimer);
+      _saveTimer = setTimeout(() => saveNow(), 200);
+    }
+    /** 即时写入 — 删除、存档等不可逆操作：先同步写 localStorage，再异步写 IndexedDB */
+    function saveNow() {
+      clearTimeout(_saveTimer);
+      const json = JSON.stringify(state.topics);
+      // 1. 同步写入 localStorage（确保刷新时数据已在磁盘）
+      try { localStorage.setItem('content-os-v2', json); } catch (e) { toast('⚠️ 存储空间不足，请导出备份后清理数据'); }
+      // 2. 异步写入 IndexedDB（长期存储，清缓存不丢）
+      idbSave(state.topics).catch(() => {});
+    }
+
+    async function load() {
+      // localStorage 有同步写入，优先作为最新数据源
+      let topics = null;
+      try {
+        const raw = localStorage.getItem('content-os-v2');
+        if (raw) { topics = JSON.parse(raw); }
+      } catch(_) {}
+      // 回退 IndexedDB
+      if (!topics || !topics.length) {
+        topics = await idbLoad();
+        // IndexedDB 有数据 → 迁移到 localStorage
+        if (topics && topics.length) {
+          try { localStorage.setItem('content-os-v2', JSON.stringify(topics)); } catch(_) {}
+        }
+      }
+      if (!topics || !Array.isArray(topics) || !topics.length) return false;
+
+      try {
+        state.topics = topics.map(t => {
+          const newTopic = { ...t, prep: normalizePrep(t.prep) };
+          if (newTopic.archived == null) newTopic.archived = false; // 向后兼容旧数据
+          if (newTopic.obsidianUrl == null) newTopic.obsidianUrl = '';
+          if (newTopic.status == null) newTopic.status = 'normal';
+          if (newTopic.priority == null) newTopic.priority = 0;
+          if (newTopic.budget == null) newTopic.budget = '';
+
+          // 迁移旧版 edit1/edit2 → edit（v2.0 合并）
+          const hasOldEdit = t.tasks?.some(s => s.id === 'edit1' || s.id === 'edit2');
+          if (hasOldEdit) {
+            newTopic.tasks = buildWorkflow(newTopic);
+            // 迁移完成状态：旧 edit1 或 edit2 任一完成 → 新 edit 完成
+            const oldDone = t.tasks.some(s => (s.id === 'edit1' || s.id === 'edit2') && s.completed);
+            if (oldDone) {
+              const editTask = newTopic.tasks.find(s => s.id === 'edit');
+              if (editTask) editTask.completed = true;
+            }
+            // 迁移其他阶段的完成状态
+            t.tasks.forEach(saved => {
+              if (saved.id === 'edit1' || saved.id === 'edit2') return;
+              const nt = newTopic.tasks.find(s => s.id === saved.id);
+              if (nt && saved.completed) nt.completed = true;
+            });
+          } else if (Array.isArray(t.tasks) && t.tasks.length) {
+            // 已有 v2.0 格式的保存数据：保留手动调整的日期
+            newTopic.tasks = buildWorkflow(newTopic);
+            t.tasks.forEach(saved => {
+              if (saved.id && saved.id.startsWith('custom_')) return; // 下面单独处理
+              const nt = newTopic.tasks.find(s => s.id === saved.id);
+              if (nt && saved.completed) nt.completed = true;
+              if (nt && saved.startDate && saved.endDate) {
+                // 保留手动微调的日期
+                nt.startDate = saved.startDate;
+                nt.endDate = saved.endDate;
+              }
+            });
+          } else {
+            newTopic.tasks = buildWorkflow(newTopic);
+          }
+          // 保留自定义日程
+          const customTasks = (t.tasks || []).filter(s => s.id && s.id.startsWith('custom_'));
+          newTopic.tasks = newTopic.tasks.concat(customTasks);
+
+          return newTopic;
+        });
+        return true;
+      } catch (_) { return false; }
+    }
+
+    /** 根据当前视图返回可见选题 */
+    function visibleTopics() {
+      if (state.activeNav === 'archived') return state.topics.filter(t => t.archived);
+      return state.topics.filter(t => !t.archived);
+    }
+
+    /** 渲染侧边栏 */
+    function renderSidebar() {
+      const topics = visibleTopics();
+      const isArchivedView = state.activeNav === 'archived';
+      document.getElementById('sidebar').innerHTML = `
+        <div class="sidebar-top">
+          <button class="sidebar-toggle" id="sidebar-toggle" title="${state.sidebarCollapsed ? '展开侧栏' : '收起侧栏'}">${state.sidebarCollapsed ? '▶' : '◀'}</button>
+          <div class="brand-row">
+            <img class="brand-logo" src="IMG/NPIEAI_logo.jpg" alt="" />
+            <div class="brand-text">
+              <div class="brand-title">NPie Draftstage</div>
+              <div class="brand-subtitle">哌稿场 · 档期</div>
+            </div>
+          </div>
+        </div>
+
+        <nav class="nav-list">
+          <button class="nav-pill ${state.activeNav === 'timeline' ? 'active' : ''}" data-nav="timeline">排期日历</button>
+          <button class="nav-pill ${state.activeNav === 'topics' ? 'active' : ''}" data-nav="topics">选题卡</button>
+          <button class="nav-pill ${state.activeNav === 'archived' ? 'active' : ''}" data-nav="archived">已存档</button>
+        </nav>
+
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-section-label">${isArchivedView ? '已存档选题' : '选题目录'}</div>
+
+        <div class="topic-list" id="sidebar-topic-list">
+          ${topics.length === 0
+            ? `<div style="padding:12px 14px;color:var(--text-muted);font-size:0.76rem;">${isArchivedView ? '暂无已存档选题' : '暂无选题'}</div>`
+            : topics.map((topic, index) => {
+            const sel = state.selectedTopicId === topic.id;
+            const urgent = isTopicUrgent(topic);
+            const colorObj = getTopicColor(index);
+            return `
+              <div class="topic-item ${sel ? 'selected' : ''} ${urgent ? 'topic-urgent' : ''}" data-sidebar-topic="${topic.id}"
+                   style="border-left-color: ${colorObj.main}; background-color: ${colorObj.bg}; position:relative;">
+                <span class="topic-item-badge badge-${topic.type === 'self' ? 'self' : topic.type === 'commercial' ? 'commercial' : topic.type === 'collab' ? 'collab' : 'custom'}">${topic.type === 'self' ? '自' : topic.type === 'commercial' ? '商' : topic.type === 'collab' ? '合' : '定'}</span>
+                <span class="topic-item-title">${esc(topic.title)}</span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+        <!-- 第一部分：导出/导入 + 说明 -->
+        <div class="sidebar-bottom">
+          <div class="sidebar-bottom-btns">
+            <button class="tool-btn" id="btn-export" title="导出备份"><img src="IMG/Export.svg" alt="" class="tool-btn-icon" /><span class="tool-btn-text">导出备份</span></button>
+            <button class="tool-btn" id="btn-import" title="导入恢复"><img src="IMG/Import.svg" alt="" class="tool-btn-icon" /><span class="tool-btn-text">导入恢复</span></button>
+          </div>
+          <div class="sidebar-bottom-text">
+            <p style="margin:0;font-size:0.56rem;line-height:1.5;">导出 — 将全部选题数据保存为 JSON 文件；导入 — 从备份文件恢复选题数据。</p>
+          </div>
+        </div>
+        <!-- 第二部分：关于/设置 + slogan -->
+        <div class="sidebar-footer">
+          <div class="sidebar-links">
+            <button class="sidebar-link" id="btn-about" title="关于嗯哌">
+              <img src="IMG/About.svg" alt="" class="sidebar-link-icon" /><span>关于嗯哌</span>
+            </button>
+            <button class="sidebar-link" id="btn-settings" title="设置">
+              <img src="IMG/Settings.svg" alt="" class="sidebar-link-icon" /><span>设置</span>
+            </button>
+          </div>
+          <p class="sidebar-slogan">
+            <span>NPie Draftstage – Creator Content Schedule</span>
+            <span>哌稿场——创作者内容排期看板</span>
+          </p>
+        </div>
+      `;
+
+      // 侧边栏折叠切换
+      const sidebarEl = document.getElementById('sidebar');
+      if (state.sidebarCollapsed) sidebarEl.classList.add('collapsed');
+      const toggleBtn = document.getElementById('sidebar-toggle');
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+          state.sidebarCollapsed = !state.sidebarCollapsed;
+          sidebarEl.classList.toggle('collapsed', state.sidebarCollapsed);
+          toggleBtn.textContent = state.sidebarCollapsed ? '▶' : '◀';
+          toggleBtn.title = state.sidebarCollapsed ? '展开侧栏' : '收起侧栏';
+        });
+      }
+
+      // 绑定导航事件
+      document.querySelectorAll('[data-nav]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.activeNav = btn.dataset.nav;
+          localStorage.setItem('npiedraft-nav', state.activeNav);
+          state.selectedTopicId = null;
+          render();
+          // 先 render 更新 DOM（显隐排期区域会影响选题卡位置），再滚动
+          requestAnimationFrame(() => {
+            if (state.activeNav === 'timeline') {
+              document.getElementById('timeline-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+              document.getElementById('topics-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          });
+        });
+      });
+
+      // 绑定侧边栏选题点击事件
+      document.querySelectorAll('[data-sidebar-topic]').forEach(item => {
+        item.addEventListener('click', () => {
+          state.selectedTopicId = item.dataset.sidebarTopic;
+          state.activeNav = 'topics';
+          localStorage.setItem('npiedraft-nav', 'topics');
+          render();
+          // 等待渲染完成后滚动到对应选题卡
+          setTimeout(() => {
+            const cardEl = document.querySelector(`[data-card-id="${item.dataset.sidebarTopic}"]`);
+            if (cardEl) {
+              cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              // 高亮效果
+              cardEl.style.transition = 'box-shadow 0.3s ease';
+              cardEl.style.boxShadow = '0 0 0 3px rgba(176, 138, 83, 0.4)';
+              setTimeout(() => {
+                cardEl.style.boxShadow = '';
+              }, 1500);
+            } else {
+              document.getElementById('topics-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }, 50);
+        });
+      });
+
+      document.getElementById('btn-export').onclick = () => {
+        const blob = new Blob([JSON.stringify({ topics: state.topics }, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `content-os-${fmt(new Date())}.json`;
+        a.click();
+        toast('已导出备份');
+      };
+      document.getElementById('btn-import').onclick = () => document.getElementById('import-file').click();
+      document.getElementById('btn-about').onclick = () => {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;cursor:pointer;';
+        const card = document.createElement('div');
+        card.style.cssText = 'background:var(--surface);border-radius:20px;padding:48px 52px 40px;max-width:560px;width:92vw;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.25);cursor:default;position:relative;font-family:var(--font,inherit);';
+        card.innerHTML = `<button style="position:absolute;top:16px;right:18px;width:32px;height:32px;border-radius:50%;border:none;background:transparent;font-size:1.2rem;cursor:pointer;color:var(--text-muted);">✕</button>
+          <div style="font-family:'Space Mono',monospace;font-size:0.62rem;letter-spacing:0.3em;color:var(--accent);text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:10px;"><span style="width:28px;height:1px;background:var(--accent);display:inline-block;"></span> Content Creator</div>
+          <div style="font-family:'Noto Serif SC',serif;font-size:3rem;font-weight:900;line-height:1;color:var(--text);margin-bottom:4px;">嗯哌</div>
+          <div style="font-family:'Playfair Display','Noto Serif SC',serif;font-size:2.4rem;font-weight:900;font-style:italic;color:transparent;-webkit-text-stroke:1.2px var(--text);line-height:1;margin-bottom:22px;">NPIE</div>
+          <div style="width:48px;height:1px;background:var(--border);margin-bottom:18px;"></div>
+          <p style="font-size:0.82rem;line-height:1.8;color:var(--text-muted);margin:0 0 14px;">嗯哌（NPIE）是一个<b style="color:var(--text);">自媒体创作者品牌</b>，专注内容创作、知识分享与数字工具开发。</p>
+          <p style="font-size:0.82rem;line-height:1.8;color:var(--text-muted);margin:0 0 14px;">主理人以创作者视角出发，制作与分享<b style="color:var(--text);">创作方法论、工具评测、效率工作流</b>等深度内容，帮助同行创作者提升内容生产的质量与效率。</p>
+          <p style="font-size:0.82rem;line-height:1.8;color:var(--text-muted);margin:0 0 22px;">本应用「哌稿场 · 档期」为嗯哌主理人开发的<b style="color:var(--text);">创作排期工具</b>，源于真实创作场景中的需求——管理多条内容选题的制作流程与发布时间。</p>
+          <div style="display:flex;gap:16px;padding-top:14px;border-top:1px solid var(--border);font-size:0.66rem;color:var(--text-muted);font-family:'Space Mono',monospace;letter-spacing:0.06em;">
+            <span>Content Creator</span><span style="color:var(--border);">|</span><span>Since 2025</span>
+          </div>`;
+        overlay.appendChild(card);
+        const close = () => overlay.remove();
+        overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+        card.querySelector('button').addEventListener('click', close);
+        document.addEventListener('keydown', function onKey(e) { if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); } });
+        document.body.appendChild(overlay);
+      };
+      document.getElementById('btn-settings').onclick = () => openSettingsModal();
+    }
+
+    /**
+     * 用 canvas 测量文字宽度（字体与任务块一致：600 0.65rem Poppins/PingFang SC）
+     * @param {string} text
+     * @returns {number} px
+     */
+    const _measureCanvas = document.createElement('canvas');
+    const _measureCtx    = _measureCanvas.getContext('2d');
+    function measureText(text) {
+      _measureCtx.font = '600 10.88px "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif';
+      return _measureCtx.measureText(text).width;
+    }
+
+    /**
+     * 根据所有选题任务名称，计算合适的单列宽度
+     * 最小 58px（约 4 个汉字），最大 120px
+     * @returns {number}
+     */
+    function calcCellWidth() {
+      const MIN_CELL = 58;
+      const MAX_CELL = 150;
+      const PAD = 20; // 左右 padding + border 余量
+      let best = MIN_CELL;
+
+      visibleTopics().forEach(topic => {
+        topic.tasks.forEach(task => {
+          const start = parse(task.startDate);
+          const end   = parse(task.endDate);
+          const span  = Math.max(1, Math.round((end - start) / MS_DAY) + 1);
+          const w     = measureText(task.name);
+          // 每天需要的宽度 = (文字宽 + padding) / 跨天数，向上取整
+          const perDay = Math.ceil((w + PAD) / span);
+          if (perDay > best) best = perDay;
+        });
+      });
+
+      return Math.min(best, MAX_CELL);
+    }
+
+    /**
+     * 渲染排期日历
+     */
+    function renderTimeline() {
+      updateBounds();
+      const dates = getDates();
+      const todayStr = fmt(TODAY);
+      const CELL = calcCellWidth();
+
+      /** 月份分组 */
+      const months = [];
+      dates.forEach(d => {
+        const key = `${d.getFullYear()}-${d.getMonth()}`;
+        const last = months[months.length - 1];
+        if (!last || last.key !== key) months.push({ key, label: `${d.getMonth() + 1}月`, span: 1 });
+        else last.span++;
+      });
+
+      let monthHtml = '<div class="month-corner"></div>';
+      months.forEach(m => {
+        monthHtml += `<div class="month-label-cell" style="width:${m.span * CELL}px;min-width:${m.span * CELL}px">${m.label}</div>`;
+      });
+
+      let headerHtml = '<div class="timeline-corner">选题</div>';
+      dates.forEach((d, i) => {
+        const isToday = fmt(d) === todayStr;
+        const isFirst = i === 0 || d.getDate() === 1;
+        const cls = [d.getDay() === 0 || d.getDay() === 6 ? 'weekend' : '', isToday ? 'today' : ''].filter(Boolean).join(' ');
+        headerHtml += `<div class="day-cell ${cls}" style="width:${CELL}px;min-width:${CELL}px">
+          ${isFirst ? `<span class="day-month-label">${d.getMonth()+1}月</span>` : ''}
+          <span class="day-date">${d.getDate()}</span>
+          <span class="day-week">${'日一二三四五六'[d.getDay()]}</span>
+          ${isToday ? '<span class="day-today-label">今天</span>' : ''}
+        </div>`;
+      });
+
+      let rowsHtml = '';
+      visibleTopics().forEach((topic, index) => {
+        const sel = state.selectedTopicId === topic.id;
+        const urgent = isTopicUrgent(topic);
+        const colorObj = getTopicColor(index);
+        const progress = calcProgress(topic);
+        rowsHtml += `<div class="timeline-row" data-row-id="${topic.id}">`;
+        rowsHtml += `<div class="topic-label ${sel ? 'selected' : ''} ${urgent ? 'tl-urgent' : ''}" draggable="true" data-label-id="${topic.id}">
+          <div class="topic-label-card" style="border-left-color: ${urgent ? '#E08840' : colorObj.main}; background-color: ${colorObj.bg}; position: relative;">
+            ${urgent ? '<span class="tl-urgent-dot" title="紧急选题">急</span>' : ''}
+            <span class="tl-type-dot dot-${topic.type === 'self' ? 'self' : topic.type === 'commercial' ? 'commercial' : topic.type === 'collab' ? 'collab' : 'custom'}">${topic.type === 'self' ? '自' : topic.type === 'commercial' ? '商' : topic.type === 'collab' ? '合' : '定'}</span>
+            <div class="topic-label-name" data-rename-label="${topic.id}" title="${esc(topic.title)}">${esc(topic.title)}</div>
+            <div class="topic-label-meta">
+              <span class="topic-label-date">${fmtShortDate(topic.publishDate)}</span>
+              <span style="color:var(--border)">·</span>
+              <span class="topic-label-progress">${progress}%</span>
+            </div>
+          </div>
+          <img class="topic-label-arrow ${topic.obsidianUrl ? 'has-url' : ''}" src="IMG/Obsidian.webp" alt="" title="${topic.obsidianUrl ? '左键打开 Obsidian 笔记 / 右键编辑链接' : '设置 Obsidian 链接'}" data-obsidian-label="${topic.id}" />
+        </div>`;
+        rowsHtml += `<div class="track-area" data-track-id="${topic.id}">`;
+        dates.forEach(d => {
+          const ds = fmt(d);
+          const cls = [ds === todayStr ? 'today' : '', d.getDay() === 0 || d.getDay() === 6 ? 'weekend' : ''].filter(Boolean).join(' ');
+          rowsHtml += `<div class="track-cell ${cls}" style="width:${CELL}px;min-width:${CELL}px" data-date="${ds}" data-track="${topic.id}"></div>`;
+        });
+        // ── 重叠检测：同一日期的任务按可用空间自适应尺寸 + 上下错开 ──
+        const allTasks = topic.tasks;
+        const groupsByRange = new Map();
+        allTasks.forEach(task => {
+          const key = task.startDate + '|' + task.endDate;
+          if (!groupsByRange.has(key)) groupsByRange.set(key, []);
+          groupsByRange.get(key).push(task);
+        });
+        // stackInfo: taskId → 完整行内样式字符串（top + 必要时缩小尺寸）
+        const stackInfo = new Map();
+        const ROW_H = 90;
+        groupsByRange.forEach(group => {
+          const n = group.length;
+          if (n < 2) return;
+          // 根据任务数反算每个块能占的高度
+          const minGap = n >= 3 ? 2 : 5;
+          const avail = ROW_H - (n + 1) * minGap;
+          const blockH = Math.floor(avail / n);
+          // n≥3 时缩小 min-height + padding 让文字不溢出
+          const compact = n >= 3;
+          const padV = compact ? 2 : 4;
+          const padH = compact ? 5 : 8;
+          const minH  = Math.max(14, blockH - 2 - padV * 2); // 减去 border + padding
+          group.forEach((task, i) => {
+            const top = minGap + i * (blockH + minGap);
+            const sizePart = compact
+              ? `min-height:${minH}px;padding:${padV}px ${padH}px;`
+              : '';
+            stackInfo.set(task.id, `top:${top}px;transform:none;${sizePart}`);
+          });
+        });
+
+        allTasks.forEach(task => {
+          const si = dates.findIndex(d => fmt(d) === task.startDate);
+          const ei = dates.findIndex(d => fmt(d) === task.endDate);
+          if (si < 0 || ei < 0) return;
+          const left  = si * CELL + 2;
+          const width = (ei - si + 1) * CELL - 4;
+
+          const posStyle = stackInfo.get(task.id) || '';
+          // 无行内样式 → CSS top:50%;transform:translateY(-50%) 居中 + 基础尺寸
+
+          // 内置工作流用 CSS 类着色（暗色模式兼容），自定义工作流用行内色
+          const isBuiltin = topic.type === 'self' || topic.type === 'commercial' || topic.type === 'collab';
+          const colorStyle = isBuiltin ? '' : `background:${task.color};`;
+          const stageClass = task.id.startsWith('custom_') ? 'stage-custom' : `stage-${task.id}`;
+          rowsHtml += `<div class="task-block ${stageClass} ${task.completed ? 'completed' : ''}"
+            draggable="true" data-task-topic="${topic.id}" data-task-id="${esc(task.id)}"
+            style="left:${left}px;width:${width}px;${colorStyle}${posStyle}">
+            <div class="task-block-name">${esc(task.name)}</div>
+          </div>`;
+        });
+        rowsHtml += '</div></div>';
+      });
+
+      document.getElementById('timeline-inner').innerHTML =
+        `<div class="timeline-header-row">${headerHtml}</div>` +
+        rowsHtml;
+
+      bindTimelineEvents(dates, CELL);
+    }
+
+    /**
+     * 绑定日历区交互事件
+     * @param {Date[]} dates
+     * @param {number} cellW
+     */
+    function bindTimelineEvents(dates, cellW) {
+      const inner = document.getElementById('timeline-inner');
+
+      /** 选题标签：选中 / 整条移动 / 顺序调整 */
+      inner.querySelectorAll('.topic-label').forEach(label => {
+        const topicId = label.dataset.labelId;
+
+        label.addEventListener('click', e => {
+          if (state.drag?.moved) return;
+          // 点击名称文字区域 → 重命名
+          if (e.target.dataset.renameLabel) {
+            e.stopPropagation();
+            openRenameModal(e.target.dataset.renameLabel);
+            return;
+          }
+          state.selectedTopicId = topicId;
+          render();
+        });
+
+        label.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('application/x-topic-move', topicId);
+          e.dataTransfer.setData('application/x-topic-reorder', topicId);
+          e.dataTransfer.effectAllowed = 'move';
+          label.classList.add('dragging');
+          state.drag = { type: 'topic', id: topicId, moved: false };
+        });
+
+        label.addEventListener('dragend', () => {
+          label.classList.remove('dragging');
+          state.drag = null;
+        });
+
+        label.addEventListener('dragover', e => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+        });
+
+        label.addEventListener('drop', e => {
+          e.preventDefault();
+          const srcId = e.dataTransfer.getData('application/x-topic-reorder');
+          const tgtId = label.dataset.labelId;
+          if (srcId && tgtId && srcId !== tgtId) reorderTopics(srcId, tgtId);
+        });
+
+        /** 触屏：点击选中 */
+        label.addEventListener('touchend', e => {
+          e.preventDefault();
+          state.selectedTopicId = topicId;
+          render();
+          toast('已选中');
+        });
+      });
+
+      /** 轨道格：整条排期落点 / 触屏落点 / 右键菜单 */
+      inner.querySelectorAll('.track-cell').forEach(cell => {
+        cell.addEventListener('dragover', e => {
+          e.preventDefault();
+          cell.classList.add('drop-target');
+        });
+        cell.addEventListener('dragleave', () => cell.classList.remove('drop-target'));
+        cell.addEventListener('drop', e => {
+          e.preventDefault();
+          cell.classList.remove('drop-target');
+          // 拖拽落点后清除选中态，利用 click 处理器已有的 selectedTopicId 守卫防止误触整条排期移动
+          state.selectedTopicId = null;
+          const taskPayload = e.dataTransfer.getData('application/x-task-move');
+          if (taskPayload) {
+            const { topicId, taskId } = JSON.parse(taskPayload);
+            moveSingleTask(topicId, taskId, cell.dataset.date);
+            return;
+          }
+          const topicId = e.dataTransfer.getData('application/x-topic-move');
+          if (topicId) {
+            moveWholeSchedule(topicId, cell.dataset.date);
+            if (state.drag) state.drag.moved = true;
+          }
+        });
+        // 右键菜单 — 空格子新增日程，有任务的格子显示删除
+        cell.addEventListener('click', e => {
+          // 显式阻止 cell 上的任何点击行为，移动排期仅通过拖拽完成
+          e.preventDefault();
+          e.stopPropagation();
+        });
+        cell.addEventListener('contextmenu', e => {
+          e.preventDefault();
+          const topicId = cell.dataset.track;
+          const date    = cell.dataset.date;
+          const topic   = state.topics.find(t => t.id === topicId);
+          if (!topic) return;
+          // 筛选该日期上有哪些任务
+          const tasksHere = topic.tasks.filter(t => t.startDate <= date && t.endDate >= date);
+          if (tasksHere.length === 0) {
+            // 空格子 → 新增日程（过期日期不可添加）
+            const today = new Date(); today.setHours(0,0,0,0);
+            if (date < fmt(today)) return;
+            showEmptyCellMenu(cell, topicId, date);
+          } else {
+            // 有任务 → 显示删除菜单
+            showOccupiedCellMenu(cell, topicId, tasksHere);
+          }
+        });
+      });
+
+      /** 任务块：单块微调 + 自定义日程交互 */
+      inner.querySelectorAll('.task-block').forEach(block => {
+        const taskId  = block.dataset.taskId;
+        const topicId = block.dataset.taskTopic;
+        const isCustom = taskId && taskId.startsWith('custom_');
+
+        block.addEventListener('dragstart', e => {
+          e.stopPropagation();
+          const payload = { topicId, taskId };
+          e.dataTransfer.setData('application/x-task-move', JSON.stringify(payload));
+          e.dataTransfer.effectAllowed = 'move';
+        });
+
+        // 单击：阻止冒泡
+        block.addEventListener('click', e => e.stopPropagation());
+
+        // 双击：重命名（所有节点通用）
+        block.addEventListener('dblclick', e => {
+          e.stopPropagation();
+          e.preventDefault();
+          openTaskRename(topicId, taskId);
+        });
+
+        // 右键：删除节点
+        block.addEventListener('contextmenu', e => {
+          e.preventDefault();
+          e.stopPropagation();
+          showTaskContextMenu(e.currentTarget, topicId, taskId);
+        });
+      });
+
+      /** 日历选题标签 Obsidian 图标点击 */
+      inner.querySelectorAll('[data-obsidian-label]').forEach(icon => {
+        icon.addEventListener('click', e => {
+          e.stopPropagation();
+          const topic = state.topics.find(t => t.id === icon.dataset.obsidianLabel);
+          if (!topic) return;
+          if (topic.obsidianUrl) {
+            window.location.href = topic.obsidianUrl;
+          } else {
+            openObsidianModal(topic.id);
+          }
+        });
+        // 右键 → 始终打开编辑弹窗（修改链接）
+        icon.addEventListener('contextmenu', e => {
+          e.preventDefault();
+          e.stopPropagation();
+          const topic = state.topics.find(t => t.id === icon.dataset.obsidianLabel);
+          if (topic) openObsidianModal(topic.id);
+        });
+      });
+
+      /** 鼠标拖拽整条排期（增强体验）— 使用 init 中全局绑定的 _dragLabelId */
+      inner.querySelectorAll('.topic-label').forEach(label => {
+        label.addEventListener('mouseenter', () => {
+          if (!window._npiedraft_dragActive || window._npiedraft_dragLabelId !== label.dataset.labelId) return;
+          const row = label.closest('.timeline-row');
+          if (row) row.style.background = 'rgba(176,138,83,0.04)';
+        });
+        label.addEventListener('mouseleave', () => {
+          const row = label.closest('.timeline-row');
+          if (row) row.style.background = '';
+        });
+      });
+    }
+
+    /**
+     * 整条排期移至新发布日 — 重新按工作日倒排，保留已完成状态和自定义日程
+     */
+    function moveWholeSchedule(topicId, newPublishDate) {
+      const topic = state.topics.find(t => t.id === topicId);
+      if (!topic || !newPublishDate) return;
+      if (topic.publishDate === newPublishDate) return;
+
+      // 保留完成状态
+      const completedMap = new Map();
+      topic.tasks.forEach(t => { if (t.completed) completedMap.set(t.id, true); });
+      // 保留自定义日程
+      const customTasks = topic.tasks.filter(t => t.id && t.id.startsWith('custom_'));
+
+      topic.publishDate = newPublishDate;
+      topic.tasks = buildWorkflow(topic);
+      // 恢复完成状态
+      topic.tasks.forEach(t => { if (completedMap.has(t.id)) t.completed = true; });
+      // 追加自定义日程
+      topic.tasks = topic.tasks.concat(customTasks);
+
+      saveNow();
+      render();
+      toast(`「${topic.title}」发布日 → ${newPublishDate}`);
+    }
+
+    /**
+     * 微调单个任务块日期
+     * @param {string} topicId
+     * @param {string} taskId
+     * @param {string} newStart
+     */
+    function moveSingleTask(topicId, taskId, newStart) {
+      const topic = state.topics.find(t => t.id === topicId);
+      if (!topic || !newStart) return;
+      // 校验目标日期有效
+      if (isNaN(parse(newStart).getTime())) return;
+      // 不能拖到已过期的日期
+      const today = new Date(); today.setHours(0,0,0,0);
+      if (parse(newStart) < today) { toast('不能移动到已过期的日期'); render(); return; }
+
+      if (taskId === 'publish') {
+        topic.publishDate = newStart;
+        ['cover', 'copy', 'publish'].forEach(id => {
+          const t = topic.tasks.find(t => t.id === id);
+          if (t) { t.startDate = newStart; t.endDate = newStart; }
+        });
+      } else if (['cover', 'copy'].includes(taskId)) {
+        topic.publishDate = newStart;
+        ['cover', 'copy', 'publish'].forEach(id => {
+          const t = topic.tasks.find(t => t.id === id);
+          if (t) { t.startDate = newStart; t.endDate = newStart; }
+        });
+      } else {
+        const task = topic.tasks.find(t => t.id === taskId);
+        if (!task) return;
+        // 防非法日期导致 duration 为 NaN
+        const startMs = parse(task.startDate).getTime();
+        const endMs   = parse(task.endDate).getTime();
+        const duration = (!isNaN(startMs) && !isNaN(endMs))
+          ? Math.round((endMs - startMs) / MS_DAY)
+          : 0;
+        task.startDate = newStart;
+        task.endDate   = fmt(addDays(parse(newStart), Math.max(0, duration)));
+      }
+
+      saveNow();
+      render();
+      toast(`已调整「${topic.title}」节点日期`);
+    }
+
+    /** ── 流程节点重命名与删除（统一：标准 + 自定义） ────────────────────────── */
+
+    /**
+     * 双击重命名 — 查找 DOM 中的任务块，原地 contentEditable 编辑
+     */
+    function openTaskRename(topicId, taskId) {
+      const topic = state.topics.find(t => t.id === topicId);
+      if (!topic) return;
+      const task = topic.tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      // 在 DOM 中找对应的任务块
+      const blockEl = document.querySelector(`.task-block[data-task-topic="${topicId}"][data-task-id="${CSS.escape(taskId)}"]`);
+      if (!blockEl) return;
+      const nameDiv = blockEl.querySelector('.task-block-name');
+      if (!nameDiv) return;
+
+      const oldName = task.name;
+      nameDiv.contentEditable = 'true';
+      nameDiv.focus();
+      document.execCommand('selectAll', false, null);
+
+      const commitRename = () => {
+        nameDiv.contentEditable = 'false';
+        const newName = nameDiv.textContent.trim();
+        if (newName && newName !== oldName) {
+          task.name = newName;
+          save();
+          render();
+          toast(`已重命名为「${newName}」`);
+        } else {
+          nameDiv.textContent = oldName;
+        }
+      };
+
+      const cancel = () => {
+        nameDiv.contentEditable = 'false';
+        nameDiv.textContent = oldName;
+      };
+
+      nameDiv.addEventListener('blur', commitRename, { once: true });
+      nameDiv.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); nameDiv.blur(); }
+        if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+      }, { once: true });
+    }
+
+    /** 右键任务块 → 删除节点 */
+    function showTaskContextMenu(blockEl, topicId, taskId) {
+      const menu = document.getElementById('ctx-menu');
+      const topic = state.topics.find(t => t.id === topicId);
+      const task = topic?.tasks.find(t => t.id === taskId);
+      const taskName = task ? task.name : '日程';
+
+      menu.innerHTML = `
+        <div class="ctx-item danger" data-ctx="delete-task">删除「${esc(taskName)}」</div>
+        <div class="ctx-separator"></div>
+        <div class="ctx-item" data-ctx="cancel">取消</div>
+      `;
+
+      menu.style.left = '-9999px';
+      menu.style.top  = '-9999px';
+      menu.style.display = 'block';
+
+      const rect = blockEl.getBoundingClientRect();
+      const mw   = menu.offsetWidth  || 160;
+      const mh   = menu.offsetHeight || 80;
+      const vw   = window.innerWidth;
+      const vh   = window.innerHeight;
+
+      let left = rect.left;
+      let top  = rect.bottom + 4;
+
+      if (left + mw > vw) left = rect.right - mw;
+      if (top  + mh > vh) top  = rect.top - mh - 4;
+      left = Math.max(4, left);
+      top  = Math.max(4, top);
+
+      menu.style.left = left + 'px';
+      menu.style.top  = top  + 'px';
+
+      menu.querySelectorAll('[data-ctx]').forEach(item => {
+        item.addEventListener('click', e => {
+          e.stopPropagation();
+          hideContextMenu();
+          if (item.dataset.ctx === 'delete-task') deleteTaskNode(topicId, taskId);
+        });
+      });
+    }
+
+    function deleteTaskNode(topicId, taskId) {
+      const topic = state.topics.find(t => t.id === topicId);
+      if (!topic) return;
+      const task = topic.tasks.find(t => t.id === taskId);
+      if (!task) return;
+      showConfirm(`确认删除流程节点「${task.name}」？`, () => {
+        topic.tasks = topic.tasks.filter(t => t.id !== taskId);
+        saveNow();
+        render();
+        toast(`已删除「${task.name}」`);
+      }, '删除节点', '删除');
+    }
+
+    /** ── 右键菜单 ─────────────────────────────────────── */
+
+    // 当前右键菜单上下文
+    let _ctxTopicId = null;
+    let _ctxDate    = null;
+
+    /**
+     * 右键菜单 — 定位到触发格子的正下方（左对齐），不超出视口
+     * @param {HTMLElement} cellEl  触发右键的 .track-cell 元素
+     * @param {string} topicId
+     * @param {string} date
+     */
+    function showContextMenu(cellEl, topicId, date) {
+      _ctxTopicId = topicId;
+      _ctxDate    = date;
+
+      const topic = state.topics.find(t => t.id === topicId);
+      if (!topic) return;
+      const pct = calcProgress(topic);
+      const isArchived = topic.archived;
+
+      // 按进度和存档状态生成菜单项
+      let actionItems = '';
+      if (isArchived) {
+        actionItems = `
+          <div class="ctx-item" data-ctx="restore">恢复选题</div>
+          <div class="ctx-separator"></div>
+          <div class="ctx-item danger" data-ctx="force-delete">彻底删除</div>
+        `;
+      } else if (pct === 0) {
+        actionItems = `
+          <div class="ctx-item danger" data-ctx="abandon">放弃选题</div>
+        `;
+      } else if (pct === 100) {
+        actionItems = `
+          <div class="ctx-item" data-ctx="archive">存档</div>
+        `;
+      }
+
+      // 只有从日历格子触发时（有 date）才显示"新增日程"
+      const scheduleSection = date ? `
+        <div class="ctx-item" data-ctx="add-schedule">＋ 新增日程</div>
+        <div class="ctx-separator"></div>
+      ` : '';
+
+      const menu = document.getElementById('ctx-menu');
+      menu.innerHTML = `
+        ${scheduleSection}
+        <div class="ctx-item" data-ctx="rename">重命名</div>
+        ${actionItems ? '<div class="ctx-separator"></div>' + actionItems : ''}
+        <div class="ctx-separator"></div>
+        <div class="ctx-item" data-ctx="cancel">取消</div>
+      `;
+
+      menu.querySelectorAll('[data-ctx]').forEach(item => {
+        item.addEventListener('click', e => {
+          e.stopPropagation();
+          hideContextMenu();
+          const action = item.dataset.ctx;
+          if (action === 'add-schedule') openScheduleModal(_ctxTopicId, _ctxDate);
+          if (action === 'rename')       openRenameModal(_ctxTopicId);
+          if (action === 'abandon')      deleteTopic(_ctxTopicId, 'abandon');
+          if (action === 'archive')      archiveTopic(_ctxTopicId);
+          if (action === 'restore')      archiveTopic(_ctxTopicId, false);
+          if (action === 'force-delete') deleteTopic(_ctxTopicId, 'force');
+        });
+      });
+
+      // 先隐藏渲染，下一帧再定位（避免尺寸未计算问题）
+      menu.style.visibility = 'hidden';
+      menu.style.left    = '0px';
+      menu.style.top     = '0px';
+      menu.style.display = 'block';
+
+      requestAnimationFrame(() => {
+        const rect = cellEl.getBoundingClientRect();
+        const mw   = menu.offsetWidth  || 160;
+        const mh   = menu.offsetHeight || 150;
+        const vw   = window.innerWidth;
+        const vh   = window.innerHeight;
+
+        let left = rect.left;
+        let top  = rect.bottom + 4;
+
+        if (left + mw > vw) left = rect.right - mw;
+        if (top  + mh > vh) top  = rect.top - mh - 4;
+        left = Math.max(4, left);
+        top  = Math.max(4, top);
+
+        menu.style.left       = left + 'px';
+        menu.style.top        = top  + 'px';
+        menu.style.visibility = 'visible';
+      });
+    }
+
+    function hideContextMenu() {
+      const menu = document.getElementById('ctx-menu');
+      if (menu) menu.style.display = 'none';
+    }
+
+    document.addEventListener('click', hideContextMenu);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') hideContextMenu(); });
+
+    /** ── 空格子右键 → 新增日程 ────────────────────────────── */
+
+    function showEmptyCellMenu(cellEl, topicId, date) {
+      const menu = document.getElementById('ctx-menu');
+      menu.innerHTML = `
+        <div class="ctx-item" data-ctx="add-schedule">＋ 新增日程</div>
+        <div class="ctx-separator"></div>
+        <div class="ctx-item" data-ctx="cancel">取消</div>
+      `;
+      menu.querySelector('[data-ctx="add-schedule"]').addEventListener('click', e => {
+        e.stopPropagation();
+        hideContextMenu();
+        openScheduleModal(topicId, date);
+      });
+      menu.querySelector('[data-ctx="cancel"]').addEventListener('click', e => {
+        e.stopPropagation();
+        hideContextMenu();
+      });
+      positionMenu(cellEl, menu);
+    }
+
+    /** ── 有任务的格子右键 → 删除该节点 ─────────────────────── */
+
+    function showOccupiedCellMenu(cellEl, topicId, tasksHere) {
+      const menu = document.getElementById('ctx-menu');
+      const items = tasksHere.map(t =>
+        `<div class="ctx-item danger" data-ctx="delete-task" data-task-id="${esc(t.id)}">删除「${esc(t.name)}」</div>`
+      ).join('');
+      menu.innerHTML = `
+        ${items}
+        <div class="ctx-separator"></div>
+        <div class="ctx-item" data-ctx="cancel">取消</div>
+      `;
+      menu.querySelectorAll('[data-ctx="delete-task"]').forEach(item => {
+        item.addEventListener('click', e => {
+          e.stopPropagation();
+          hideContextMenu();
+          deleteTaskNode(topicId, item.dataset.taskId);
+        });
+      });
+      menu.querySelector('[data-ctx="cancel"]').addEventListener('click', e => {
+        e.stopPropagation();
+        hideContextMenu();
+      });
+      positionMenu(cellEl, menu);
+    }
+
+    /** 复用菜单定位逻辑 */
+    function positionMenu(cellEl, menu) {
+      menu.style.visibility = 'hidden';
+      menu.style.left = '0px';
+      menu.style.top  = '0px';
+      menu.style.display = 'block';
+      requestAnimationFrame(() => {
+        const rect = cellEl.getBoundingClientRect();
+        const mw   = menu.offsetWidth  || 160;
+        const mh   = menu.offsetHeight || 120;
+        const vw   = window.innerWidth;
+        const vh   = window.innerHeight;
+        let left = rect.left;
+        let top  = rect.bottom + 4;
+        if (left + mw > vw) left = rect.right - mw;
+        if (top  + mh > vh) top  = rect.top - mh - 4;
+        left = Math.max(4, left);
+        top  = Math.max(4, top);
+        menu.style.left       = left + 'px';
+        menu.style.top        = top  + 'px';
+        menu.style.visibility = 'visible';
+      });
+    }
+
+    /** ── 选题卡右键菜单（跟随鼠标坐标） ───────────────────── */
+
+    function showTopicMenuAt(clientX, clientY, topicId) {
+      const topic = state.topics.find(t => t.id === topicId);
+      if (!topic) return;
+      const pct = calcProgress(topic);
+      const isArchived = topic.archived;
+
+      let actionItems = '';
+      if (isArchived) {
+        actionItems = `
+          <div class="ctx-item" data-ctx="restore">恢复选题</div>
+          <div class="ctx-separator"></div>
+          <div class="ctx-item danger" data-ctx="force-delete">彻底删除</div>
+        `;
+      } else if (pct === 0) {
+        actionItems = `<div class="ctx-item danger" data-ctx="abandon">放弃选题</div>`;
+      } else if (pct === 100) {
+        actionItems = `<div class="ctx-item" data-ctx="archive">存档</div>`;
+      }
+
+      const menu = document.getElementById('ctx-menu');
+      menu.innerHTML = `
+        <div class="ctx-item" data-ctx="rename">重命名</div>
+        ${actionItems ? '<div class="ctx-separator"></div>' + actionItems : ''}
+        <div class="ctx-separator"></div>
+        <div class="ctx-item" data-ctx="cancel">取消</div>
+      `;
+
+      menu.querySelectorAll('[data-ctx]').forEach(item => {
+        item.addEventListener('click', e => {
+          e.stopPropagation();
+          hideContextMenu();
+          const action = item.dataset.ctx;
+          if (action === 'rename')       openRenameModal(topicId);
+          if (action === 'abandon')      deleteTopic(topicId, 'abandon');
+          if (action === 'archive')      archiveTopic(topicId);
+          if (action === 'restore')      archiveTopic(topicId, false);
+          if (action === 'force-delete') deleteTopic(topicId, 'force');
+        });
+      });
+
+      positionMenuAt(clientX, clientY, menu);
+    }
+
+    function positionMenuAt(clientX, clientY, menu) {
+      menu.style.visibility = 'hidden';
+      menu.style.left = '0px';
+      menu.style.top  = '0px';
+      menu.style.display = 'block';
+      requestAnimationFrame(() => {
+        const mw = menu.offsetWidth  || 160;
+        const mh = menu.offsetHeight || 120;
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        let left = clientX;
+        let top  = clientY + 4;
+        if (left + mw > vw) left = clientX - mw;
+        if (top  + mh > vh) top  = clientY - mh - 4;
+        left = Math.max(4, left);
+        top  = Math.max(4, top);
+        menu.style.left       = left + 'px';
+        menu.style.top        = top  + 'px';
+        menu.style.visibility = 'visible';
+      });
+    }
+
+    /** ── 新增日程 ─────────────────────────────────────── */
+
+    let _scheduleTopicId = null;
+    let _scheduleDate    = null;
+
+    function openScheduleModal(topicId, date) {
+      _scheduleTopicId = topicId;
+      _scheduleDate    = date;
+      document.getElementById('schedule-modal-name').value = '';
+      document.getElementById('schedule-modal-overlay').classList.add('open');
+      setTimeout(() => document.getElementById('schedule-modal-name').focus(), 50);
+    }
+
+    function closeScheduleModal() {
+      document.getElementById('schedule-modal-overlay').classList.remove('open');
+    }
+
+    function confirmSchedule() {
+      const name = document.getElementById('schedule-modal-name').value.trim();
+      if (!name) { toast('请填写日程名称'); return; }
+      const topic = state.topics.find(t => t.id === _scheduleTopicId);
+      if (!topic) return;
+      // 不能添加到过期日期
+      const today = new Date(); today.setHours(0,0,0,0);
+      if (_scheduleDate < fmt(today)) { toast('不能添加到已过期的日期'); closeScheduleModal(); return; }
+      const customId = 'custom_' + Date.now();
+      topic.tasks.push({
+        id: customId, name, days: 1, color: '#C4B8D4', completed: false,
+        startDate: _scheduleDate, endDate: _scheduleDate
+      });
+      // 按日期排序所有任务
+      topic.tasks.sort((a, b) => a.startDate.localeCompare(b.startDate) || a.id.localeCompare(b.id));
+      save();
+      closeScheduleModal();
+      render();
+      toast(`已添加日程「${name}」`);
+    }
+
+    /** ── 重命名 ─────────────────────────────────────── */
+
+    let _renameTopicId = null;
+
+    function openRenameModal(topicId) {
+      _renameTopicId = topicId;
+      const topic = state.topics.find(t => t.id === topicId);
+      document.getElementById('rename-modal-input').value = topic ? topic.title : '';
+      document.getElementById('rename-modal-overlay').classList.add('open');
+      setTimeout(() => {
+        const input = document.getElementById('rename-modal-input');
+        input.focus();
+        input.select();
+      }, 50);
+    }
+
+    function closeRenameModal() {
+      document.getElementById('rename-modal-overlay').classList.remove('open');
+    }
+
+    function confirmRename() {
+      const name = document.getElementById('rename-modal-input').value.trim();
+      if (!name) { toast('名称不能为空'); return; }
+      const topic = state.topics.find(t => t.id === _renameTopicId);
+      if (!topic) return;
+      topic.title = name;
+      save();
+      closeRenameModal();
+      render();
+      toast(`已重命名为「${name}」`);
+    }
+
+    /** ── Obsidian 链接弹窗 ──────────────────────────────── */
+
+    let _obsidianTopicId = null;
+
+    function openObsidianModal(topicId) {
+      _obsidianTopicId = topicId;
+      const topic = state.topics.find(t => t.id === topicId);
+      document.getElementById('obsidian-modal-input').value = topic?.obsidianUrl || '';
+      // 已有链接才显示清除按钮
+      const hasUrl = !!topic?.obsidianUrl;
+      document.getElementById('obsidian-modal-clear').style.display = hasUrl ? '' : 'none';
+      // 已有链接→确认可用；新链接→需先测试
+      const confirmBtn = document.getElementById('obsidian-modal-confirm');
+      confirmBtn.disabled = !hasUrl;
+      confirmBtn.style.opacity = hasUrl ? '' : '0.5';
+      document.getElementById('obsidian-test-hint').style.display = hasUrl ? 'none' : '';
+      document.getElementById('obsidian-modal-overlay').classList.add('open');
+      setTimeout(() => document.getElementById('obsidian-modal-input').focus(), 50);
+    }
+
+    function closeObsidianModal() {
+      document.getElementById('obsidian-modal-overlay').classList.remove('open');
+    }
+
+    function confirmObsidianUrl() {
+      const url = document.getElementById('obsidian-modal-input').value.trim();
+      const topic = state.topics.find(t => t.id === _obsidianTopicId);
+      if (!topic) return;
+      topic.obsidianUrl = url;
+      saveNow(); render();
+      closeObsidianModal();
+      toast(url ? 'Obsidian 链接已设置' : 'Obsidian 链接已清除');
+    }
+
+    /** ── 删除/放弃选题 ─────────────────────────────────────── */
+
+    /**
+     * @param {string} topicId
+     * @param {string} [mode] 'abandon' | 'force'
+     */
+    function deleteTopic(topicId, mode) {
+      const topic = state.topics.find(t => t.id === topicId);
+      if (!topic) return;
+      const msg = mode === 'abandon'
+        ? `该选题尚未开始执行，确认放弃「${topic.title}」？`
+        : `确定彻底删除「${topic.title}」？此操作无法撤销。`;
+      const title = mode === 'abandon' ? '放弃选题' : '彻底删除';
+      showConfirm(msg, () => {
+        state.topics = state.topics.filter(t => t.id !== topicId);
+        if (state.selectedTopicId === topicId) state.selectedTopicId = null;
+        saveNow();
+        render();
+        toast(mode === 'abandon' ? `已放弃「${topic.title}」` : `已删除「${topic.title}」`);
+      }, title, mode === 'abandon' ? '放弃' : '删除');
+    }
+
+    /**
+     * 存档或恢复选题
+     * @param {string} topicId
+     * @param {boolean} [archive=true]
+     */
+    function archiveTopic(topicId, archive = true) {
+      const topic = state.topics.find(t => t.id === topicId);
+      if (!topic) return;
+      if (archive) {
+        showConfirm(`该选题已完成，确认存档「${topic.title}」？`, () => {
+          topic.archived = true;
+          saveNow(); render();
+          toast(`已存档「${topic.title}」`);
+          if (state.selectedTopicId === topicId) state.selectedTopicId = null;
+        }, '存档选题', '存档');
+      } else {
+        topic.archived = false;
+        toast(`已恢复「${topic.title}」`);
+        if (state.selectedTopicId === topicId) state.selectedTopicId = null;
+        saveNow(); render();
+      }
+    }
+
+    /** @param {string} fromId @param {string} toId */
+    function reorderTopics(fromId, toId) {
+      const fi = state.topics.findIndex(t => t.id === fromId);
+      const ti = state.topics.findIndex(t => t.id === toId);
+      if (fi < 0 || ti < 0 || fi === ti) return;
+      const [item] = state.topics.splice(fi, 1);
+      state.topics.splice(ti, 0, item);
+      saveNow();
+      render();
+      toast('已调整选题顺序');
+    }
+
+    /**
+     * 不重建 DOM，只更新某个选题卡的进度条和百分比数字
+     * @param {string} topicId
+     */
+    function patchCardProgress(topicId) {
+      const topic = state.topics.find(t => t.id === topicId);
+      if (!topic) return;
+      const pct = calcProgress(topic);
+      // progress fill bar
+      const card = document.querySelector(`[data-card-id="${topicId}"]`);
+      if (!card) return;
+      const fill = card.querySelector('.card-progress-fill');
+      if (fill) fill.style.width = pct + '%';
+      const pctEl = card.querySelector('.card-progress-pct');
+      if (pctEl) pctEl.textContent = pct + '%';
+      // also update sidebar label progress if visible
+      const sidebarLabel = document.querySelector(`.topic-label[data-label-id="${topicId}"] .topic-label-progress`);
+      if (sidebarLabel) sidebarLabel.textContent = pct + '%';
+    }
+
+    /**
+     * 不重建 DOM，只更新 timeline 行中某选题的任务块 completed 样式
+     * @param {string} topicId
+     */
+    function patchTimelineRow(topicId) {
+      const topic = state.topics.find(t => t.id === topicId);
+      if (!topic) return;
+      // update each task block's completed class
+      document.querySelectorAll(`.task-block[data-task-topic="${topicId}"]`).forEach(block => {
+        const taskId = block.dataset.taskId;
+        const task = topic.tasks.find(t => t.id === taskId);
+        if (task) block.classList.toggle('completed', !!task.completed);
+      });
+    }
+
+    /** 渲染选题卡网格 */
+    function renderCards() {
+      const grid = document.getElementById('cards-grid');
+      const allWf = allWorkflows();
+      grid.innerHTML = visibleTopics().map(topic => {
+        const pct = calcProgress(topic);
+        const urgent = isTopicUrgent(topic);
+        const sel = state.selectedTopicId === topic.id;
+        const wfName = (allWf.find(w => w.id === topic.type) || {}).name || (topic.type === 'self' ? '自制内容' : topic.type === 'commercial' ? '商单' : '自定义');
+        // 锁定条件：任意制作流程节点已完成 → 前置准备不可添加
+        const wfStarted = topic.tasks.some(t => t.completed && !t.id.startsWith('custom_'));
+        return `
+        <div class="topic-card type-${topic.type} ${sel ? 'selected' : ''} ${urgent ? 'is-urgent' : ''}" draggable="true" data-card-id="${topic.id}" style="position:relative;">
+
+          <!-- 左上角类型角标 -->
+          <span class="card-type-badge badge-${topic.type === 'self' ? 'self' : topic.type === 'commercial' ? 'commercial' : topic.type === 'collab' ? 'collab' : 'custom'}" title="${wfName}">${topic.type === 'self' ? '自' : topic.type === 'commercial' ? '商' : topic.type === 'collab' ? '合' : '定'}</span>
+
+          <!-- 第一行：工作流类型下拉（发布日期绝对定位右上角，不影响行距） -->
+          <div style="margin-bottom:4px;position:relative;">
+            <select class="card-type-select" data-type-select="${topic.id}" style="font-size:0.66rem;padding:2px 6px;">
+              ${allWf.map(w => `<option value="${w.id}" ${topic.type === w.id ? 'selected' : ''}>${esc(w.name)}</option>`).join('')}
+            </select>
+            <div class="card-publish-date" style="position:absolute;top:0;right:0;">
+              <span class="card-publish-label">发布日期</span>
+              <span class="card-publish-day">${fmtShortDate(topic.publishDate)}</span>
+            </div>
+          </div>
+          <!-- 第二行：选题名称 + Obsidian图标 -->
+          <div class="card-head">
+            <div class="card-head-left">
+              <span class="card-title">${esc(topic.title)}<span class="card-obsidian-wrap ${topic.obsidianUrl ? 'has-url' : ''}" title="${topic.obsidianUrl ? '左键打开 Obsidian 笔记 / 右键编辑链接' : '设置 Obsidian 链接'}" data-obsidian-topic="${topic.id}" style="margin-left:0.55em;vertical-align:middle;"><img class="card-obsidian-icon" src="IMG/Obsidian.webp" alt="" /></span></span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+            <div class="card-progress-bar" style="flex:1;margin-bottom:0;"><div class="card-progress-fill" style="width:${pct}%"></div></div>
+            <span class="card-progress-pct" style="font-size:0.78rem;font-weight:700;color:var(--text);white-space:nowrap;">${pct}%</span>
+          </div>
+
+          <!-- 第二部分：前置准备 -->
+          <div class="card-section">
+            <div class="card-section-title">前置准备${wfStarted ? ' <span style="font-size:0.6rem;color:var(--text-muted);">（已锁定）</span>' : ''}</div>
+            <div class="prep-row">
+              <input class="prep-input" placeholder="${wfStarted ? '流程已开始，不可添加' : '添加准备项…'}" data-prep-in="${topic.id}" ${wfStarted ? 'disabled' : ''} />
+              <button class="prep-add-btn" data-prep-add="${topic.id}" ${wfStarted ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}>+</button>
+            </div>
+            ${topic.prep.length === 0 ? `<p class="prep-empty-hint">${wfStarted ? '流程已开始' : '暂无前置任务，可自行添加'}</p>` : ''}
+            ${topic.prep.map((p, i) => `
+              <div class="prep-item ${p.completed ? 'done' : ''}">
+                <input type="checkbox" class="item-checkbox" data-prep-chk="${topic.id}:${i}" ${p.completed ? 'checked' : ''} />
+                <span class="item-text">${esc(p.text)}</span>
+                <button class="item-remove" data-prep-rm="${topic.id}:${i}">✕</button>
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- 第三部分：制作流程（两列） -->
+          <div class="card-section">
+            <div class="card-section-title">制作流程 · 自动倒排</div>
+            <div class="workflow-grid">
+              ${topic.tasks.filter(task => !['cover','copy','publish'].includes(task.id)).sort((a, b) => a.startDate.localeCompare(b.startDate)).map(task => `
+                <div class="workflow-item ${task.completed ? 'done' : ''}">
+                  <input type="checkbox" class="item-checkbox" data-task-chk="${topic.id}:${task.id}" ${task.completed ? 'checked' : ''} />
+                  <span class="workflow-dot" style="background:${task.color}"></span>
+                  <span class="item-text">${esc(task.name)}</span>
+                  <span class="item-date">${task.startDate.slice(5)}</span>
+                </div>
+              `).join('')}
+              ${(() => { const c = topic.tasks.find(t => t.id === 'cover'); return c ? `
+                <div class="workflow-item ${c.completed ? 'done' : ''}">
+                  <input type="checkbox" class="item-checkbox" data-task-chk="${topic.id}:cover-copy-publish" ${c.completed ? 'checked' : ''} />
+                  <span class="workflow-dot" style="background:${c.color}"></span>
+                  <span class="item-text">封面/文案/发布</span>
+                  <span class="item-date">${c.startDate.slice(5)}</span>
+                </div>` : ''; })()}
+            </div>
+          </div>
+
+        </div>`;
+      }).join('');
+
+      /** 卡片拖拽排序 */
+      grid.querySelectorAll('.topic-card').forEach(card => {
+        card.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('application/x-card-reorder', card.dataset.cardId);
+          e.dataTransfer.effectAllowed = 'move';
+        });
+        card.addEventListener('dragover', e => { e.preventDefault(); card.classList.add('drag-over'); });
+        card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+        card.addEventListener('drop', e => {
+          e.preventDefault();
+          card.classList.remove('drag-over');
+          const src = e.dataTransfer.getData('application/x-card-reorder');
+          if (src && src !== card.dataset.cardId) reorderTopics(src, card.dataset.cardId);
+        });
+        card.addEventListener('click', (e) => {
+          // 点击交互控件时不触发卡片选中/重渲染，避免与控件自身事件冲突
+          if (e.target.closest('input, button, select')) return;
+          state.selectedTopicId = card.dataset.cardId;
+          render();
+        });
+        // 右键选题卡 → 弹出选题操作菜单（存档/放弃/恢复等）
+        card.addEventListener('contextmenu', e => {
+          e.preventDefault();
+          showTopicMenuAt(e.clientX, e.clientY, card.dataset.cardId);
+        });
+      });
+
+      /** Obsidian 链接图标点击 */
+      grid.querySelectorAll('[data-obsidian-topic]').forEach(icon => {
+        icon.addEventListener('click', e => {
+          e.stopPropagation();
+          const topic = state.topics.find(t => t.id === icon.dataset.obsidianTopic);
+          if (!topic) return;
+          if (topic.obsidianUrl) {
+            window.location.href = topic.obsidianUrl;
+          } else {
+            openObsidianModal(topic.id);
+          }
+        });
+        // 右键 → 始终打开编辑弹窗（修改链接）
+        icon.addEventListener('contextmenu', e => {
+          e.preventDefault();
+          e.stopPropagation();
+          const topic = state.topics.find(t => t.id === icon.dataset.obsidianTopic);
+          if (topic) openObsidianModal(topic.id);
+        });
+      });
+
+      /** 工作流类型切换 */
+      grid.querySelectorAll('[data-type-select]').forEach(sel => {
+        sel.addEventListener('change', () => {
+          const topic = state.topics.find(t => t.id === sel.dataset.typeSelect);
+          if (!topic) return;
+          topic.type = sel.value;
+          topic.tasks = buildWorkflow(topic);
+          save();
+          render();
+          toast(`已切换为${sel.value === 'commercial' ? '商单' : '自制内容'}流程`);
+        });
+        sel.addEventListener('click', e => e.stopPropagation());
+      });
+
+      /** 前置准备 CRUD */
+      grid.querySelectorAll('[data-prep-add]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          const id = btn.dataset.prepAdd;
+          const input = document.querySelector(`[data-prep-in="${id}"]`);
+          const text = input?.value.trim();
+          if (!text) return;
+          const topic = state.topics.find(t => t.id === id);
+          topic.prep.push({ text, completed: false });
+          save();
+          render();
+        });
+      });
+
+      // 添加回车键支持
+      grid.querySelectorAll('[data-prep-in]').forEach(input => {
+        input.addEventListener('keypress', e => {
+          e.stopPropagation();
+          if (e.key === 'Enter') {
+            const id = input.dataset.prepIn;
+            const text = input?.value.trim();
+            if (!text) return;
+            const topic = state.topics.find(t => t.id === id);
+            topic.prep.push({ text, completed: false });
+            save();
+            render();
+          }
+        });
+        input.addEventListener('click', e => {
+          e.stopPropagation();
+        });
+      });
+      grid.querySelectorAll('[data-prep-rm]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          const [id, idx] = btn.dataset.prepRm.split(':');
+          const topic = state.topics.find(t => t.id === id);
+          save(); render();
+        });
+      });
+      grid.querySelectorAll('[data-prep-chk]').forEach(chk => {
+        chk.addEventListener('change', e => {
+          e.stopPropagation();
+          const [id, idx] = chk.dataset.prepChk.split(':');
+          const topic = state.topics.find(t => t.id === id);
+          if (!topic) return;
+          const item = topic.prep[+idx];
+          if (item) item.completed = chk.checked;
+          // visual: strikethrough on the item row
+          const row = chk.closest('.prep-item');
+          if (row) row.classList.toggle('done', chk.checked);
+          // update progress bar and pct in this card
+          patchCardProgress(id);
+          save();
+          // sync timeline (completed class on task block)
+          patchTimelineRow(id);
+        });
+      });
+
+      /** 实时锁定/解锁前置准备（DOM 操作，不刷新页面） */
+      function togglePrepLockDOM(topicId) {
+        const topic = state.topics.find(t => t.id === topicId);
+        if (!topic) return;
+        const locked = topic.tasks.some(t => t.completed && !t.id.startsWith('custom_'));
+        const card = document.querySelector(`[data-card-id="${topicId}"]`);
+        if (!card) return;
+        const input = card.querySelector('.prep-input');
+        const btn = card.querySelector('.prep-add-btn');
+        const hint = card.querySelector('.prep-empty-hint');
+        const titleEl = card.querySelector('.card-section-title');
+        if (input) { input.disabled = locked; input.placeholder = locked ? '流程已开始，不可添加' : '添加准备项…'; }
+        if (btn) { btn.disabled = locked; btn.style.opacity = locked ? '0.4' : ''; btn.style.cursor = locked ? 'not-allowed' : ''; }
+        if (hint) hint.textContent = locked ? '流程已开始' : (topic.prep.length ? '' : '暂无前置任务，可自行添加');
+        if (titleEl) titleEl.innerHTML = locked ? '前置准备 <span style="font-size:0.6rem;color:var(--text-muted);">（已锁定）</span>' : '前置准备';
+      }
+
+      /** 固定流程勾选 */
+      grid.querySelectorAll('[data-task-chk]').forEach(chk => {
+        chk.addEventListener('change', e => {
+          e.stopPropagation();
+          const [id, taskId] = chk.dataset.taskChk.split(':');
+          const topic = state.topics.find(t => t.id === id);
+          if (!topic) return;
+          if (taskId === 'cover-copy-publish') {
+            // 合并的封面/文案/发布复选框：一起勾选/取消
+            ['cover','copy','publish'].forEach(tid => {
+              const t = topic.tasks.find(t => t.id === tid);
+              if (t) t.completed = chk.checked;
+            });
+          } else {
+            const task = topic.tasks.find(t => t.id === taskId);
+            if (task) task.completed = chk.checked;
+          }
+          // visual: strikethrough on the item row
+          const row = chk.closest('.workflow-item');
+          if (row) row.classList.toggle('done', chk.checked);
+          // update progress bar and pct in this card
+          patchCardProgress(id);
+          // 实时锁定/解锁前置准备（不依赖刷新）
+          togglePrepLockDOM(id);
+          save();
+          // sync timeline task block
+          patchTimelineRow(id);
+        });
+      });
+    }
+
+    /** 新增选题弹窗 */
+    function openAddModal(defaultDate) {
+      const overlay = document.getElementById('modal-overlay');
+      updateTypeSelect(); // 确保工作流类型下拉最新
+      document.getElementById('modal-title').value = '';
+      document.getElementById('modal-type').value = 'self';
+      document.getElementById('modal-date').value = defaultDate || fmt(addDays(TODAY, 14));
+      document.querySelector('input[name="modal-status"][value="normal"]').checked = true;
+      document.getElementById('modal-priority-val').value = '0';
+      document.getElementById('modal-budget').value = '';
+      document.getElementById('modal-budget-field').style.display = 'none';
+      // 重置星星
+      document.querySelectorAll('#modal-priority span').forEach(s => s.classList.remove('active'));
+      overlay.classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('modal-overlay').classList.remove('open');
+    }
+
+    function confirmAdd() {
+      const title = document.getElementById('modal-title').value.trim();
+      const type = document.getElementById('modal-type').value;
+      const publishDate = document.getElementById('modal-date').value;
+      if (!title || !publishDate) { toast('请填写名称与发布日期'); return; }
+      const status = document.querySelector('input[name="modal-status"]:checked')?.value || 'normal';
+      const priority = parseInt(document.getElementById('modal-priority-val').value) || 0;
+      let budget = document.getElementById('modal-budget').value.trim();
+      // 纯数字自动格式化：50000 → ¥50,000
+      if (/^\d+$/.test(budget)) {
+        budget = '¥' + Number(budget).toLocaleString('zh-CN');
+      }
+      const topic = { id: uid(), title, type, publishDate, prep: [], tasks: [], archived: false, obsidianUrl: '', status, priority, budget };
+      topic.tasks = buildWorkflow(topic);
+      state.topics.push(topic);
+      saveNow();
+      closeModal();
+      render();
+      toast(`已添加「${title}」`);
+    }
+
+    /** 更新顶部通知跑马灯 */
+    function updateTicker() {
+      const el = document.getElementById('header-ticker');
+      if (!el) return;
+      const today = new Date(); today.setHours(0,0,0,0);
+      const urgent = state.topics.filter(t => isTopicUrgent(t));
+      // 按权重排序
+      urgent.sort((a, b) => tickerWeight(b) - tickerWeight(a));
+      if (!urgent.length) {
+        el.innerHTML = '<span class="header-ticker-empty">暂无紧急选题 · 一切尽在掌控</span>';
+        return;
+      }
+      const items = urgent.map(t => {
+        const days = Math.round((parse(t.publishDate) - today) / MS_DAY);
+        const tag = t.type === 'commercial' ? '商单' : '自制';
+        const stars = t.priority > 0 ? '★'.repeat(t.priority) : '';
+        const budget = t.budget ? ` [${t.budget}]` : '';
+        const statusLabel = t.status === 'urgent' ? '🚨' : (t.status === 'important' ? '📌' : '');
+        let cls = '';
+        if (t.status === 'urgent' || days <= 1) cls = 'urgent';
+        else if (days <= 3) cls = 'urgent';
+        const prefix = cls === 'urgent' ? '🔥' : '⚡';
+        return { text: `${statusLabel}${prefix} ${tag} · ${t.title}${stars}${budget} — ${days}天后发布`, cls };
+      });
+      const source = items.length >= 3 ? items : [...items, ...items];
+      const doubled = [...source, ...source];
+      el.innerHTML = `<div class="header-ticker-track">${doubled.map(i =>
+        `<span class="header-ticker-item ${i.cls}">${esc(i.text)}</span>`
+      ).join(' &nbsp;·&nbsp; ')}</div>`;
+    }
+
+    /** 全局渲染 */
+    function render() {
+      // 视图相关 UI 控制
+      const isArchived = state.activeNav === 'archived';
+      const addBtn = document.getElementById('btn-add-topic');
+      if (addBtn) addBtn.style.display = isArchived ? 'none' : '';
+      const timelineSection = document.getElementById('timeline-section');
+      if (timelineSection) timelineSection.style.display = isArchived ? 'none' : '';
+      const topicsTitle = document.querySelector('.topics-title-large');
+      if (topicsTitle) topicsTitle.textContent = isArchived ? '已存档选题' : '选题卡';
+      const topicsSubtitle = document.querySelector('.topics-title-small');
+      if (topicsSubtitle) topicsSubtitle.textContent = isArchived ? '已完成归档的选题，可在此恢复或彻底删除' : '前置准备可以自由增加、勾选和删除。正式流程保持统一，避免每条内容出现一套不同的复杂清单。';
+
+      updateTicker();
+      renderSidebar();
+      renderTimeline();
+      renderCards();
+      setTimeout(addAriaLabels, 0);
+      // 确保 timeline 宽度正确
+      setTimeout(() => {
+        const timelineScroll = document.getElementById('timeline-scroll');
+        const timelineInner = document.getElementById('timeline-inner');
+        if (timelineScroll && timelineInner) {
+          const rows = timelineInner.querySelectorAll('.timeline-row');
+          let maxWidth = 0;
+          rows.forEach(row => {
+            maxWidth = Math.max(maxWidth, row.scrollWidth);
+          });
+          if (maxWidth > 0) {
+            timelineInner.style.minWidth = maxWidth + 'px';
+          }
+        }
+      }, 0);
+    }
+
+    /** ── 自定义确认弹窗 ──────────────────────────────── */
+
+    let _confirmCallback = null;
+    let _cancelCallback = null;
+
+    function showConfirm(msg, onOk, title = '确认操作', okText = '确认', onCancel = null) {
+      if (_confirmCallback) { console.warn('showConfirm: 上一个确认未关闭就被覆盖', new Error().stack); }
+      document.getElementById('confirm-modal-msg').textContent = msg;
+      document.getElementById('confirm-modal-title').textContent = title;
+      document.getElementById('confirm-modal-ok').textContent = okText;
+      document.getElementById('confirm-modal-cancel').textContent = onCancel ? '标为完成' : '取消';
+      _confirmCallback = onOk;
+      _cancelCallback = onCancel;
+      document.getElementById('confirm-modal-overlay').classList.add('open');
+      setTimeout(() => document.getElementById('confirm-modal-ok').focus(), 50);
+    }
+
+    function closeConfirm(confirmed) {
+      document.getElementById('confirm-modal-overlay').classList.remove('open');
+      if (confirmed && _confirmCallback) _confirmCallback();
+      if (!confirmed && _cancelCallback) _cancelCallback();
+      _confirmCallback = null;
+      _cancelCallback = null;
+    }
+
+    /** ── 设置弹窗 ─────────────────────────────────────── */
+
+    let _editingWfId = null; // 正在编辑的工作流 id
+
+    function openSettingsModal() {
+      document.getElementById('settings-modal-overlay').classList.add('open');
+      switchSettingsTab('appearance');
+      updateModeUI();
+      updateThemeUI();
+      renderWorkflowList();
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settings-modal-overlay').classList.remove('open');
+      _editingWfId = null;
+      document.getElementById('wf-editor').style.display = 'none';
+    }
+
+    // ── 面板切换 ──
+    function switchSettingsTab(tab) {
+      document.querySelectorAll('.settings-tab').forEach(t => t.classList.toggle('active', t.dataset.stab === tab));
+      document.querySelectorAll('.settings-panel').forEach(p => p.classList.toggle('active', p.id === 'spanel-' + tab));
+    }
+
+    // ── 主题 / 模式 ──
+    function applyTheme() {
+      const mode = localStorage.getItem('npiedraft-mode') || 'light';
+      const theme = localStorage.getItem('npiedraft-theme') || 'warm';
+      document.documentElement.setAttribute('data-theme', mode === 'dark' ? 'dark' : theme);
+      if (mode === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+      else document.documentElement.setAttribute('data-theme', theme);
+    }
+
+    function updateModeUI() {
+      const mode = localStorage.getItem('npiedraft-mode') || 'light';
+      document.getElementById('mode-light').classList.toggle('active', mode === 'light');
+      document.getElementById('mode-dark').classList.toggle('active', mode === 'dark');
+      // 暗色模式下主题选项灰度不可选
+      const themeOptions = document.querySelector('.theme-options');
+      if (themeOptions) themeOptions.style.opacity = mode === 'dark' ? '0.4' : '';
+      document.querySelectorAll('.theme-btn').forEach(b => {
+        b.disabled = mode === 'dark';
+        b.style.pointerEvents = mode === 'dark' ? 'none' : '';
+      });
+    }
+
+    function updateThemeUI() {
+      const theme = localStorage.getItem('npiedraft-theme') || 'warm';
+      document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+      const active = document.querySelector(`.theme-btn[data-theme="${theme}"]`);
+      if (active) active.classList.add('active');
+    }
+
+    // ── 工作流管理 ──
+    function getCustomWorkflows() {
+      try { return JSON.parse(localStorage.getItem('npiedraft-custom-wf') || '[]'); } catch(_) { return []; }
+    }
+    function saveCustomWorkflows(wfs) { localStorage.setItem('npiedraft-custom-wf', JSON.stringify(wfs)); }
+
+    /** 获取完整的工作流列表（内置 + 自定义） */
+    function allWorkflows() {
+      const builtin = [
+        { id: 'self', name: '自制内容', stages: WORKFLOWS.self, isBuiltin: true },
+        { id: 'commercial', name: '商单', stages: WORKFLOWS.commercial, isBuiltin: true },
+        { id: 'collab', name: '合作内容', stages: WORKFLOWS.collab, isBuiltin: true }
+      ];
+      const custom = getCustomWorkflows().map(w => ({ ...w, isBuiltin: false }));
+      return [...builtin, ...custom];
+    }
+
+    /** 根据 id 获取工作流定义 */
+    function getWorkflowById(id) {
+      if (id === 'self') return WORKFLOWS.self;
+      if (id === 'commercial') return WORKFLOWS.commercial;
+      if (id === 'collab') return WORKFLOWS.collab;
+      const cw = getCustomWorkflows().find(w => w.id === id);
+      return cw ? cw.stages : null;
+    }
+
+    function renderWorkflowList() {
+      const el = document.getElementById('wf-list');
+      const all = allWorkflows();
+      el.innerHTML = all.map(w => `
+        <div class="wf-item">
+          <span class="wf-item-name">${esc(w.name)}</span>
+          <span class="wf-item-tag">${w.isBuiltin ? '内置' : '自定义'} · ${w.stages.length} 节点</span>
+          <div class="wf-item-actions">
+            <button class="wf-icon-btn" data-wf-copy="${w.id}" title="复制">📋</button>
+            <button class="wf-icon-btn" data-wf-edit="${w.id}" title="编辑">✎</button>
+            ${!w.isBuiltin ? `<button class="wf-icon-btn danger" data-wf-del="${w.id}" title="删除">✕</button>` : ''}
+          </div>
+        </div>
+      `).join('');
+      // 复制按钮
+      el.querySelectorAll('[data-wf-copy]').forEach(btn => {
+        btn.addEventListener('click', () => duplicateWorkflow(btn.dataset.wfCopy));
+      });
+      // 编辑按钮
+      el.querySelectorAll('[data-wf-edit]').forEach(btn => {
+        btn.addEventListener('click', () => openWorkflowEditor(btn.dataset.wfEdit));
+      });
+      // 删除按钮
+      el.querySelectorAll('[data-wf-del]').forEach(btn => {
+        btn.addEventListener('click', () => deleteWorkflow(btn.dataset.wfDel));
+      });
+    }
+
+    function duplicateWorkflow(wfId) {
+      const all = allWorkflows();
+      const wf = all.find(w => w.id === wfId);
+      if (!wf) return;
+      const customWfs = getCustomWorkflows();
+      const newId = 'cw_' + Date.now();
+      customWfs.push({
+        id: newId,
+        name: wf.name + ' 副本',
+        stages: wf.stages.map(s => ({ ...s, id: s.id === 'cover' || s.id === 'copy' || s.id === 'publish' ? s.id : 's' + Date.now() + Math.random().toString(36).slice(2, 5) }))
+      });
+      saveCustomWorkflows(customWfs);
+      updateTypeSelect();
+      renderWorkflowList();
+      toast(`已复制「${wf.name}」`);
+    }
+
+    function openWorkflowEditor(wfId) {
+      _editingWfId = wfId;
+      const all = allWorkflows();
+      const wf = all.find(w => w.id === wfId);
+      if (!wf) return;
+      document.getElementById('wf-editor-name').value = wf.isBuiltin ? wf.name + '（内置，不可删）' : wf.name;
+      if (wf.isBuiltin) document.getElementById('wf-editor-name').disabled = true;
+      else document.getElementById('wf-editor-name').disabled = false;
+      // 渲染节点编辑器
+      const stagesEl = document.getElementById('wf-editor-stages');
+      const stages = wf.stages.filter(s => !['cover','copy','publish'].includes(s.id));
+      stagesEl.innerHTML = stages.map(s => `
+        <div class="wf-stage-row">
+          <input type="text" value="${esc(s.name)}" placeholder="节点名" data-wf-sname="${s.id}" />
+          <input type="number" value="${s.days}" min="1" max="30" class="wf-days" placeholder="天" />
+          <input type="color" value="${s.color}" title="颜色" />
+          <button class="wf-icon-btn danger" data-wf-sdel="${s.id}">✕</button>
+        </div>
+      `).join('');
+      // 节点拖拽排序
+      setupStageDrag(document.getElementById('wf-editor-stages'));
+      document.getElementById('wf-editor').style.display = 'block';
+    }
+
+    function setupStageDrag(container) {
+      let dragRow = null;
+      container.querySelectorAll('.wf-stage-row').forEach(row => {
+        row.setAttribute('draggable', 'true');
+        row.addEventListener('dragstart', e => { dragRow = row; row.style.opacity = '0.5'; });
+        row.addEventListener('dragend', () => { dragRow = null; row.style.opacity = ''; });
+        row.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
+        row.addEventListener('drop', e => {
+          e.preventDefault();
+          if (dragRow && dragRow !== row) {
+            const rows = [...container.querySelectorAll('.wf-stage-row')];
+            const fromIdx = rows.indexOf(dragRow);
+            const toIdx = rows.indexOf(row);
+            if (fromIdx < toIdx) row.after(dragRow);
+            else row.before(dragRow);
+          }
+        });
+      });
+    }
+
+    function addWorkflowStageRow() {
+      const stagesEl = document.getElementById('wf-editor-stages');
+      const row = document.createElement('div');
+      row.className = 'wf-stage-row';
+      row.setAttribute('draggable', 'true');
+      row.innerHTML = `
+        <input type="text" placeholder="节点名" />
+        <input type="number" value="1" min="1" max="30" class="wf-days" placeholder="天" />
+        <input type="color" value="#B0A090" title="颜色" />
+        <button class="wf-icon-btn danger">✕</button>
+      `;
+      row.querySelector('.wf-icon-btn').addEventListener('click', () => row.remove());
+      // 拖拽事件
+      row.addEventListener('dragstart', e => { row.style.opacity = '0.5'; });
+      row.addEventListener('dragend', () => { row.style.opacity = ''; });
+      row.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
+      row.addEventListener('drop', e => {
+        e.preventDefault();
+        const dragRow = [...stagesEl.querySelectorAll('.wf-stage-row')].find(r => r.style.opacity === '0.5');
+        if (dragRow && dragRow !== row) {
+          const rows = [...stagesEl.querySelectorAll('.wf-stage-row')];
+          const fromIdx = rows.indexOf(dragRow);
+          const toIdx = rows.indexOf(row);
+          if (fromIdx < toIdx) row.after(dragRow);
+          else row.before(dragRow);
+        }
+      });
+      stagesEl.appendChild(row);
+    }
+
+    function saveWorkflowFromEditor() {
+      const name = document.getElementById('wf-editor-name').value.trim();
+      if (!name) { toast('请输入工作流名称'); return; }
+      const rows = document.querySelectorAll('#wf-editor-stages .wf-stage-row');
+      const stages = [];
+      rows.forEach(row => {
+        const inputs = row.querySelectorAll('input');
+        const sname = inputs[0].value.trim();
+        if (!sname) return;
+        stages.push({
+          id: 's' + Date.now() + Math.random().toString(36).slice(2,5),
+          name: sname,
+          days: Math.max(1, parseInt(inputs[1].value) || 1),
+          color: inputs[2].value
+        });
+      });
+      if (!stages.length) { toast('请至少添加一个节点'); return; }
+      // 自动追加封面/文案/发布
+      stages.push(
+        { id: 'cover', name: '封面', days: 1, color: '#C8B8A0' },
+        { id: 'copy', name: '文案', days: 1, color: '#D4C0B0' },
+        { id: 'publish', name: '发布', days: 1, color: '#A09080' }
+      );
+      const customWfs = getCustomWorkflows();
+      if (_editingWfId && customWfs.find(w => w.id === _editingWfId)) {
+        const wf = customWfs.find(w => w.id === _editingWfId);
+        wf.name = name;
+        wf.stages = stages;
+      } else if (_editingWfId === 'self' || _editingWfId === 'commercial') {
+        // 编辑内置工作流：存为覆盖
+        WORKFLOWS[_editingWfId] = stages;
+        toast(`已更新「${name}」工作流`);
+      } else {
+        // 新建
+        customWfs.push({ id: 'cw_' + Date.now(), name, stages });
+      }
+      saveCustomWorkflows(customWfs);
+      // 更新新增选题下拉框
+      updateTypeSelect();
+      _editingWfId = null;
+      document.getElementById('wf-editor').style.display = 'none';
+      renderWorkflowList();
+      toast(`已保存工作流「${name}」`);
+    }
+
+    function deleteWorkflow(wfId) {
+      const customWfs = getCustomWorkflows();
+      const wf = customWfs.find(w => w.id === wfId);
+      if (!wf) return;
+      // 检查是否有选题在使用
+      const usingTopics = state.topics.filter(t => t.type === wfId && calcProgress(t) > 0);
+      if (usingTopics.length) {
+        showConfirm(`${usingTopics.length} 个选题正在使用此工作流（进度 > 0%），无法删除。请等待选题执行完毕后再删除。`, () => {}, '无法删除', '我知道了');
+        return;
+      }
+      showConfirm(`确定删除工作流「${wf.name}」？`, () => {
+        saveCustomWorkflows(customWfs.filter(w => w.id !== wfId));
+        state.topics.forEach(t => { if (t.type === wfId) t.type = 'self'; });
+        updateTypeSelect();
+        renderWorkflowList();
+        saveNow(); render();
+        toast(`已删除「${wf.name}」`);
+      }, '删除工作流', '删除');
+    }
+
+    /** 更新新增选题弹窗的工作流类型下拉 */
+    function updateTypeSelect() {
+      const sel = document.getElementById('modal-type');
+      if (!sel) return;
+      const all = allWorkflows();
+      sel.innerHTML = all.map(w => `<option value="${w.id}">${esc(w.name)}</option>`).join('');
+      // 也更新已有选题卡里的下拉
+      document.querySelectorAll('[data-type-select]').forEach(cardSel => {
+        const current = cardSel.value;
+        cardSel.innerHTML = all.map(w => `<option value="${w.id}" ${w.id === current ? 'selected' : ''}>${esc(w.name)}</option>`).join('');
+      });
+    }
+
+    // ── 初始化主题 ──
+    function initTheme() {
+      if (!localStorage.getItem('npiedraft-mode')) localStorage.setItem('npiedraft-mode', 'light');
+      if (!localStorage.getItem('npiedraft-theme')) localStorage.setItem('npiedraft-theme', 'warm');
+      applyTheme();
+      updateTypeSelect();
+    }
+
+    /** 初始化 */
+    async function init() {
+      // CDN 加载失败检测
+      window.addEventListener('error', e => {
+        if (e.target && (e.target.tagName === 'LINK' || e.target.tagName === 'SCRIPT')) {
+          document.getElementById('offline-warning').style.display = 'block';
+        }
+      }, true);
+
+      // 全局拖拽状态（只绑定一次，避免每次 render 泄漏）
+      window._npiedraft_dragActive = false;
+      window._npiedraft_dragLabelId = null;
+      document.addEventListener('mousedown', e => {
+        const label = e.target.closest('.topic-label');
+        if (label && e.button === 0) {
+          window._npiedraft_dragActive = true;
+          window._npiedraft_dragLabelId = label.dataset.labelId;
+          if (window._npiedraft_dragLabelId) state.selectedTopicId = window._npiedraft_dragLabelId;
+        }
+      });
+      document.addEventListener('mouseup', () => { window._npiedraft_dragActive = false; window._npiedraft_dragLabelId = null; });
+
+      const loaded = await load();
+      if (!loaded) seedData();
+      updateBounds();
+
+
+      document.getElementById('btn-add-topic').onclick = () => openAddModal();
+      document.getElementById('modal-cancel').onclick = closeModal;
+      document.getElementById('modal-confirm').onclick = confirmAdd;
+      // 星评点击
+      document.querySelectorAll('#modal-priority span').forEach(star => {
+        star.addEventListener('click', () => {
+          const val = parseInt(star.dataset.star);
+          document.getElementById('modal-priority-val').value = val;
+          document.querySelectorAll('#modal-priority span').forEach((s, i) => {
+            s.classList.toggle('active', i < val);
+          });
+        });
+      });
+      // 商单显示金额字段
+      document.getElementById('modal-type').addEventListener('change', function() {
+        document.getElementById('modal-budget-field').style.display = this.value === 'commercial' ? '' : 'none';
+      });
+
+      // 新增日程弹窗
+      document.getElementById('schedule-modal-cancel').onclick  = closeScheduleModal;
+      document.getElementById('schedule-modal-confirm').onclick = confirmSchedule;
+      document.getElementById('schedule-modal-name').addEventListener('keydown', e => {
+        if (e.key === 'Enter') confirmSchedule();
+      });
+
+      // Obsidian 链接弹窗
+      document.getElementById('obsidian-modal-cancel').onclick  = closeObsidianModal;
+      document.getElementById('obsidian-modal-confirm').onclick = confirmObsidianUrl;
+      document.getElementById('obsidian-modal-test').onclick    = () => {
+        const url = document.getElementById('obsidian-modal-input').value.trim();
+        if (!url.startsWith('obsidian://open')) { toast('格式错误：应以 obsidian://open 开头'); return; }
+        if (!url.includes('vault=')) { toast('格式错误：缺少 vault= 参数（你的 Obsidian 仓库名）'); return; }
+        if (!url.includes('file=')) { toast('格式错误：缺少 file= 参数（笔记路径或标题）'); return; }
+        const confirmBtn = document.getElementById('obsidian-modal-confirm');
+        confirmBtn.disabled = false;
+        confirmBtn.style.opacity = '';
+        document.getElementById('obsidian-test-hint').textContent = '✓ 格式校验通过，点击「确认」保存（链接有效性请保存后在 Obsidian 中验证）';
+        document.getElementById('obsidian-test-hint').style.color = 'var(--green)';
+      };
+      document.getElementById('obsidian-modal-clear').onclick   = () => {
+        document.getElementById('obsidian-modal-input').value = '';
+        confirmObsidianUrl();
+      };
+      document.getElementById('obsidian-modal-input').addEventListener('input', () => {
+        const confirmBtn = document.getElementById('obsidian-modal-confirm');
+        confirmBtn.disabled = true;
+        confirmBtn.style.opacity = '0.5';
+        document.getElementById('obsidian-test-hint').textContent = '💡 请输入 obsidian:// 链接后点击「测试链接」校验格式，通过后方可保存';
+        document.getElementById('obsidian-test-hint').style.color = 'var(--text-muted)';
+      });
+      document.getElementById('obsidian-modal-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter') confirmObsidianUrl();
+      });
+
+      // 重命名弹窗
+      document.getElementById('rename-modal-cancel').onclick  = closeRenameModal;
+      document.getElementById('rename-modal-confirm').onclick = confirmRename;
+      document.getElementById('rename-modal-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter') confirmRename();
+      });
+
+      document.getElementById('import-file').addEventListener('change', e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+          try {
+            const data = JSON.parse(ev.target.result);
+            if (!data.topics || !Array.isArray(data.topics)) throw new Error('缺少 topics 数组');
+            if (data.topics.length > 200) throw new Error('选题数量超过上限(200)');
+            state.topics = data.topics.map((t, i) => {
+              if (!t.id || !t.title || !t.publishDate) throw new Error(`第${i+1}条选题缺少必要字段(id/title/publishDate)`);
+              return {
+                ...t, prep: normalizePrep(t.prep),
+                archived: t.archived ?? false,
+                obsidianUrl: typeof t.obsidianUrl === 'string' ? t.obsidianUrl : '',
+                status: ['normal','important','urgent'].includes(t.status) ? t.status : 'normal',
+                priority: Math.min(5, Math.max(0, parseInt(t.priority) || 0)),
+                budget: typeof t.budget === 'string' ? t.budget : '',
+                tasks: t.tasks?.length ? t.tasks : buildWorkflow(t)
+              };
+            });
+            save(); render();
+            toast(`导入成功 (${state.topics.length} 条选题)`);
+          } catch (e) { toast('导入失败：' + (e.message || '数据格式错误')); }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+      });
+
+      // 设置弹窗事件
+      document.getElementById('settings-modal-close').onclick = closeSettingsModal;
+      document.querySelectorAll('.settings-tab').forEach(tab => {
+        tab.addEventListener('click', () => switchSettingsTab(tab.dataset.stab));
+      });
+      // 外观
+      document.getElementById('mode-light').addEventListener('click', () => {
+        localStorage.setItem('npiedraft-mode', 'light');
+        applyTheme(); updateModeUI();
+      });
+      document.getElementById('mode-dark').addEventListener('click', () => {
+        localStorage.setItem('npiedraft-mode', 'dark');
+        applyTheme(); updateModeUI();
+      });
+      // 主题
+      document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          localStorage.setItem('npiedraft-theme', btn.dataset.theme);
+          applyTheme(); updateThemeUI();
+        });
+      });
+      // 工作流
+      document.getElementById('btn-add-workflow').addEventListener('click', () => {
+        _editingWfId = null;
+        document.getElementById('wf-editor-name').value = '';
+        document.getElementById('wf-editor-name').disabled = false;
+        document.getElementById('wf-editor-stages').innerHTML = '';
+        document.getElementById('wf-editor').style.display = 'block';
+      });
+      document.getElementById('btn-wf-add-stage').addEventListener('click', addWorkflowStageRow);
+      document.getElementById('btn-wf-save').addEventListener('click', saveWorkflowFromEditor);
+      document.getElementById('btn-wf-cancel').addEventListener('click', () => {
+        _editingWfId = null;
+        document.getElementById('wf-editor').style.display = 'none';
+      });
+      // 初始化主题
+      // 使用说明多步骤引导
+      const guideSteps = [
+        { title: '欢迎！这是哌稿场 · 档期', html: `<p>哌稿场是一张<b>内容创作排期看板</b>——把选题策划、制作流程、进度追踪全部放在一张画布上。</p>
+          <p><b>怎么用？</b>你只需要做三件事：</p>
+          <p>❶ <b>创建选题</b> → 设定发布日期<br>❷ 系统<b>自动倒排</b>所有制作阶段（跳过周末和节假日）<br>❸ 按日历上的节点<b>执行和勾选</b>，进度条自动推进</p>
+          <p>自制内容和商单分开管理，每个选题可以绑定 Obsidian 笔记。</p>
+          <p style="color:var(--text-muted);font-size:0.72rem;">按 → 键或点击「下一步」继续 👇</p>` },
+        { title: '第一步：创建选题', html: `<p>点击排期日历<b>底部的「+ 增加选题」</b>按钮，弹出创建窗口：</p>
+          <p><b>必填项</b>：选题名称（如"掌握NotebookLM 2.0（2026 版）"）、工作流类型（自制内容 / 商单 / ……）、发布日期。</p>
+          <p><b>选填项</b>：状态标记（普通 / 重要 / 紧急）、影响力星级（点击星星 1-5 颗）、商单可选填金额（如 50000，自动格式化 ¥50,000）。</p>
+          <p>点击「确认添加」后，系统立即按<b>工作日倒排</b>生成所有制作阶段——比如发布日期是周五，最后一个制作节点"包装"会自动排到周四，周末被跳过。</p>` },
+        { title: '第二步：看懂排期日历', html: `<p>日历是哌稿场的<b>核心操作区</b>。每一行是一条选题，每个<b>彩色方块</b>是一个制作阶段。</p>
+          <p><b>拖拽操作（最重要！）</b></p>
+          <p>◀ <b>拖拽左侧的选题名称卡片</b>到日历上的任意一天 → 这条选题的<b>发布日期改变</b>，系统重新按工作日倒排所有节点。</p>
+          <p>◀ <b>拖拽右侧的彩色任务块</b>到另一天 → <b>只移动这一个节点</b>，其他节点不受影响。</p>
+          <p><b>右键菜单</b>：在日历空格子上点右键 → 可添加自定义日程（如"品牌素材整理"）；在有任务块的格子上点右键 → 可删除该节点。</p>
+          <p><b>双击任务块</b>上的文字 → 原地编辑名称，按 Enter 确认，Esc 取消。</p>
+          <p><b>封面、文案、发布</b>三个节点固定在发布日当天，自动上下排列。</p>` },
+        { title: '第三步：用选题卡追踪进度', html: `<p>向下滚动到<b>「选题卡」</b>区域。每条选题一张卡片，和日历数据实时同步。</p>
+          <p><b>卡片结构（从上到下）：</b></p>
+          <p>① <b>标题行</b>：选题名称 + Obsidian 链接图标 + 进度百分比。左上角有红圈「自」或金圈「商」角标区分类型。紧急选题左边框变橙色。</p>
+          <p>② <b>前置准备</b>：像待办清单一样自由添加和勾选。比如"产品功能调研""客户 Brief 确认"。</p>
+          <p>③ <b>制作流程</b>：两列排列，每个阶段一个复选框。勾选一项 → 进度条实时更新。全部勾选完 → 进度 100%。</p>
+          <p>④ <b>工作流类型</b>下拉框：随时切换「自制内容」和「商单」，系统自动用对应的流程重新倒排。</p>
+          <p><b>右键选题卡</b>可以：重命名选题 / 存档（进度100%时）/ 放弃（进度0%时）。</p>` },
+        { title: '其他功能：角标、主题、数据', html: `<p><b>角标速查</b>：</p>
+          <p style="display:flex;align-items:center;gap:4px;"><span style="display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:#C5554A;color:#fff;font-size:0.5rem;font-weight:800;">自</span> 红色「自」= 自制内容，出现在选题卡左上角、日历标签右上角、侧栏选题名前</p>
+          <p style="display:flex;align-items:center;gap:4px;"><span style="display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:#C89B3C;color:#fff;font-size:0.5rem;font-weight:800;">商</span> 金色「商」= 商单，同上位置</p>
+          <p style="display:flex;align-items:center;gap:4px;"><span style="display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:#E04030;color:#fff;font-size:0.5rem;font-weight:800;">急</span> 红色「急」= 紧急选题，日历标签左上角。自制距发布≤3天、商单≤5天自动出现</p>
+          <p><b>个性化设置</b>：点击侧栏底部「设置」→ 日间/夜间模式一键切换、7 套完整配色可选、可创建自定义工作流类型。</p>
+          <p><b>数据安全</b>：所有数据自动存入浏览器内置数据库，清缓存不会丢失。定期点击侧栏「导出备份」下载 JSON 文件保存到 iCloud 或其他云盘。换设备时「导入恢复」即可。</p>
+          <p><b>更多功能</b>：侧栏可折叠（点 ◀ 按钮）；顶部跑马灯滚动显示紧急选题；已完成的选题可右键存档到「已存档」视图。</p>` }
+      ];
+      let _guideStep = 0;
+      function renderGuideStep() {
+        const s = guideSteps[_guideStep];
+        document.getElementById('guide-step-title').textContent = s.title;
+        document.getElementById('guide-step-content').innerHTML = s.html;
+        document.querySelectorAll('.guide-dot').forEach((d, i) => d.classList.toggle('active', i === _guideStep));
+        document.getElementById('guide-prev').style.visibility = _guideStep === 0 ? 'hidden' : '';
+        const nextBtn = document.getElementById('guide-next');
+        if (_guideStep === guideSteps.length - 1) { nextBtn.textContent = '完成 ✓'; nextBtn.style.background = 'var(--green)'; }
+        else { nextBtn.textContent = '下一步 →'; nextBtn.style.background = ''; }
+        document.getElementById('guide-step-num').textContent = `${_guideStep+1} / ${guideSteps.length}`;
+      }
+      function openGuide() { _guideStep = 0; renderGuideStep(); document.getElementById('guide-modal-overlay').classList.add('open'); }
+      function closeGuide() { document.getElementById('guide-modal-overlay').classList.remove('open'); }
+      document.getElementById('btn-header-guide').onclick = openGuide;
+      document.getElementById('guide-modal-x').onclick = closeGuide;
+      document.getElementById('guide-next').addEventListener('click', () => {
+        if (_guideStep < guideSteps.length - 1) { _guideStep++; renderGuideStep(); } else { closeGuide(); }
+      });
+      document.getElementById('guide-prev').addEventListener('click', () => { if (_guideStep > 0) { _guideStep--; renderGuideStep(); } });
+      // 键盘操作：左右箭头切换步骤，Escape 关闭
+      document.addEventListener('keydown', e => {
+        const overlay = document.getElementById('guide-modal-overlay');
+        if (!overlay.classList.contains('open')) return;
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); if (_guideStep < guideSteps.length - 1) { _guideStep++; renderGuideStep(); } else { closeGuide(); } }
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); if (_guideStep > 0) { _guideStep--; renderGuideStep(); } }
+        if (e.key === 'Escape') { e.preventDefault(); closeGuide(); }
+      });
+      // 确认弹窗
+      document.getElementById('confirm-modal-cancel').onclick = () => closeConfirm(false);
+      document.getElementById('confirm-modal-ok').onclick = () => closeConfirm(true);
+      // 键盘支持：监听 overlay 自身
+      document.getElementById('confirm-modal-overlay').addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); closeConfirm(true); }
+        if (e.key === 'Escape') { e.preventDefault(); closeConfirm(false); }
+      });
+
+      // ── 全局弹窗键盘支持：Esc 关闭 / Enter 确认 ──
+      document.addEventListener('keydown', e => {
+        const overlays = [
+          { id: 'modal-overlay', close: closeModal, confirm: confirmAdd, focus: 'modal-confirm' },
+          { id: 'schedule-modal-overlay', close: closeScheduleModal, confirm: confirmSchedule, focus: 'schedule-modal-confirm' },
+          { id: 'obsidian-modal-overlay', close: closeObsidianModal, confirm: confirmObsidianUrl, focus: 'obsidian-modal-confirm' },
+          { id: 'rename-modal-overlay', close: closeRenameModal, confirm: confirmRename, focus: 'rename-modal-confirm' },
+          { id: 'settings-modal-overlay', close: closeSettingsModal, confirm: null, focus: null },
+          { id: 'confirm-modal-overlay', close: () => closeConfirm(false), confirm: () => closeConfirm(true), focus: 'confirm-modal-ok' },
+          { id: 'guide-modal-overlay', close: closeGuide, confirm: null, focus: null },
+        ];
+        for (const ov of overlays) {
+          const el = document.getElementById(ov.id);
+          if (!el || !el.classList.contains('open')) continue;
+          if (e.key === 'Escape') { e.preventDefault(); ov.close(); return; }
+          if (e.key === 'Enter' && ov.confirm) {
+            // 如果焦点在 textarea 或 contentEditable，不触发（允许换行）
+            if (e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+            e.preventDefault(); ov.confirm(); return;
+          }
+          return; // 只处理最上层弹窗
+        }
+      });
+      // 弹窗打开时自动聚焦
+      const _origOpenAdd = openAddModal;
+      openAddModal = function(d) { _origOpenAdd(d); setTimeout(() => document.getElementById('modal-title').focus(), 80); };
+      const _origOpenSched = openScheduleModal;
+      openScheduleModal = function(a,b) { _origOpenSched(a,b); setTimeout(() => document.getElementById('schedule-modal-name').focus(), 80); };
+      const _origOpenObs = openObsidianModal;
+      openObsidianModal = function(a) { _origOpenObs(a); setTimeout(() => document.getElementById('obsidian-modal-input').focus(), 80); };
+      const _origOpenRename = openRenameModal;
+      openRenameModal = function(a) { _origOpenRename(a); setTimeout(() => document.getElementById('rename-modal-input').focus(), 80); };
+
+      initTheme();
+
+      render();
+      // 数据加载完成，显示界面，消除白屏闪烁
+      document.querySelector('.app-shell').classList.add('ready');
+    }
+
+    init();

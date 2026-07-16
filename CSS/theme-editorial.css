@@ -1,0 +1,69 @@
+    /* ── 主题：蓝黄杂志风 ── */
+    [data-theme="editorial"] {
+      --bg: #fefcf6;
+      --surface: #FFFFFF;
+      --surface-muted: #faf6eb;
+      --border: rgba(26,26,46,0.08);
+      --text: #1A1A2E;
+      --text-muted: #4A4A5A;
+      --muted-2: #8A8A9A;
+      --accent: #2B7FD8;
+      --accent-soft: #E8F0FA;
+      --green: #2d6a4f;
+      --red: #E84A5F;
+      --blue: #2B7FD8;
+      --yellow: #F4D758;
+      --shadow: 0 2px 16px rgba(26,26,46,0.06);
+      --card-self: #FDF8F2;
+      --card-commercial: #F2F4F8;
+      --card-comp-self: #F4E8D8;
+      --card-comp-commercial: #E8ECF2;
+      font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    }
+    [data-theme="editorial"] .brand-title { font-family: 'Fraunces', 'Noto Serif SC', serif; font-style: italic; font-size: 0.78rem; letter-spacing: 0; text-transform: none; }
+    [data-theme="editorial"] .brand-subtitle { font-family: 'Noto Serif SC', serif; font-weight: 900; }
+    [data-theme="editorial"] .card-title,
+    [data-theme="editorial"] .topics-title-large,
+    [data-theme="editorial"] .timeline-hero-title { font-family: 'Noto Serif SC', serif; font-weight: 900; }
+    [data-theme="editorial"] .nav-pill { font-weight: 500; }
+    [data-theme="editorial"] .nav-pill.active { background: #E8F0FA; color: #2B7FD8; font-weight: 700; }
+    [data-theme="editorial"] .topic-item { border-radius: 10px; border: 1px solid rgba(26,26,46,0.06); }
+    [data-theme="editorial"] .topic-item.selected { outline-color: #2B7FD8; }
+    [data-theme="editorial"] .topic-card { border-radius: 14px; border: 1px solid rgba(26,26,46,0.08); transition: transform 0.2s, box-shadow 0.2s; }
+    [data-theme="editorial"] .topic-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(26,26,46,0.1); }
+    [data-theme="editorial"] .topic-card.selected { outline-color: #2B7FD8; }
+    [data-theme="editorial"] .task-block { border-radius: 6px; font-weight: 500; }
+    [data-theme="editorial"] .add-topic-btn { background: #1A1A2E; border-radius: 10px; }
+    [data-theme="editorial"] .add-topic-btn:hover { background: #2B7FD8; }
+    [data-theme="editorial"] .modal-btn-primary { background: #2B7FD8; border-radius: 10px; }
+    [data-theme="editorial"] .modal-btn-primary:hover { background: #1E6AC0; }
+    [data-theme="editorial"] .modal-box { border-radius: 16px; }
+    [data-theme="editorial"] .card-type-badge.badge-self { background: #2B7FD8; }
+    [data-theme="editorial"] .card-type-badge.badge-commercial { background: #F4D758; color: #1A1A2E; }
+    [data-theme="editorial"] .tl-type-dot.dot-self { background: #2B7FD8; }
+    [data-theme="editorial"] .tl-type-dot.dot-commercial { background: #F4D758; color: #1A1A2E; }
+    [data-theme="editorial"] .tl-type-dot.dot-custom { background: #8B8AA5; }
+    [data-theme="editorial"] .topic-item-badge.badge-self { background: #2B7FD8; }
+    [data-theme="editorial"] .topic-item-badge.badge-commercial { background: #F4D758; color: #1A1A2E; }
+    [data-theme="editorial"] .topic-item-badge.badge-custom { background: #8B8AA5; }
+    [data-theme="editorial"] .card-type-badge.badge-self { background: #2B7FD8; }
+    [data-theme="editorial"] .card-type-badge.badge-commercial { background: #F4D758; color: #1A1A2E; }
+    [data-theme="editorial"] .card-type-badge.badge-custom { background: #8B8AA5; }
+    [data-theme="editorial"] .card-type-badge.badge-collab { background: #5090A0 !important; }
+    [data-theme="editorial"] .tl-type-dot.dot-collab { background: #5090A0 !important; }
+    [data-theme="editorial"] .topic-item-badge.badge-collab { background: #5090A0 !important; }
+    [data-theme="editorial"] .legend-dot.dot-collab { background: #5090A0 !important; }
+    [data-theme="editorial"] .tl-urgent-dot { background: #E84A5F; }
+    [data-theme="editorial"] .topic-label.tl-urgent .topic-label-card,
+    [data-theme="editorial"] .topic-item.topic-urgent { border-left-color: #E84A5F !important; }
+    [data-theme="editorial"] .topic-card.is-urgent { border-left: 3px solid #E84A5F; }
+    [data-theme="editorial"] .card-progress-fill { background: linear-gradient(90deg, #2B7FD8, #F4D758); }
+    [data-theme="editorial"] .topic-label-card { border-radius: 10px; }
+    [data-theme="editorial"] .section-card { border-radius: 14px; }
+    [data-theme="editorial"] .sidebar { border-right-color: rgba(26,26,46,0.06); }
+    [data-theme="editorial"] .header-ticker { border-radius: 8px; background: #faf6eb; border-color: rgba(26,26,46,0.06); }
+    [data-theme="editorial"] .sidebar-slogan span:first-child { font-family: 'Fraunces', serif; font-style: italic; }
+    [data-theme="editorial"] .legend-dot.dot-self { background: #2B7FD8; }
+    [data-theme="editorial"] .legend-dot.dot-commercial { background: #F4D758; color: #1A1A2E; }
+    [data-theme="editorial"] .legend-dot.dot-urgent { background: #E84A5F; }
+    [data-theme="editorial"] ::selection { background: #F4D758; color: #1A1A2E; }

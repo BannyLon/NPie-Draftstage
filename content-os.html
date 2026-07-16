@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NPie Draftstage · 哌稿场档期</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@700;900&family=Inter:wght@400;500;600;700;800&family=Fraunces:ital,wght@0,400;0,700;1,400;1,700&family=Caveat:wght@500;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="CSS/content-os.css" />
+  <link rel="stylesheet" href="CSS/theme-editorial.css" />
+</head>
+<body>
+  <div id="offline-warning" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#E84A5F;color:#fff;text-align:center;padding:8px;font-size:0.78rem;font-weight:600;">⚠️ 网络连接异常，部分样式可能无法加载。请检查网络后刷新页面。</div>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main-panel">
+      <div class="main-header">
+        <div class="header-ticker" id="header-ticker"></div>
+        <div class="main-header-brand">
+          <img class="main-header-logo" src="IMG/NPIEAI_logo.jpg" alt="NPIE" />
+          <span class="main-header-title">哌稿场 · 档期<br><small>NPie Draftstage</small></span>
+        </div>
+      </div>
+      <div class="panel-section" id="timeline-section" style="padding:0;position:relative;">
+        <button class="guide-float-btn" id="btn-header-guide" title="新手指南">
+          <img class="guide-float-icon" src="IMG/guide.svg" alt="" />
+          <span class="guide-float-text">新手指南</span>
+        </button>
+        <div class="timeline-hero">
+          <div class="timeline-hero-eyebrow">DRAG TO SCHEDULE</div>
+          <div class="timeline-hero-title">选题和日历，同屏排期</div>
+          <div class="timeline-hero-desc">拖左侧选题卡 → 重新按工作日倒排。拖右侧任务块 → 仅移动该节点。排期自动避开周末与法定节假日。时间轴从 7 月延伸到 12 月，随选题扩展。</div>
+        </div>
+        <div style="border: 1px solid var(--border); border-radius: 14px; margin: 0 16px 24px; overflow: hidden; background: var(--surface);">
+          <div class="timeline-scroll" id="timeline-scroll">
+            <div class="timeline-inner" id="timeline-inner"></div>
+          </div>
+          <div class="add-topic-bar" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+            <button class="add-topic-btn" id="btn-add-topic">+ 增加选题</button>
+            <div class="legend-bar">
+              <span class="legend-item"><span class="legend-dot dot-self">自</span> 自制内容</span>
+              <span class="legend-item"><span class="legend-dot dot-commercial">商</span> 商单</span>
+              <span class="legend-item"><span class="legend-dot dot-urgent">急</span> 紧急选题</span>
+              <span class="legend-item"><span class="legend-dot dot-collab">合</span> 合作内容</span>
+              <span class="legend-item"><span class="legend-dot dot-custom">定</span> 自定义</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="panel-section panel-section-topics" id="topics-section">
+        <div class="section-card">
+          <div class="topics-title-area">
+            <div class="topics-title-large">选题卡</div>
+            <div class="topics-title-small">前置准备可以自由增加、勾选和删除。正式流程保持统一，避免每条内容出现一套不同的复杂清单。</div>
+          </div>
+          <div class="cards-wrap">
+            <div class="cards-grid" id="cards-grid"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal-box" style="width:500px;max-width:96vw;">
+      <div class="modal-title">新增选题</div>
+      <div class="modal-field">
+        <label>选题名称</label>
+        <input type="text" id="modal-title" placeholder="如 DJI Mic Mini 2s" />
+      </div>
+      <div class="modal-field">
+        <label>工作流类型</label>
+        <select id="modal-type">
+          <option value="self">自制内容</option>
+          <option value="commercial">商单</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label>发布日期</label>
+        <input type="date" id="modal-date" />
+      </div>
+      <div class="modal-field modal-field-row">
+        <label>状态</label>
+        <div class="radio-row">
+          <label class="radio-label"><input type="radio" name="modal-status" value="normal" checked /> 普通</label>
+          <label class="radio-label"><input type="radio" name="modal-status" value="important" /> 重要</label>
+          <label class="radio-label"><input type="radio" name="modal-status" value="urgent" /> 紧急</label>
+        </div>
+      </div>
+      <div class="modal-field modal-field-row">
+        <label>影响力</label>
+        <div class="star-rating" id="modal-priority">
+          <span data-star="1">☆</span><span data-star="2">☆</span><span data-star="3">☆</span><span data-star="4">☆</span><span data-star="5">☆</span>
+        </div>
+        <input type="hidden" id="modal-priority-val" value="0" />
+      </div>
+      <div class="modal-field" id="modal-budget-field" style="display:none;">
+        <label>金额</label>
+        <input type="text" id="modal-budget" placeholder="如 50000" inputmode="numeric" pattern="[0-9,.]*" />
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn modal-btn-cancel" id="modal-cancel">取消</button>
+        <button class="modal-btn modal-btn-primary" id="modal-confirm">确认添加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 右键菜单 -->
+  <div id="ctx-menu" class="ctx-menu" style="display:none"></div>
+
+  <!-- 新增日程弹窗 -->
+  <div class="modal-overlay" id="schedule-modal-overlay">
+    <div class="modal-box">
+      <div class="modal-title">新增日程</div>
+      <div class="modal-field">
+        <label>日程名称</label>
+        <input type="text" id="schedule-modal-name" placeholder="如 品牌素材整理" />
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn modal-btn-cancel" id="schedule-modal-cancel">取消</button>
+        <button class="modal-btn modal-btn-primary" id="schedule-modal-confirm">确认添加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Obsidian 链接弹窗 -->
+  <div class="modal-overlay" id="obsidian-modal-overlay">
+    <div class="modal-box" style="width:580px;max-width:96vw;">
+      <div class="modal-title">设置 Obsidian 笔记链接</div>
+      <div class="modal-field">
+        <label>obsidian://open?vault=你的Vault名&file=笔记路径或标题</label>
+        <input type="text" id="obsidian-modal-input" placeholder="obsidian://open?vault=我的Vault&file=选题/笔记名" style="font-size:0.78rem;" />
+      </div>
+      <div id="obsidian-test-hint" style="font-size:0.68rem;color:var(--text-muted);margin-bottom:6px;">💡 请输入 obsidian:// 链接后点击「测试链接」校验格式，通过后方可保存</div>
+      <div class="modal-actions">
+        <button class="modal-btn modal-btn-cancel" id="obsidian-modal-cancel">取消</button>
+        <button class="modal-btn modal-btn-cancel" id="obsidian-modal-clear" style="color:var(--red)">清除链接</button>
+        <button class="modal-btn modal-btn-cancel" id="obsidian-modal-test">🔗 测试链接</button>
+        <button class="modal-btn modal-btn-primary" id="obsidian-modal-confirm" disabled style="opacity:0.5;">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 设置弹窗 -->
+  <div class="modal-overlay" id="settings-modal-overlay">
+    <div class="modal-box" style="width:620px;max-width:96vw;">
+      <div class="modal-title">设置</div>
+      <div class="settings-tabs">
+        <button class="settings-tab active" data-stab="appearance">外观</button>
+        <button class="settings-tab" data-stab="workflows">工作流</button>
+      </div>
+      <!-- 外观面板（模式 + 主题合一） -->
+      <div class="settings-panel active" id="spanel-appearance">
+        <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:8px;">模式</label>
+        <div class="mode-toggle">
+          <button class="mode-btn active" id="mode-light" data-mode="light">☀️<span class="mode-label">日间</span></button>
+          <button class="mode-btn" id="mode-dark" data-mode="dark">🌙<span class="mode-label">夜间</span></button>
+        </div>
+        <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin:14px 0 8px;">配色方案</label>
+        <div class="theme-options" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;">
+          <button class="theme-btn active" data-theme="warm">
+            <div class="swatch"><span style="background:#B08A53"></span><span style="background:#F4EFE6"></span><span style="background:#8B9B7A"></span></div>暖棕
+          </button>
+          <button class="theme-btn" data-theme="cool">
+            <div class="swatch"><span style="background:#5B7C99"></span><span style="background:#EEF0F2"></span><span style="background:#7B9B82"></span></div>冷灰
+          </button>
+          <button class="theme-btn" data-theme="green">
+            <div class="swatch"><span style="background:#6B8C5C"></span><span style="background:#EEF2EC"></span><span style="background:#6B8898"></span></div>自然绿
+          </button>
+          <button class="theme-btn" data-theme="magazine">
+            <div class="swatch"><span style="background:#B88040"></span><span style="background:#F5F0EB"></span><span style="background:#889880"></span></div>高级时尚杂志风
+          </button>
+          <button class="theme-btn" data-theme="fresh">
+            <div class="swatch"><span style="background:#78A848"></span><span style="background:#F2F7EC"></span><span style="background:#C07058"></span></div>草绿小清新风
+          </button>
+          <button class="theme-btn" data-theme="warmgold">
+            <div class="swatch"><span style="background:#C89038"></span><span style="background:#F8F2E8"></span><span style="background:#98A870"></span></div>暖金
+          </button>
+          <button class="theme-btn" data-theme="editorial">
+            <div class="swatch"><span style="background:#2B7FD8"></span><span style="background:#fefcf6"></span><span style="background:#F4D758"></span></div>蓝黄杂志风
+          </button>
+        </div>
+      </div>
+      <!-- 工作流面板 -->
+      <div class="settings-panel" id="spanel-workflows">
+        <div class="wf-list" id="wf-list"></div>
+        <button class="modal-btn modal-btn-primary" id="btn-add-workflow" style="width:100%;">＋ 新增工作流</button>
+        <div id="wf-editor" style="display:none; margin-top:10px; padding:12px; border-radius:8px; border:1px solid var(--border); background:var(--surface-muted);">
+          <input type="text" id="wf-editor-name" placeholder="工作流名称（如 播客制作）" style="width:100%;padding:6px 8px;border-radius:5px;border:1px solid var(--border);font-size:0.82rem;margin-bottom:8px;" />
+          <div id="wf-editor-stages"></div>
+          <button class="modal-btn modal-btn-cancel" id="btn-wf-add-stage" style="width:100%;margin-bottom:6px;">＋ 添加节点</button>
+          <div style="font-size:0.6rem;color:var(--text-muted);margin-bottom:8px;">💡 封面/文案/发布节点将自动追加到末尾，无需手动添加</div>
+          <div style="display:flex;gap:6px;">
+            <button class="modal-btn modal-btn-cancel" id="btn-wf-cancel" style="flex:1;">取消</button>
+            <button class="modal-btn modal-btn-primary" id="btn-wf-save" style="flex:1;">确认保存</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions" style="margin-top:14px;">
+        <button class="modal-btn modal-btn-cancel" id="settings-modal-close">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 重命名弹窗 -->
+  <div class="modal-overlay" id="rename-modal-overlay">
+    <div class="modal-box">
+      <div class="modal-title">重命名选题</div>
+      <div class="modal-field">
+        <label>选题名称</label>
+        <input type="text" id="rename-modal-input" placeholder="新名称" />
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn modal-btn-cancel" id="rename-modal-cancel">取消</button>
+        <button class="modal-btn modal-btn-primary" id="rename-modal-confirm">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 确认弹窗 -->
+  <div class="modal-overlay" id="confirm-modal-overlay">
+    <div class="modal-box" style="width:380px;max-width:92vw;">
+      <div class="modal-title" id="confirm-modal-title">确认操作</div>
+      <p id="confirm-modal-msg" style="font-size:0.82rem;color:var(--text);line-height:1.5;margin:0 0 14px;"></p>
+      <div class="modal-actions">
+        <button class="modal-btn modal-btn-cancel" id="confirm-modal-cancel">取消</button>
+        <button class="modal-btn modal-btn-primary" id="confirm-modal-ok" style="background:var(--red);">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 使用说明弹窗（多步骤引导） -->
+  <div class="modal-overlay" id="guide-modal-overlay">
+    <div class="modal-box" style="width:520px;max-width:94vw;position:relative;">
+      <button id="guide-modal-x" style="position:absolute;top:10px;right:12px;width:28px;height:28px;border-radius:50%;border:none;background:transparent;font-size:1.1rem;cursor:pointer;color:var(--text-muted);line-height:1;">✕</button>
+      <div class="modal-title" id="guide-step-title">欢迎使用哌稿场</div>
+      <div class="guide-step-indicator" style="display:flex;gap:6px;margin-bottom:14px;">
+        <span class="guide-dot active" data-gs="0"></span><span class="guide-dot" data-gs="1"></span><span class="guide-dot" data-gs="2"></span><span class="guide-dot" data-gs="3"></span><span class="guide-dot" data-gs="4"></span>
+      </div>
+      <div id="guide-step-content" style="font-size:0.82rem;line-height:1.8;color:var(--text);min-height:180px;"></div>
+      <div class="modal-actions" style="margin-top:14px;justify-content:space-between;">
+        <button class="modal-btn modal-btn-cancel" id="guide-prev" style="visibility:hidden;">← 上一步</button>
+        <span id="guide-step-num" style="font-size:0.7rem;color:var(--text-muted);"></span>
+        <button class="modal-btn modal-btn-primary" id="guide-next">下一步 →</button>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="import-file" accept="application/json" hidden />
+  <div id="toast"></div>
+
+  <script src="JS/content-os.js"></script>
+</body>
+</html>
